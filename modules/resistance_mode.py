@@ -171,6 +171,7 @@ class ResistanceMode():
     def shutdown(self):
         self.sourcemeter_obj.shutdown()
         self.field_obj.shutdown()
+        ResistanceMode.idle()
 
     def idle(self):
         pass

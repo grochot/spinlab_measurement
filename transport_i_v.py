@@ -123,7 +123,11 @@ class IVTransfer(Procedure):
                    self.emit('progress', 100 * self.counter / len(self.points))
                    self.counter = self.counter + 1
 
-
+    
+    def shutdown(self):
+         match self.mode:
+            case "ResistanceMode":
+                 self.resistancemode.shutdown()
    
         
 
@@ -161,7 +165,7 @@ class MainWindow(ManagedDockWindow):
         experiment = self.new_experiment(results)
         self.manager.queue(experiment)
         
-        
+    
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
