@@ -1,0 +1,2 @@
+class DummyGaussmeter:
+    pass
