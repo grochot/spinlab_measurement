@@ -12,6 +12,6 @@ class DummySourcemeter:
     def source_current_range(self, range):
         pass
 
-
+#
     self.source_voltage = 0 
     self.voltage_nplc = 0 
