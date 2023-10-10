@@ -26,27 +26,25 @@ from pymeasure.instruments import Instrument
 
 
 class Agilent34410A(Instrument):
-    """
-    Represent the HP/Agilent/Keysight 34410A and related multimeters.
-
-    Implemented measurements: voltage_dc, voltage_ac, current_dc, current_ac, resistance,
-    resistance_4w
-    """
-    # only the most simple functions are implemented
-    voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "DC voltage, in Volts")
-
-    voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF", "AC voltage, in Volts")
-
-    current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "DC current, in Amps")
-
-    current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "AC current, in Amps")
-
-    resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance, in Ohms")
-
-    resistance_4w = Instrument.measurement(
-        "MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
-
     def __init__(self, adapter, name="HP/Agilent/Keysight 34410A Multimeter", **kwargs):
         super().__init__(
             adapter, name, **kwargs
         )
+    def resolution(self, resolution):
+        pass
+    def range(self, range):
+        self.write("CONF:%s\n" % range)
+    def autorange(self, autorange):
+        pass
+    def function(self, function):
+        pass
+    def average(self, average):
+        pass
+    
+    def current_dc(self):
+        current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "DC current, in Amps")
+        return current_dc
+    def voltage_dc(self):
+        voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "DC voltage, in Volts")
+        return voltage_dc
+

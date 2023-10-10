@@ -1,2 +1,5 @@
 class DummyField:
-    pass
+    def set_field(self, field):
+        pass
+    def shutdown(self):
+        pass
