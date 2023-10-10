@@ -1,3 +1,4 @@
+import numpy as np
 class DummyMultimeter():
     def __init__(self, resource_name):
         pass
@@ -13,6 +14,6 @@ class DummyMultimeter():
         pass
     
     def current_dc(self):
-        return 0
+        return np.nan
     def voltage_dc(self):
-        return 0
+        return np.nan

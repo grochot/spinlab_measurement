@@ -10,7 +10,7 @@ class Keithley2636(Instrument):
             **kwargs
         )
 
-    def select_channel(self, channel):
+    def set_channel(self, channel):
        pass
 
     def source_mode(self, source_type):

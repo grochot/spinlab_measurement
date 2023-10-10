@@ -36,7 +36,7 @@ class SpinLabMeasurement(Procedure):
     
     #Hardware
     set_sourcemeter=ListParameter("Sourcemeter", choices=["Keithley 2400", "Keithley 2636", "Agilent 2912", "none"], default = "none", group_by="mode", group_condition=lambda v: v == "ResistanceMode")
-    set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"], group_by={"mode": lambda v: v=="ResistanceMode", "mode_resistance": lambda v: v=="4-points"})
+    set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"], default = "none", group_by={"mode": lambda v: v=="ResistanceMode", "mode_resistance": lambda v: v=="4-points"})
     set_gaussmeter = ListParameter("Gaussmeter", choices=["Lakeshore", "none"], group_by={"mode":lambda v: v == "ResistanceMode"})
     set_field = ListParameter("Magnetic Field", choices = ["DAQ", "Lockin", "none"], group_by = {"mode": lambda v: v == "ResistanceMode"})
     set_lockin = ListParameter("Lockin", choices = ["Zurich", "SR830"], group_by = {"mode": lambda v: v == "HarmonicMode" or v == "FMRMode"})

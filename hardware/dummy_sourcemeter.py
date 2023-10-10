@@ -1,3 +1,4 @@
+import numpy as np
 class DummySourcemeter:
 
     def __init__(self, resource_name):
@@ -29,9 +30,9 @@ class DummySourcemeter:
     def source_current(self, current):
         pass
     def current(self):
-        return 0
+        return np.nan
     def voltage(self):
-        return 0
+        return np.nan
 
 
 

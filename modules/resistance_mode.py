@@ -1,6 +1,7 @@
 from time import sleep
 import math
-
+import numpy as np
+import logging
 from hardware.keithley2400 import Keithley2400
 from hardware.agilent_34410a import Agilent34410A
 from hardware.daq import DAQ
@@ -16,6 +17,8 @@ from hardware.dummy_multimeter import DummyMultimeter
 from hardware.dummy_gaussmeter import DummyGaussmeter
 from hardware.dummy_field import DummyField
 from logic.vector import Vector
+log = logging.getLogger(__name__) 
+log.addHandler(logging.NullHandler()) 
 
 class ResistanceMode():
     def __init__(self, vector:str, fourpoints:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool, address_sourcemeter:str, address_multimeter:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_lockin:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str ) -> None:   
@@ -56,8 +59,12 @@ class ResistanceMode():
         
     def generate_points(self):
         #Vector initialization
-        self.vector_obj = Vector()
-        self.point_list = self.vector_obj.generate_vector(self.vector)
+        if self.vector != "":
+            self.vector_obj = Vector()
+            self.point_list = self.vector_obj.generate_vector(self.vector)
+        else:
+            log.error("Vector is not defined")
+            self.point_list = [1]
         return self.point_list
 
 
@@ -133,7 +140,7 @@ class ResistanceMode():
         if self.gaussmeter == "none":
             self.tmp_field = point
         else: 
-            self.tmp_field = self.gaussmeter.measure()
+            self.tmp_field = self.gaussmeter_obj.measure()
         sleep(self.delay_bias)
 
         if self.fourpoints:
@@ -148,12 +155,18 @@ class ResistanceMode():
             
         else: 
             if self.sourcemeter_source == "VOLT":
-                self.tmp_voltage = self.sourcemeter_bias
+                if self.sourcemeter_bias != 0:
+                    self.tmp_voltage = self.sourcemeter_bias
+                else: 
+                    self.tmp_voltage = 1e-9
                 self.tmp_current = self.sourcemeter_obj.current()
                 self.tmp_resistance = self.tmp_voltage/self.tmp_current
             else:
                 self.tmp_voltage =  self.sourcemeter_obj.voltage()
-                self.tmp_current =  self.sourcemeter_bias
+                if self.sourcemeter_bias != 0:
+                    self.tmp_current =  self.sourcemeter_bias
+                else: 
+                    self.tmp_current = 1e-9
                 self.tmp_resistance = self.tmp_voltage/self.tmp_current
             
         data = {

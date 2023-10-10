@@ -1,3 +1,4 @@
+import numpy as np
 class DummyGaussmeter:
     def __init__(self, resource_name):
         pass
@@ -6,4 +7,4 @@ class DummyGaussmeter:
     def resolution(self, resolution):
         pass
     def measure(self):
-        return 0
+        return np.nan
