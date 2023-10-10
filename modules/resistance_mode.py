@@ -52,15 +52,16 @@ class ResistanceMode():
         self.gaussmeter_resolution = gaussmeter_resolution
         self.vector = vector
         self.fourpoints = fourpoints
-        self.vector_obj = Vector()
         
+        
+    def generate_points(self):
+        #Vector initialization
+        self.vector_obj = Vector()
+        self.point_list = self.vector_obj.generate_vector(self.vector)
+        return self.point_list
 
 
     def initializing(self):
-         #Vector initialization
-
-        self.point_list = self.vector_obj.generate_vector(self.vector)
-
         # Hardware objects initialization
         match self.sourcemeter:
             case "Keithley 2400":
@@ -71,19 +72,19 @@ class ResistanceMode():
             case "Agilent 2912": 
                 self.sourcemeter_obj = Agilent2912(self.address_sourcemeter)
             case _: 
-                self.sourcemeter_obj = DummySourcemeter()
+                self.sourcemeter_obj = DummySourcemeter(self.address_sourcemeter)
         
         match self.multimeter:
             case "Agilent 34400": 
                 self.multimeter_obj = Agilent34410A(self.address_multimeter)
             case _: 
-                self.multimeter_obj = DummyMultimeter()
+                self.multimeter_obj = DummyMultimeter(self.address_multimeter)
         
         match self.gaussmeter: 
             case "Lakeshore": 
                 self.gaussmeter_obj = Lakeshore(self.address_gaussmeter)
             case _:
-                self.gaussmeter_obj = DummyGaussmeter()
+                self.gaussmeter_obj = DummyGaussmeter(self.address_gaussmeter)
         
         match self.field:
             case "DAQ": 
@@ -123,7 +124,7 @@ class ResistanceMode():
         #Field initialization 
         self.field_obj.set_field(self.point_list[0])
 
-        return self.point_list
+        
 
     
     def operating(self, point):
@@ -168,9 +169,7 @@ class ResistanceMode():
         
         return data 
 
-    def shutdown(self):
-        self.sourcemeter_obj.shutdown()
-        self.field_obj.shutdown()
+    def end(self):
         ResistanceMode.idle()
 
     def idle(self):

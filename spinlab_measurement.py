@@ -8,6 +8,7 @@ from time import sleep, time
 import traceback
 from logic.find_instrument import FindInstrument
 from logic.save_results_path import SaveFilePath
+from pymeasure.experiment import Procedure, Results
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows.managed_dock_window import ManagedDockWindow
 from pymeasure.experiment import (
@@ -47,56 +48,57 @@ class SpinLabMeasurement(Procedure):
     set_generator = ListParameter("RF Generator", choices = ["Agilent", "none"], group_by = {"mode": lambda v: v == "FMRMode"})
    
     #Hardware address
-    address_sourcemeter=Parameter("Sourcemeter address", group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_multimeter=Parameter("Multimeter address", group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_gaussmeter=Parameter("Gaussmeter address", group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_lockin=Parameter("Lockin address", group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_switch=Parameter("Switch address", group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_analyzer=Parameter("Analyzer address", group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_generator=Parameter("Generator address", group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_sourcemeter=Parameter("Sourcemeter address", default = "GPIB::24", group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_multimeter=Parameter("Multimeter address", default = "GPIB::23", group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_gaussmeter=Parameter("Gaussmeter address", default = "GPIB::12", group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_lockin=Parameter("Lockin address", default = "GPIB::8", group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_switch=Parameter("Switch address", default = "GPIB::24", group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_analyzer=Parameter("Analyzer address", default = "GPIB::24", group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_generator=Parameter("Generator address", default = "GPIB::24", group_by = {"mode": lambda v: v=="ResistanceMode"})
 
     #MeasurementParameters
     sample_name = Parameter("Sample name") 
     vector = Parameter("Vector")
-    delay_field = 0
-    delay_lockin = 0 
-    delay_bias = 0 
+    delay_field = FloatParameter("Delay Field", default=0, units="s", group_by={"mode": lambda v: v == "ResistanceMode"})
+    delay_lockin = FloatParameter("Delay Lockin", default=0, units="s", group_by={"mode": lambda v: v == "ResistanceMode"})
+    delay_bias = FloatParameter("Delay Bias", default=0, units="s", group_by={"mode": lambda v: v == "ResistanceMode"})
     
     #########  SETTINGS PARAMETERS ##############
     #SourcemeterParameters 
-    sourcemter_source = ListParameter("Source", choices=["Voltage", "Current"])
-    sourcemeter_compliance = 0
-    sourcemeter_channel = ListParameter("Channel", choices = ["Channel A", "Channel B"])
-    sourcemeter_limit = 0 
-    sourcemeter_nplc = 0 
-    sourcemeter_average = 0 
-    sourcemeter_bias = 0
+    sourcemter_source = ListParameter("Source", choices=["Voltage", "Current"], group_by={"mode": lambda v: v == "ResistanceMode"})
+    sourcemeter_compliance = FloatParameter("Compliance", default=0, group_by={"mode": lambda v: v == "ResistanceMode"})
+    sourcemeter_channel = ListParameter("Channel", choices = ["Channel A", "Channel B"], group_by={"mode": lambda v: v == "ResistanceMode"})
+    sourcemeter_limit = FloatParameter("Limit", default=0, group_by={"mode": lambda v: v == "ResistanceMode"})
+    sourcemeter_nplc = FloatParameter("NPLC", default=0, group_by={"mode": lambda v: v == "ResistanceMode"})
+    sourcemeter_average = IntegerParameter("Average", default=0, group_by={"mode": lambda v: v == "ResistanceMode"})
+    sourcemeter_bias = FloatParameter("Bias", default=0, group_by={"mode": lambda v: v == "ResistanceMode"})
 
     #MultimeterParameters 
-    multimeter_function = ListParameter("Function", choices=["DC Voltage", "AC Voltage", "DC Current", "AC Current", "2-wire Resistance", "4-wire Resistance"])
-    multimeter_resolution = 0 
-    multimeter_autorange = 0
-    multimeter_range = 0 
-    multimeter_average = 0
+    multimeter_function = ListParameter("Function", choices=["DC Voltage", "AC Voltage", "DC Current", "AC Current", "2-wire Resistance", "4-wire Resistance"], group_by={"mode": lambda v: v == "ResistanceMode"})
+    multimeter_resolution = ListParameter("Resolution", choices=["3.5 digits", "4.5 digits", "5.5 digits", "6.5 digits"], group_by={"mode": lambda v: v == "ResistanceMode"})
+    multimeter_autorange = BooleanParameter("Autorange", default=False, group_by={"mode": lambda v: v == "ResistanceMode"})
+    multimeter_range = FloatParameter("Range", default=0, group_by={"mode": lambda v: v == "ResistanceMode"})
+    multimeter_average = IntegerParameter("Average", default=0, group_by={"mode": lambda v: v == "ResistanceMode"})
+    
     #LockinParameters
-    lockin_average = 0 
-    lockin_input_coupling = ListParameter("Input Coupling", choices = ["AC", "DC"])
-    lockin_reference_source = ListParameter("Reference Source", choices=["Internal", "External"])
-    lockin_dynamic_reserve = ListParameter("Dynamic Reserve", choices=["High Reserve", "Normal", "Low Noise", "Auto Reserve"])
-    lockin_input_connection = ListParameter("Input Connection", choices = ["Single Voltage", "Differential Voltage"])
-    lockin_sensitivity = ListParameter("Sensitivity", choices=["Auto Gain", "2 nV/fA", "5 nV/fA", "10 nV/fA", "20 nV/fA", "50 nV/fA", "100 nV/fA", "200 nV/fA", "500 nV/fA", "1 uV/pA", "2 uV/pA", "5 uV/pA", "10 uV/pA", "20 uV/pA", "50 uV/pA", "100 uV/pA", "200 uV/pA", "500 uV/pA", "1 mV/nA", "2 mV/nA", "5 mV/nA", "10 mV/nA", "20 mV/nA", "50 mV/nA", "100 mV/nA", "200 mV/nA", "500 mV/nA", "1 V/uA"])
-    lockin_timeconstant = ListParameter("Time Constant", choices = ["10 us", "30 us", "100 us", "300 us", "1 ms", "3 ms", "10 ms", "30 ms", "100 ms", "300 ms", "1 s", "3 s", "10 s", "30 s", "100 s", "300 s", "1 ks", "3 ks", "10 ks", "30 ks"])
-    lockin_autophase = BooleanParameter("Autophase")
+    lockin_average = IntegerParameter("Average", default=0, group_by={"mode": lambda v: v == "HarmonicMode"})
+    lockin_input_coupling = ListParameter("Input Coupling", choices = ["AC", "DC"], group_by={"mode": lambda v: v == "HarmonicMode"})
+    lockin_reference_source = ListParameter("Reference Source", choices=["Internal", "External"], group_by={"mode": lambda v: v == "HarmonicMode"})
+    lockin_dynamic_reserve = ListParameter("Dynamic Reserve", choices=["High Reserve", "Normal", "Low Noise", "Auto Reserve"], group_by={"mode": lambda v: v == "HarmonicMode"})
+    lockin_input_connection = ListParameter("Input Connection", choices = ["Single Voltage", "Differential Voltage"], group_by={"mode": lambda v: v == "HarmonicMode"})
+    lockin_sensitivity = ListParameter("Sensitivity", choices=["Auto Gain", "2 nV/fA", "5 nV/fA", "10 nV/fA", "20 nV/fA", "50 nV/fA", "100 nV/fA", "200 nV/fA", "500 nV/fA", "1 uV/pA", "2 uV/pA", "5 uV/pA", "10 uV/pA", "20 uV/pA", "50 uV/pA", "100 uV/pA", "200 uV/pA", "500 uV/pA", "1 mV/nA", "2 mV/nA", "5 mV/nA", "10 mV/nA", "20 mV/nA", "50 mV/nA", "100 mV/nA", "200 mV/nA", "500 mV/nA", "1 V/uA"], group_by={"mode": lambda v: v == "HarmonicMode"})
+    lockin_timeconstant = ListParameter("Time Constant", choices = ["10 us", "30 us", "100 us", "300 us", "1 ms", "3 ms", "10 ms", "30 ms", "100 ms", "300 ms", "1 s", "3 s", "10 s", "30 s", "100 s", "300 s", "1 ks", "3 ks", "10 ks", "30 ks"], group_by={"mode": lambda v: v == "HarmonicMode"})
+    lockin_autophase = BooleanParameter("Autophase", default=False, group_by={"mode": lambda v: v == "HarmonicMode"})
 
     #FieldParameters 
-    field_constant = 0
+    field_constant = FloatParameter("Constant", default=0)
     #GeneratorParameters 
 
     #Analyzer Parameters 
 
     #GaussmeterParameters 
-    gaussmeter_range = ListParameter("Range", choices=["1","2","3","4","5"])
-    gaussmeter_resolution = ListParameter("Resolution", choices=["3 digits", "4 digits", "5 digits"])
+    gaussmeter_range = ListParameter("Range", default=1, choices=[1,2,3,4,5], group_by={"mode": lambda v: v == "ResistanceMode"})
+    gaussmeter_resolution = ListParameter("Resolution", default = "5 digits",choices=["3 digits", "4 digits", "5 digits"], group_by={"mode": lambda v: v == "ResistanceMode"})
 
 
     DEBUG = 1
@@ -106,10 +108,12 @@ class SpinLabMeasurement(Procedure):
     
     ################ STARTUP ##################3
     def startup(self):
+     
         match self.mode:
             case "ResistanceMode":
                 self.resistancemode = ResistanceMode(self.vector, self.mode_resistance, self.sourcemeter_bias, self.set_sourcemeter, self.set_multimeter, self.set_gaussmeter, self.set_field, self.set_automaticstation, self.set_switch, self.set_kriostat, self.set_rotationstation, self.address_sourcemeter, self.address_multimeter, self.address_gaussmeter, self.address_switch, self.delay_field, self.delay_lockin, self.delay_bias, self.sourcemter_source, self.sourcemeter_compliance, self.sourcemeter_channel, self.sourcemeter_limit, self.sourcemeter_nplc, self.sourcemeter_average, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution)
-                self.points = self.resistancemode.initializing()
+                self.points = self.resistancemode.generate_points()
+                self.resistancemode.initializing()
 
 #################################### PROCEDURE##############################################
     def execute(self):
@@ -126,8 +130,7 @@ class SpinLabMeasurement(Procedure):
     def shutdown(self):
          match self.mode:
             case "ResistanceMode":
-                 self.resistancemode.shutdown()
-   
+                 pass
         
 
 class MainWindow(ManagedDockWindow):
@@ -137,7 +140,7 @@ class MainWindow(ManagedDockWindow):
     def __init__(self):
         super().__init__(
             procedure_class= SpinLabMeasurement,
-            inputs=['mode', 'sample_name', 'mode_resistance', 'mode_fmr', 'mode_harmonic', 'set_sourcemeter', 'set_multimeter', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','set_switch', 'set_kriostat', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter' ],
+            inputs=['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'mode_harmonic', 'set_sourcemeter', 'set_multimeter', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','set_switch', 'set_kriostat', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter', 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity', 'lockin_timeconstant', 'lockin_autophase', 'delay_field', 'delay_lockin', 'delay_bias'],
             x_axis=['Field (Oe)', 'Voltage (V)'],
             y_axis=['Field (Oe)', 'Resistance (ohm)'],
             directory_input=True,  

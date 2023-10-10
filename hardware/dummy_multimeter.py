@@ -1,4 +1,6 @@
 class DummyMultimeter():
+    def __init__(self, resource_name):
+        pass
     def resolution(self, resolution):
         pass
     def range(self, range):

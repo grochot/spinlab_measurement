@@ -11,3 +11,4 @@ scipy
 pyqtgraph
 zhinst
 keithley2600
+nidaqmx
