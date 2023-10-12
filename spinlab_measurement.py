@@ -16,6 +16,7 @@ from pymeasure.experiment import (
 )
 from logic.unique_name import unique_name
 from modules.resistance_mode import ResistanceMode
+from logic.find_instrument import FindInstrument
 
 
 log = logging.getLogger(__name__) 
@@ -25,9 +26,9 @@ log.addHandler(logging.NullHandler())
 
 class SpinLabMeasurement(Procedure):
     # licznik = 1 # licznik
-    # find_instruments = FindInstrument()
-    # finded_instruments = find_instruments.show_instrument() 
-    # print(finded_instruments)
+    find_instruments = FindInstrument()
+    finded_instruments = find_instruments.show_instrument() 
+    print(finded_instruments)
 #################################################################### PARAMETERS #####################################################################
     mode = ListParameter("Mode", choices=['ResistanceMode', 'FMRMode', 'VSMMode', 'HarmonicMode', 'CalibrationFieldMode', 'PulseMode'])
     mode_resistance = BooleanParameter("4-points", default=False, group_by="mode", group_condition=lambda v: v=="ResistanceMode")
@@ -48,13 +49,13 @@ class SpinLabMeasurement(Procedure):
     set_generator = ListParameter("RF Generator", choices = ["Agilent", "none"], group_by = {"mode": lambda v: v == "FMRMode"})
    
     #Hardware address
-    address_sourcemeter=Parameter("Sourcemeter address", default = "GPIB::24", group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_multimeter=Parameter("Multimeter address", default = "GPIB::23", group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_gaussmeter=Parameter("Gaussmeter address", default = "GPIB::12", group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_lockin=Parameter("Lockin address", default = "GPIB::8", group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_switch=Parameter("Switch address", default = "GPIB::24", group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_analyzer=Parameter("Analyzer address", default = "GPIB::24", group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_generator=Parameter("Generator address", default = "GPIB::24", group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_sourcemeter=ListParameter("Sourcemeter address", choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_multimeter=ListParameter("Multimeter address", choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_gaussmeter=ListParameter("Gaussmeter address",  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_lockin=ListParameter("Lockin address",  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_switch=ListParameter("Switch address",  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_analyzer=ListParameter("Analyzer address",  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_generator=ListParameter("Generator address",  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
 
     #MeasurementParameters
     sample_name = Parameter("Sample name") 

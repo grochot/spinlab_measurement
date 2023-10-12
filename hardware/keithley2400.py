@@ -53,7 +53,7 @@ class Keithley2400(Instrument):
         self.write(":SENS:CURR:PROT %g" % current)
         
     def enable_source(self):
-        self.write("OUTPut %d", 1)
+        self.write("OUTPut %d" % 1)
 
     def measure_current(self):
         self.write(":SENS:FUNC 'CURR'")
@@ -64,13 +64,13 @@ class Keithley2400(Instrument):
         self.write( ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g" % range)
 
     def voltage_nplc(self, nplc):
-        self.write(":SENS:VOLT:NPLC %g", nplc)
+        self.write(":SENS:VOLT:NPLC %g" % nplc)
 
     def compliance_voltage(self, voltage):
-         self.write(":SENS:VOLT:PROT %g" % voltage)
+        self.write(":SENS:VOLT:PROT %g" % voltage)
     
     def current_nplc(self, nplc):
-        self.write(":SENS:CURR:NPLC %g", nplc)
+        self.write(":SENS:CURR:NPLC %g" % nplc)
 
     def measure_voltage(self):
         self.write(":SENS:FUNC 'VOLT'")
@@ -78,20 +78,24 @@ class Keithley2400(Instrument):
         self.write(":SENS:VOLT")
    
     def shutdown(self):
-        self.write("OUTPut %d", 0)
+        self.write("OUTPut %d" % 0)
 
     def source_voltage(self, voltage):
-        self.write(":SOUR:VOLT:LEV %g", voltage)
+        self.write(":SOUR:VOLT:LEV %g" % voltage)
     def source_current(self, current):
-        self.write(":SOUR:CURR:LEV %g", current)
+        self.write(":SOUR:CURR:LEV %g" % current)
    
-    def current(self):
-        current = Instrument.measurement(":READ?")
-        return current
-    
-    def voltage(self):
-        voltage = Instrument.measurement(":READ?")
-        return voltage
+   
+    current = Instrument.measurement(
+        ":READ?",
+        """ Reads the current in Amps, if configured for this reading.
+        """)
+     voltage = Instrument.measurement(
+        ":READ?",
+        """ Reads the voltage in Volts, if configured for this reading.
+        """
+    )
+        
 
 
 
