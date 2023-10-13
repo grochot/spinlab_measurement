@@ -104,7 +104,9 @@ class SpinLabMeasurement(Procedure):
     gaussmeter_resolution = ListParameter("Resolution", default = "5 digits",choices=["3 digits", "4 digits", "5 digits"], group_by={"mode": lambda v: v == "ResistanceMode"})
 
     #PulseGeneratorParameters
-    pulsegenerator_amplitude=ListParameter("Amplitude [V]", default=7.5, choices=[1,2,3,4,7.5], group_by={"mode": lambda v: v == "CIMSMode"})
+    pulsegenerator_amplitude=FloatParameter("Amplitude [V]", default=7.5, group_by={"mode": lambda v: v == "CIMSMode"})
+    pulsegenerator_duration=FloatParameter("Duration [ns]", default=0.25, group_by={"mode": lambda v: v == "CIMSMode"})
+    pulsegenerator_frequency=FloatParameter("Frequency [Hz]", default=1, group_by={"mode": lambda v: v == "CIMSMode"})
 
     DEBUG = 1
     DATA_COLUMNS = ['Voltage (V)', 'Current (A)', 'Resistance (ohm)', 'Field (Oe)', 'Frequency (Hz)', 'X (V)', 'Y (V)', 'Phase']
@@ -152,7 +154,8 @@ class MainWindow(ManagedDockWindow):
                     'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 
                     'field_constant', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 
                     'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity', 'lockin_timeconstant', 'lockin_autophase', 'delay_field', 
-                    'delay_lockin', 'delay_bias','set_pulsegenerator','address_pulsegenerator'],
+                    'delay_lockin', 'delay_bias','set_pulsegenerator','address_pulsegenerator','pulsegenerator_amplitude','pulsegenerator_duration',
+                    'pulsegenerator_frequency'],
             x_axis=['Field (Oe)', 'Voltage (V)'],
             y_axis=['Field (Oe)', 'Resistance (ohm)'],
             directory_input=True,  
