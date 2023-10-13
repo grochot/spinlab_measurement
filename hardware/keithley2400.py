@@ -27,7 +27,10 @@ import time
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, RangeException
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+
+from pymeasure.instruments.keithley.buffer import KeithleyBuffer
 
 
 class Keithley2400(Instrument):
@@ -39,64 +42,116 @@ class Keithley2400(Instrument):
             includeSCPI=True,
             **kwargs
         )
-    def source_mode(self, source_type):
-        if source_type == "Voltage":
-            self.write(":SOUR:FUNC VOLT")
-        else:
-            self.write(":SOUR:FUNC CURR")
+    source_mode = Instrument.control(
+        ":SOUR:FUNC?", ":SOUR:FUNC %s",
+        """ A string property that controls the source mode, which can
+        take the values 'current' or 'voltage'. The convenience methods
+        :meth:`~.Keithley2400.apply_current` and :meth:`~.Keithley2400.apply_voltage`
+        can also be used. """,
+        validator=strict_discrete_set,
+        values={'current': 'CURR', 'VOLT': 'VOLT'},
+        map_values=True
+)
 
+    voltage_range = Instrument.control(
+        ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
+        """ A floating point property that controls the measurement voltage
+        range in Volts, which can take values from -210 to 210 V.
+        Auto-range is disabled when this property is set. """,
+        validator=truncated_range,
+        values=[-210, 210]
+    )
 
-    def source_voltage_range(self, voltage):
-        self.write( ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g" % voltage)
-
-    def compliance_current(self, current):
-        self.write(":SENS:CURR:PROT %g" % current)
+    compliance_current = Instrument.control(
+        ":SENS:CURR:PROT?", ":SENS:CURR:PROT %g",
+        """ A floating point property that controls the compliance current
+        in Amps. """,
+        validator=truncated_range,
+        values=[-1.05, 1.05]
+    )
         
     def enable_source(self):
-        self.write("OUTPut %d" % 1)
+        self.write("OUTPUT ON")
 
-    def measure_current(self):
-        self.write(":SENS:FUNC 'CURR'")
-        self.write(":FORM:ELEM CURR")
-        self.write(":SENS:CURR")
+    def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
+        """ Configures the measurement of current.
+
+        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
+        :param current: Upper limit of current in Amps, from -1.05 A to 1.05 A
+        :param auto_range: Enables auto_range if True, else uses the set current
+        """
        
-    def source_current_range(self, range):
-        self.write( ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g" % range)
+        self.write(":SENS:FUNC 'CURR';"
+                    ":SENS:CURR:NPLC %f;:FORM:ELEM CURR;" % nplc)
+        if auto_range:
+            self.write(":SENS:CURR:RANG:AUTO 1;")
+        else:
+            self.current_range = current
+        self.check_errors()
+        
+    current_range = Instrument.control(
+        ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
+        """ A floating point property that controls the measurement current
+        range in Amps, which can take values between -1.05 and +1.05 A.
+        Auto-range is disabled when this property is set. """,
+        validator=truncated_range,
+        values=[-1.05, 1.05]
+    )
 
-    def voltage_nplc(self, nplc):
-        self.write(":SENS:VOLT:NPLC %g" % nplc)
-
-    def compliance_voltage(self, voltage):
-        self.write(":SENS:VOLT:PROT %g" % voltage)
+    compliance_voltage = Instrument.control(
+        ":SENS:VOLT:PROT?", ":SENS:VOLT:PROT %g",
+        """ A floating point property that controls the compliance voltage
+        in Volts. """,
+        validator=truncated_range,
+        values=[-210, 210]
+    )
     
-    def current_nplc(self, nplc):
-        self.write(":SENS:CURR:NPLC %g" % nplc)
 
-    def measure_voltage(self):
-        self.write(":SENS:FUNC 'VOLT'")
-        self.write(":FORM:ELEM VOLT")
-        self.write(":SENS:VOLT")
+    def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
+        """ Configures the measurement of voltage.
+
+        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
+        :param voltage: Upper limit of voltage in Volts, from -210 V to 210 V
+        :param auto_range: Enables auto_range if True, else uses the set voltage
+        """
+        self.write(":SENS:FUNC 'VOLT';"
+                    ":SENS:VOLT:NPLC %f;:FORM:ELEM VOLT;" % nplc)
+        if auto_range:
+            self.write(":SENS:VOLT:RANG:AUTO 1;")
+        else:
+            self.voltage_range = voltage
+        self.check_errors()
    
     def shutdown(self):
-        self.write("OUTPut %d" % 0)
+        self.write("OUTPUT OFF")
 
-    def source_voltage(self, voltage):
-        self.write(":SOUR:VOLT:LEV %g" % voltage)
-    def source_current(self, current):
-        self.write(":SOUR:CURR:LEV %g" % current)
-   
-   
+    source_voltage = Instrument.control(
+        ":SOUR:VOLT?", ":SOUR:VOLT:LEV %g",
+        """ A floating point property that controls the source voltage
+        in Volts. """
+    )
+    
+    source_current = Instrument.control(
+        ":SOUR:CURR?", ":SOUR:CURR:LEV %g",
+        """ A floating point property that controls the source current
+        in Amps. """,
+        validator=truncated_range,
+        values=[-1.05, 1.05]
+    )
+    
     current = Instrument.measurement(
         ":READ?",
         """ Reads the current in Amps, if configured for this reading.
-        """)
-     voltage = Instrument.measurement(
-        ":READ?",
-        """ Reads the voltage in Volts, if configured for this reading.
         """
     )
-        
-
+   
+    voltage = Instrument.measurement(
+        ":READ?",
+        """ Reads the voltage in Volt, if configured for this reading.
+        """
+    )
+       
+   
 
 
 
@@ -152,7 +207,7 @@ class Keithley2400(Instrument):
 #         :meth:`~.Keithley2400.apply_current` and :meth:`~.Keithley2400.apply_voltage`
 #         can also be used. """,
 #         validator=strict_discrete_set,
-#         values={'current': 'CURR', 'voltage': 'VOLT'},
+#         values={'current': 'CURR', 'VOLT': 'VOLT'},
 #         map_values=True
 #     )
 

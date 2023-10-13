@@ -66,7 +66,7 @@ class SpinLabMeasurement(Procedure):
     
     #########  SETTINGS PARAMETERS ##############
     #SourcemeterParameters 
-    sourcemter_source = ListParameter("Source", choices=["Voltage", "Current"], group_by={"mode": lambda v: v == "ResistanceMode"})
+    sourcemter_source = ListParameter("Source", choices=["VOLT", "CURR"], group_by={"mode": lambda v: v == "ResistanceMode"})
     sourcemeter_compliance = FloatParameter("Compliance", default=0, group_by={"mode": lambda v: v == "ResistanceMode"})
     sourcemeter_channel = ListParameter("Channel", choices = ["Channel A", "Channel B"], group_by={"mode": lambda v: v == "ResistanceMode"})
     sourcemeter_limit = FloatParameter("Limit", default=0, group_by={"mode": lambda v: v == "ResistanceMode"})

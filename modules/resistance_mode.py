@@ -100,21 +100,19 @@ class ResistanceMode():
                 self.field_obj = DummyField()
 
         #Sourcemeter initialization
-        self.sourcemeter_obj.source_mode(self.sourcemeter_source) #Set source type 
+        self.sourcemeter_obj.source_mode = self.sourcemeter_source #Set source type 
         if self.sourcemeter_source == "VOLT":
-            self.sourcemeter_obj.source_voltage_range(self.sourcemeter_compliance)
-            self.sourcemeter_obj.compliance_current(self.sourcemeter_compliance)
-            self.sourcemeter_obj.source_voltage(self.sourcemeter_bias)
-            self.sourcemeter_obj.voltage_nplc(self.sourcemeter_nplc)
+            self.sourcemeter_obj.voltage_range = self.sourcemeter_limit
+            self.sourcemeter_obj.compliance_current = self.sourcemeter_compliance
+            self.sourcemeter_obj.source_voltage = self.sourcemeter_bias
             self.sourcemeter_obj.enable_source()
-            self.sourcemeter_obj.measure_current()
+            self.sourcemeter_obj.measure_current(nplc =self.sourcemeter_nplc)
         else: 
-            self.sourcemeter_obj.source_current_range(self.sourcemeter_compliance)
-            self.sourcemeter_obj.compliance_voltage(self.sourcemeter_compliance)
-            self.sourcemeter_obj.source_current(self.sourcemeter_bias)
-            self.sourcemeter_obj.current_nplc(self.sourcemeter_nplc)
+            self.sourcemeter_obj.current_range = self.sourcemeter_limit
+            self.sourcemeter_obj.compliance_voltage = self.sourcemeter_compliance
+            self.sourcemeter_obj.source_current = self.sourcemeter_bias
             self.sourcemeter_obj.enable_source()
-            self.sourcemeter_obj.measure_voltage()
+            self.sourcemeter_obj.measure_voltage(nplc = self.sourcemeter_nplc)
         
         #Multimeter initialization 
         self.multimeter_obj.resolution(self.multimeter_resolution)
@@ -159,10 +157,11 @@ class ResistanceMode():
                     self.tmp_voltage = self.sourcemeter_bias
                 else: 
                     self.tmp_voltage = 1e-9
-                self.tmp_current = self.sourcemeter_obj.current()
+                self.tmp_current = self.sourcemeter_obj.current
+               
                 self.tmp_resistance = self.tmp_voltage/self.tmp_current
             else:
-                self.tmp_voltage =  self.sourcemeter_obj.voltage()
+                self.tmp_voltage =  self.sourcemeter_obj.voltage
                 if self.sourcemeter_bias != 0:
                     self.tmp_current =  self.sourcemeter_bias
                 else: 
