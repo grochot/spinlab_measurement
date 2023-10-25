@@ -36,7 +36,7 @@ class SpinLabMeasurement(Procedure):
     mode_harmonic = ListParameter("Harmonic mode", choices = ["Field harmonic", "Angular harmonic"], group_by = {"mode": lambda v: v == "HarmonicMode"})
     
     #Hardware
-    set_sourcemeter=ListParameter("Sourcemeter", choices=["Keithley 2400", "Keithley 2636", "Agilent 2912", "none"], default = "none", group_by="mode", group_condition=lambda v: v == "ResistanceMode")
+    set_sourcemeter=ListParameter("Sourcemeter", choices=["Keithley 2400", "Keithley 2636", "Agilent 2912", "none"], default = "none", group_by="mode", group_condition=lambda v: v == "ResistanceMode" or v=="CIMSMode")
     set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"], default = "none", group_by={"mode": lambda v: v=="ResistanceMode", "mode_resistance": lambda v: v=="4-points"})
     set_gaussmeter = ListParameter("Gaussmeter", choices=["Lakeshore", "none"], group_by={"mode":lambda v: v == "ResistanceMode"})
     set_field = ListParameter("Magnetic Field", choices = ["DAQ", "Lockin", "none"], group_by = {"mode": lambda v: v == "ResistanceMode"})
@@ -48,9 +48,10 @@ class SpinLabMeasurement(Procedure):
     set_analyzer = ListParameter("Vector Analyzer", choices = ['VectorAnalyzer', 'none'], group_by={'mode': lambda v: v=='VSMMode'})
     set_generator = ListParameter("RF attemptGenerator", choices = ["Agilent", "none"], group_by = {"mode": lambda v: v == "FMRMode"})
     set_pulsegenerator = ListParameter("Pulse generator", choices = ["(Tektronix) PSPL10070A", "none"], group_by = {"mode": lambda v: v == "CIMSMode"})
-   
+    set_damper= ListParameter("Damper", choices = ["STM32-damper", "none"], group_by = {"mode": lambda v: v == "CIMSMode"})
+
     #Hardware address
-    address_sourcemeter=ListParameter("Sourcemeter address", choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_sourcemeter=ListParameter("Sourcemeter address", choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode" or v=="CIMSMode"})
     address_multimeter=ListParameter("Multimeter address", choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
     address_gaussmeter=ListParameter("Gaussmeter address",  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
     address_lockin=ListParameter("Lockin address",  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
@@ -58,6 +59,8 @@ class SpinLabMeasurement(Procedure):
     address_analyzer=ListParameter("Analyzer address",  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
     address_generator=ListParameter("Generator address",  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
     address_pulsegenerator=ListParameter("Pulse Generator address",  choices=finded_instruments, group_by = {"mode": lambda v: v=="CIMSMode"})
+    address_damper=ListParameter("Damper address", choices=finded_instruments, group_by = {"mode": lambda v: v=="CIMSMode"})
+
 
     #MeasurementParameters
     sample_name = Parameter("Sample name") 
@@ -155,7 +158,7 @@ class MainWindow(ManagedDockWindow):
                     'field_constant', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 
                     'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity', 'lockin_timeconstant', 'lockin_autophase', 'delay_field', 
                     'delay_lockin', 'delay_bias','set_pulsegenerator','address_pulsegenerator','pulsegenerator_amplitude','pulsegenerator_duration',
-                    'pulsegenerator_frequency'],
+                    'pulsegenerator_frequency','set_damper','address_damper'],
             x_axis=['Field (Oe)', 'Voltage (V)'],
             y_axis=['Field (Oe)', 'Resistance (ohm)'],
             directory_input=True,  
@@ -171,7 +174,7 @@ class MainWindow(ManagedDockWindow):
 
     def queue(self, procedure=None):
         directory = self.directory  # Change this to the desired directory
-        # self.procedure_class.path_file.WriteFile(directory)
+        #self.procedure_class.path_file.WriteFile(directory)
         
         if procedure is None:
             procedure = self.make_procedure()
