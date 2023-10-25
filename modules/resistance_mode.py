@@ -106,13 +106,13 @@ class ResistanceMode():
             self.sourcemeter_obj.compliance_current = self.sourcemeter_compliance
             self.sourcemeter_obj.source_voltage = self.sourcemeter_bias
             self.sourcemeter_obj.enable_source()
-            self.sourcemeter_obj.measure_current(nplc =self.sourcemeter_nplc)
+            self.sourcemeter_obj.measure_current(self.sourcemeter_nplc)
         else: 
             self.sourcemeter_obj.current_range = self.sourcemeter_limit
             self.sourcemeter_obj.compliance_voltage = self.sourcemeter_compliance
             self.sourcemeter_obj.source_current = self.sourcemeter_bias
             self.sourcemeter_obj.enable_source()
-            self.sourcemeter_obj.measure_voltage(nplc = self.sourcemeter_nplc)
+            self.sourcemeter_obj.measure_voltage(self.sourcemeter_nplc)
         
         #Multimeter initialization 
         self.multimeter_obj.resolution(self.multimeter_resolution)
