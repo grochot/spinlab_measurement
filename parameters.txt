@@ -1,1 +1,1 @@
-D:/test
+/home/mariusz/moje_pliki/programowanie/spinlab_measurement

@@ -5,6 +5,7 @@ class Vector():
 
 	def generate_vector(self, vec):
 		ranges = vec.split(',')
+		print("Ranges:",ranges)
 		numbers = []
 		if len(ranges) == 3:
 			start = float(ranges[0])
