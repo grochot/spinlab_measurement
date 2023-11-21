@@ -160,10 +160,16 @@ class ResistanceMode():
                 else: 
                     self.tmp_voltage = 1e-9
                 self.tmp_current = self.sourcemeter_obj.current
+                if type(self.tmp_current) == list:
+                    self.tmp_current =np.average(self.tmp_current)
+                print(self.tmp_current)
                
                 self.tmp_resistance = self.tmp_voltage/self.tmp_current
             else:
                 self.tmp_voltage =  self.sourcemeter_obj.voltage
+                if type(self.tmp_voltage) == list:
+                    self.tmp_voltage =np.average(self.tmp_voltage)
+                print(self.tmp_voltage)
                 if self.sourcemeter_bias != 0:
                     self.tmp_current =  self.sourcemeter_bias
                 else: 
