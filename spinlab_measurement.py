@@ -18,6 +18,8 @@ from logic.unique_name import unique_name
 from modules.resistance_mode import ResistanceMode
 from logic.find_instrument import FindInstrument
 
+from datetime import datetime
+from datetime import timedelta
 
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
@@ -67,12 +69,12 @@ class SpinLabMeasurement(Procedure):
     #########  SETTINGS PARAMETERS ##############
     #SourcemeterParameters 
     sourcemter_source = ListParameter("Source", choices=["VOLT", "CURR"], group_by={"mode": lambda v: v == "ResistanceMode"})
-    sourcemeter_compliance = FloatParameter("Compliance", default=0, group_by={"mode": lambda v: v == "ResistanceMode"})
+    sourcemeter_compliance = FloatParameter("Compliance", default=0.01, group_by={"mode": lambda v: v == "ResistanceMode"})
     sourcemeter_channel = ListParameter("Channel", choices = ["Channel A", "Channel B"], group_by={"mode": lambda v: v == "ResistanceMode"})
-    sourcemeter_limit = FloatParameter("Limit", default=0, group_by={"mode": lambda v: v == "ResistanceMode"})
-    sourcemeter_nplc = FloatParameter("NPLC", default=0, group_by={"mode": lambda v: v == "ResistanceMode"})
-    sourcemeter_average = IntegerParameter("Average", default=0, group_by={"mode": lambda v: v == "ResistanceMode"})
-    sourcemeter_bias = FloatParameter("Bias", default=0, group_by={"mode": lambda v: v == "ResistanceMode"})
+    sourcemeter_limit = FloatParameter("Limit", default=0.1, group_by={"mode": lambda v: v == "ResistanceMode"})
+    sourcemeter_nplc = FloatParameter("NPLC", default=0.1, group_by={"mode": lambda v: v == "ResistanceMode"})
+    sourcemeter_average = IntegerParameter("Average", default=1, group_by={"mode": lambda v: v == "ResistanceMode"})
+    sourcemeter_bias = FloatParameter("Bias", default=0.1, group_by={"mode": lambda v: v == "ResistanceMode"})
 
     #MultimeterParameters 
     multimeter_function = ListParameter("Function", choices=["DC Voltage", "AC Voltage", "DC Current", "AC Current", "2-wire Resistance", "4-wire Resistance"], group_by={"mode": lambda v: v == "ResistanceMode"})
@@ -115,6 +117,7 @@ class SpinLabMeasurement(Procedure):
                 self.resistancemode = ResistanceMode(self.vector, self.mode_resistance, self.sourcemeter_bias, self.set_sourcemeter, self.set_multimeter, self.set_gaussmeter, self.set_field, self.set_automaticstation, self.set_switch, self.set_kriostat, self.set_rotationstation, self.address_sourcemeter, self.address_multimeter, self.address_gaussmeter, self.address_switch, self.delay_field, self.delay_lockin, self.delay_bias, self.sourcemter_source, self.sourcemeter_compliance, self.sourcemeter_channel, self.sourcemeter_limit, self.sourcemeter_nplc, self.sourcemeter_average, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution)
                 self.points = self.resistancemode.generate_points()
                 self.resistancemode.initializing()
+                
 
 #################################### PROCEDURE##############################################
     def execute(self):
@@ -131,7 +134,19 @@ class SpinLabMeasurement(Procedure):
     def shutdown(self):
          match self.mode:
             case "ResistanceMode":
-                 pass
+                self.resistancemode.idle()
+    
+    # def get_estimates(self, sequence_length=None, sequence=None):
+    #                 self.iterations = self.points
+    #                 self.delay = self.delay_field + self.delay_lockin + self.delay_bias
+    #                 duration = self.iterations * self.delay
+    #                 estimates = [
+    #                     ("Duration", "%d s" % int(duration)),
+    #                     ("Number of lines", "%d" % int(self.iterations)),
+    #                     ("Sequence length", str(sequence_length)),
+    #                     ('Measurement finished at', str(datetime.now() + timedelta(seconds=duration))),
+    #                 ]
+    #                 return estimates
         
 
 class MainWindow(ManagedDockWindow):

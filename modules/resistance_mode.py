@@ -73,9 +73,11 @@ class ResistanceMode():
         match self.sourcemeter:
             case "Keithley 2400":
                 self.sourcemeter_obj = Keithley2400(self.address_sourcemeter)
+                self.sourcemeter_obj.config_average(self.sourcemeter_average)
             case "Keithley 2636": 
                 self.sourcemeter_obj = Keithley2636(self.address_sourcemeter)
                 self.sourcemeter_obj.set_channel(self.sourcemeter_channel)
+               
             case "Agilent 2912": 
                 self.sourcemeter_obj = Agilent2912(self.address_sourcemeter)
             case _: 
@@ -102,17 +104,17 @@ class ResistanceMode():
         #Sourcemeter initialization
         self.sourcemeter_obj.source_mode = self.sourcemeter_source #Set source type 
         if self.sourcemeter_source == "VOLT":
-            self.sourcemeter_obj.voltage_range = self.sourcemeter_limit
+            self.sourcemeter_obj.current_range = self.sourcemeter_limit
             self.sourcemeter_obj.compliance_current = self.sourcemeter_compliance
             self.sourcemeter_obj.source_voltage = self.sourcemeter_bias
             self.sourcemeter_obj.enable_source()
-            self.sourcemeter_obj.measure_current(self.sourcemeter_nplc)
+            self.sourcemeter_obj.measure_current(self.sourcemeter_nplc, self.sourcemeter_limit)
         else: 
-            self.sourcemeter_obj.current_range = self.sourcemeter_limit
+            self.sourcemeter_obj.voltage_range = self.sourcemeter_limit
             self.sourcemeter_obj.compliance_voltage = self.sourcemeter_compliance
             self.sourcemeter_obj.source_current = self.sourcemeter_bias
             self.sourcemeter_obj.enable_source()
-            self.sourcemeter_obj.measure_voltage(self.sourcemeter_nplc)
+            self.sourcemeter_obj.measure_voltage(self.sourcemeter_nplc, self.sourcemeter_limit)
         
         #Multimeter initialization 
         self.multimeter_obj.resolution(self.multimeter_resolution)
@@ -185,4 +187,4 @@ class ResistanceMode():
         ResistanceMode.idle()
 
     def idle(self):
-        pass
+        self.sourcemeter_obj.shutdown()

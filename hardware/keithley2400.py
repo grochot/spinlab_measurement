@@ -49,7 +49,7 @@ class Keithley2400(Instrument):
         :meth:`~.Keithley2400.apply_current` and :meth:`~.Keithley2400.apply_voltage`
         can also be used. """,
         validator=strict_discrete_set,
-        values={'current': 'CURR', 'VOLT': 'VOLT'},
+        values={'CURR': 'CURR', 'VOLT': 'VOLT'},
         map_values=True
 )
 
@@ -125,6 +125,11 @@ class Keithley2400(Instrument):
     def shutdown(self):
         self.write("OUTPUT OFF")
 
+    def config_average(self, average):
+        # self.write(":SENSe:AVERage:TCONtrol REP")
+        # self.write(":SENSe:AVERage:COUNt {}".format(average))
+        self.write(":TRIG:COUN {}".format(average))
+
     source_voltage = Instrument.control(
         ":SOUR:VOLT?", ":SOUR:VOLT:LEV %g",
         """ A floating point property that controls the source voltage
@@ -150,11 +155,52 @@ class Keithley2400(Instrument):
         """ Reads the voltage in Volt, if configured for this reading.
         """
     )
-       
-   
+    filter_type = Instrument.control(
+        ":SENS:AVER:TCON?", ":SENS:AVER:TCON %s",
+        """ A String property that controls the filter's type.
+        REP : Repeating filter
+        MOV : Moving filter""",
+        validator=strict_discrete_set,
+        values=['REP', 'MOV'],
+        map_values=False)
 
+    filter_count = Instrument.control(
+        ":SENS:AVER:COUNT?", ":SENS:AVER:COUNT %d",
+        """ A integer property that controls the number of readings that are
+        acquired and stored in the filter buffer for the averaging""",
+        validator=truncated_range,
+        values=[1, 100],
+        cast=int)
+    
+    means = Instrument.measurement(
+        ":CALC3:DATA?;",
+        """ Reads the calculated means (averages) for voltage,
+        current, and resistance from the buffer data  as a list. """
+    )
+    measure_concurent_functions = Instrument.control(
+        ":SENS:FUNC:CONC?", ":SENS:FUNC:CONC %d",
+        """ A boolean property that enables or disables the ability to measure
+        more than one function simultaneously. When disabled, volts function
+        is enabled. Valid values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
 
+# k = Keithley2400("GPIB0::24::INSTR")
+# k.reset()
+# k.source_mode = "VOLT"
 
+# k.current_range = 0.0001
+# k.compliance_current = 0.001
+# k.source_voltage = 0.01
+# k.config_average(10)
+# # # k.filter_type = "REP"
+# # k.measure_concurent_functions = False
+# # # k.filter_count = 100
+# k.enable_source()
+# pp = k.measure_current(0.1,0.0001,False)
+
+# print(pp)
 
 
 

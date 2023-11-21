@@ -6,7 +6,7 @@ rm = pyvisa.ResourceManager()
 print(rm.list_resources()) 
 # inst = rm.open_resource('USB0::2733::309::032163928::0::INSTR')  
 
-# # #inst = rm.open_resource('ASRL/dev/ttyUSB0::INSTR')
+inst = rm.open_resource('GPIB0::24::INSTR')
 # inst.timeout = 2000
 
 # sleep(2)
@@ -25,5 +25,5 @@ print(rm.list_resources())
 # # sleep(2)
 # # #print(inst.read())
 
-# # print(inst.query('*IDN?'))
+print(inst.query('*IDN?'))
 # inst.close()
