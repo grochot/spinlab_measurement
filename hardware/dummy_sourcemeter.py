@@ -1,206 +1,42 @@
-#
-# This file is part of the PyMeasure package.
-#
-# Copyright (c) 2013-2022 PyMeasure Developers
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-#
-
-import logging
-import time
-
 import numpy as np
+class DummySourcemeter:
 
-from pymeasure.instruments import Instrument, RangeException
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+    def __init__(self, resourceName):
+        pass
+    source_mode = 1
 
-from pymeasure.instruments.keithley.buffer import KeithleyBuffer
+    voltage_range = 1
 
-
-class Keithley2400(Instrument):
-    def __init__(self, resourceName, **kwargs):
-        kwargs.setdefault('read_termination', '\n')
-        super().__init__(
-            resourceName,
-            "Keithley 2400",
-            includeSCPI=True,
-            **kwargs
-        )
-    source_mode = Instrument.control(
-        ":SOUR:FUNC?", ":SOUR:FUNC %s",
-        """ A string property that controls the source mode, which can
-        take the values 'current' or 'voltage'. The convenience methods
-        :meth:`~.Keithley2400.apply_current` and :meth:`~.Keithley2400.apply_voltage`
-        can also be used. """,
-        validator=strict_discrete_set,
-        values={'CURR': 'CURR', 'VOLT': 'VOLT'},
-        map_values=True
-)
-
-    voltage_range = Instrument.control(
-        ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
-        """ A floating point property that controls the measurement voltage
-        range in Volts, which can take values from -210 to 210 V.
-        Auto-range is disabled when this property is set. """,
-        validator=truncated_range,
-        values=[-210, 210]
-    )
-
-    compliance_current = Instrument.control(
-        ":SENS:CURR:PROT?", ":SENS:CURR:PROT %g",
-        """ A floating point property that controls the compliance current
-        in Amps. """,
-        validator=truncated_range,
-        values=[-1.05, 1.05]
-    )
+    compliance_current = 1
         
     def enable_source(self):
-        self.write("OUTPUT ON")
+        pass
 
     def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
-        """ Configures the measurement of current.
-
-        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
-        :param current: Upper limit of current in Amps, from -1.05 A to 1.05 A
-        :param auto_range: Enables auto_range if True, else uses the set current
-        """
-       
-        self.write(":SENS:FUNC 'CURR';"
-                    ":SENS:CURR:NPLC %f;:FORM:ELEM CURR;" % nplc)
-        if auto_range:
-            self.write(":SENS:CURR:RANG:AUTO 1;")
-        else:
-            self.current_range = current
-        self.check_errors()
+        pass
         
-    current_range = Instrument.control(
-        ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
-        """ A floating point property that controls the measurement current
-        range in Amps, which can take values between -1.05 and +1.05 A.
-        Auto-range is disabled when this property is set. """,
-        validator=truncated_range,
-        values=[-1.05, 1.05]
-    )
+    current_range = 1
 
-    compliance_voltage = Instrument.control(
-        ":SENS:VOLT:PROT?", ":SENS:VOLT:PROT %g",
-        """ A floating point property that controls the compliance voltage
-        in Volts. """,
-        validator=truncated_range,
-        values=[-210, 210]
-    )
-    
+    compliance_voltage = 1
 
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
-        """ Configures the measurement of voltage.
-
-        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
-        :param voltage: Upper limit of voltage in Volts, from -210 V to 210 V
-        :param auto_range: Enables auto_range if True, else uses the set voltage
-        """
-        self.write(":SENS:FUNC 'VOLT';"
-                    ":SENS:VOLT:NPLC %f;:FORM:ELEM VOLT;" % nplc)
-        if auto_range:
-            self.write(":SENS:VOLT:RANG:AUTO 1;")
-        else:
-            self.voltage_range = voltage
-        self.check_errors()
+        pass
    
     def shutdown(self):
-        self.write("OUTPUT OFF")
+        pass
 
-    def config_average(self, average):
-        # self.write(":SENSe:AVERage:TCONtrol REP")
-        # self.write(":SENSe:AVERage:COUNt {}".format(average))
-        self.write(":TRIG:COUN {}".format(average))
-
-    source_voltage = Instrument.control(
-        ":SOUR:VOLT?", ":SOUR:VOLT:LEV %g",
-        """ A floating point property that controls the source voltage
-        in Volts. """
-    )
+    source_voltage = 1
     
-    source_current = Instrument.control(
-        ":SOUR:CURR?", ":SOUR:CURR:LEV %g",
-        """ A floating point property that controls the source current
-        in Amps. """,
-        validator=truncated_range,
-        values=[-1.05, 1.05]
-    )
+    source_current = 1
     
-    current = Instrument.measurement(
-        ":READ?",
-        """ Reads the current in Amps, if configured for this reading.
-        """
-    )
+    current = 1
    
-    voltage = Instrument.measurement(
-        ":READ?",
-        """ Reads the voltage in Volt, if configured for this reading.
-        """
-    )
-    filter_type = Instrument.control(
-        ":SENS:AVER:TCON?", ":SENS:AVER:TCON %s",
-        """ A String property that controls the filter's type.
-        REP : Repeating filter
-        MOV : Moving filter""",
-        validator=strict_discrete_set,
-        values=['REP', 'MOV'],
-        map_values=False)
+    voltage = 1
+       
+   
 
-    filter_count = Instrument.control(
-        ":SENS:AVER:COUNT?", ":SENS:AVER:COUNT %d",
-        """ A integer property that controls the number of readings that are
-        acquired and stored in the filter buffer for the averaging""",
-        validator=truncated_range,
-        values=[1, 100],
-        cast=int)
-    
-    means = Instrument.measurement(
-        ":CALC3:DATA?;",
-        """ Reads the calculated means (averages) for voltage,
-        current, and resistance from the buffer data  as a list. """
-    )
-    measure_concurent_functions = Instrument.control(
-        ":SENS:FUNC:CONC?", ":SENS:FUNC:CONC %d",
-        """ A boolean property that enables or disables the ability to measure
-        more than one function simultaneously. When disabled, volts function
-        is enabled. Valid values are True and False. """,
-        values={True: 1, False: 0},
-        map_values=True,
-    )
 
-# k = Keithley2400("GPIB0::24::INSTR")
-# k.reset()
-# k.source_mode = "VOLT"
 
-# k.current_range = 0.0001
-# k.compliance_current = 0.001
-# k.source_voltage = 0.01
-# k.config_average(10)
-# # # k.filter_type = "REP"
-# # k.measure_concurent_functions = False
-# # # k.filter_count = 100
-# k.enable_source()
-# pp = k.measure_current(0.1,0.0001,False)
-
-# print(pp)
 
 
 
@@ -966,3 +802,5 @@ class Keithley2400(Instrument):
 #         self.stop_buffer()
 #         self.disable_source()
 #         super().shutdown()
+
+

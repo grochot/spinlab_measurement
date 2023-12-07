@@ -36,9 +36,16 @@ class FindInstrument():
 
         self.file = open("finded_instruments.txt", 'r') 
         self.instruments = self.file.read().split(',')[1:]
+        print(self.instruments)
 
         return self.instruments
 
     
     def show_instrument(self): 
-    	return self.rm.list_resources()
+    
+        self.tup = self.rm.list_resources()
+        self.lista = list(self.tup)
+        self.lista.append("None")
+        return self.lista
+
+
