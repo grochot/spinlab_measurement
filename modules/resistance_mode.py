@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler()) 
 
 class ResistanceMode():
-    def __init__(self, vector:str, fourpoints:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool, address_sourcemeter:str, address_multimeter:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_lockin:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str ) -> None:   
+    def __init__(self, vector:str, fourpoints:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool, address_sourcemeter:str, address_multimeter:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_lockin:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str) -> None:   
         ## parameter initialization 
         self.sourcemeter = sourcemeter
         self.multimeter = multimeter
@@ -50,6 +50,7 @@ class ResistanceMode():
         self.multimeter_autorange = multimeter_autorange
         self.multimeter_range = multimeter_range
         self.multimeter_average = multimeter_average
+        self.multimeter_nplc = multimeter_nplc
         self.field_constant = field_constant
         self.gaussmeter_range = gaussmeter_range
         self.gaussmeter_resolution = gaussmeter_resolution
@@ -117,11 +118,13 @@ class ResistanceMode():
             self.sourcemeter_obj.measure_voltage(self.sourcemeter_nplc, self.sourcemeter_limit)
         
         #Multimeter initialization 
-        self.multimeter_obj.resolution(self.multimeter_resolution)
-        self.multimeter_obj.range(self.multimeter_range)
-        self.multimeter_obj.autorange(self.multimeter_autorange)
-        self.multimeter_obj.function(self.multimeter_function)
-        self.multimeter_obj.average(self.multimeter_average)
+        self.multimeter_obj.resolution = self.multimeter_resolution
+        self.multimeter_obj.range_ = self.multimeter_range
+        self.multimeter_obj.autorange = self.multimeter_autorange
+        self.multimeter_obj.function_ = self.multimeter_function
+        self.multimeter_obj.trigger_delay = "MIN"
+        self.multimeter_obj.trigger_count = self.multimeter_average
+        self.multimeter_obj.nplc = self.multimeter_nplc
 
         #Lakeshore initalization 
         self.gaussmeter_obj.range(self.gaussmeter_range)
@@ -146,10 +149,10 @@ class ResistanceMode():
         if self.fourpoints:
             if self.sourcemeter_source == "VOLT":
                 self.tmp_voltage = self.sourcemeter_bias
-                self.tmp_current = self.multimeter_obj.current_dc()
+                self.tmp_current = np.average(self.multimeter_obj.reading)
                 self.tmp_resistance = self.tmp_voltage/self.tmp_current
             else:
-                self.tmp_voltage =  self.multimeter_obj.voltage_dc()
+                self.tmp_voltage =  np.average(self.multimeter_obj.reading)
                 self.tmp_current =  self.sourcemeter_bias
                 self.tmp_resistance = self.tmp_voltage/self.tmp_current
             
