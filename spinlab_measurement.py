@@ -55,13 +55,13 @@ class SpinLabMeasurement(Procedure):
     set_generator = ListParameter("RF Generator", default = parameters_from_file["set_generator"], choices = ["Agilent", "none"], group_by = {"mode": lambda v: v == "FMRMode"})
    
     #Hardware address
-    address_sourcemeter=ListParameter("Sourcemeter address", default = parameters_from_file["address_sourcemeter"], choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_multimeter=ListParameter("Multimeter address", default = parameters_from_file["address_multimeter"], choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_gaussmeter=ListParameter("Gaussmeter address",default = parameters_from_file["address_gaussmeter"],   choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_lockin=ListParameter("Lockin address", default = parameters_from_file["address_lockin"],  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_switch=ListParameter("Switch address",default = parameters_from_file["address_switch"],  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_analyzer=ListParameter("Analyzer address",default = parameters_from_file["address_analyzer"],  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
-    address_generator=ListParameter("Generator address", default = parameters_from_file["address_generator"],  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_sourcemeter=ListParameter("Sourcemeter address", default = parameters_from_file["address_sourcemeter"] if parameters_from_file["address_sourcemeter"] in finded_instruments else 'None', choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_multimeter=ListParameter("Multimeter address", default = parameters_from_file["address_multimeter"] if parameters_from_file["address_multimeter"] in finded_instruments else 'None', choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_gaussmeter=ListParameter("Gaussmeter address",default = parameters_from_file["address_gaussmeter"] if parameters_from_file["address_gaussmeter"] in finded_instruments else 'None',   choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_lockin=ListParameter("Lockin address", default = parameters_from_file["address_lockin"] if parameters_from_file["address_lockin"] in finded_instruments else 'None',  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_switch=ListParameter("Switch address",default = parameters_from_file["address_switch"] if parameters_from_file["address_switch"] in finded_instruments else 'None',  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_analyzer=ListParameter("Analyzer address",default = parameters_from_file["address_analyzer"] if parameters_from_file["address_analyzer"] in finded_instruments else 'None',  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
+    address_generator=ListParameter("Generator address", default = parameters_from_file["address_generator"] if parameters_from_file["address_generator"] in finded_instruments else 'None',  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
 
     #MeasurementParameters
     sample_name = Parameter("Sample name", default = parameters_from_file["sample_name"]) 
