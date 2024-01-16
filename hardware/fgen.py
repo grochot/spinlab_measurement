@@ -39,8 +39,3 @@ class FgenDriver:
         #print("fgen_modulation = " + outpMod)
         self.dev.write(':OUTP '+outp+';:OUTP:MOD '+outpMod+';:OUTP:BLAN:AUTO ON;:OUTP:BLAN:STAT ON;:OUTP:PROT ON;')
 
-
-d = FgenDriver('GPIB0::19::INSTR')
-d.setFreq(1e9)
-d.setPower(-70)
-d.setOutput(False)

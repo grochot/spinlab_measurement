@@ -99,7 +99,7 @@ class HarmonicMode():
         self.lockin_obj.input_config = self.lockin_input_connection
         self.lockin_obj.input_coupling = self.lockin_input_coupling
         self.lockin_obj.reference_source = self.lockin_reference_source
-
+   
 
         #Lakeshore initalization 
         self.gaussmeter_obj.range(self.gaussmeter_range)
@@ -109,58 +109,38 @@ class HarmonicMode():
         self.field_obj.set_field(self.point_list[0])
     
     def operating(self, point):
+        #set temporary result list
+        self.result_list = []
+        #set_field
         self.field_obj.set_field(point)
         sleep(self.delay_field)
-        if self.gaussmeter == "none":
+        #measure_field
+        if self.set_gaussmeter == "none":
             self.tmp_field = point
         else: 
             self.tmp_field = self.gaussmeter_obj.measure()
         sleep(self.delay_bias)
 
-        if self.fourpoints:
-            if self.sourcemeter_source == "VOLT":
-                self.tmp_voltage = self.sourcemeter_bias
-                self.tmp_current = np.average(self.multimeter_obj.reading)
-                self.tmp_resistance = self.tmp_voltage/self.tmp_current
-            else:
-                self.tmp_voltage =  np.average(self.multimeter_obj.reading)
-                self.tmp_current =  self.sourcemeter_bias
-                self.tmp_resistance = self.tmp_voltage/self.tmp_current
-            
-        else: 
-            if self.sourcemeter_source == "VOLT":
-                if self.sourcemeter_bias != 0:
-                    self.tmp_voltage = self.sourcemeter_bias
-                else: 
-                    self.tmp_voltage = 1e-9
-                self.tmp_current = self.sourcemeter_obj.current
-                if type(self.tmp_current) == list:
-                    self.tmp_current =np.average(self.tmp_current)
-                print(self.tmp_current)
-               
-                self.tmp_resistance = self.tmp_voltage/self.tmp_current
-            else:
-                self.tmp_voltage =  self.sourcemeter_obj.voltage
-                if type(self.tmp_voltage) == list:
-                    self.tmp_voltage =np.average(self.tmp_voltage)
-                print(self.tmp_voltage)
-                if self.sourcemeter_bias != 0:
-                    self.tmp_current =  self.sourcemeter_bias
-                else: 
-                    self.tmp_current = 1e-9
-                self.tmp_resistance = self.tmp_voltage/self.tmp_current
+        #measure_lockin 
+        for i in range(self.lockin_average):
+            self.result = self.lockin_obj.snap("{}".format(self.lockin_channel1), "{}".format(self.lockin_channel2))
+            self.result_list.append(self.result)
+        
+        #calculate average:
+        self.result1 = np.average([i[0] for i in self.result_list])
+        self.result2 = np.average([i[1] for i in self.result_list])
             
         data = {
-            'Voltage (V)':self.tmp_voltage, 
-            'Current (A)':self.tmp_current, 
-            'Resistance (ohm)': self.tmp_resistance, 
-            'Field (Oe)': self.tmp_field, 
+            'Voltage (V)': math.nan,
+            'Current (A)': math.nan,
+            'Resistance (ohm)': self.result1 if self.lockin_channel1 == "R" else (self.result2 if self.lockin_channel2 == "R" else math.nan), 
+            'Field (Oe)': self.tmp_field,
             'Frequency (Hz)': math.nan, 
-            'X (V)': math.nan, 
-            'Y (V)': math.nan, 
-            'Phase':math.nan,
-            'Polar angle (deg)': self.polar_angle if self.rotationstation == True else math.nan,
-            'Azimuthal angle (deg)': self.azimuthal_angle if self.rotationstation == True else math.nan
+            'X (V)':  self.result1 if self.lockin_channel1 == "X" else (self.result2 if self.lockin_channel2 == "X" else math.nan),   
+            'Y (V)':  self.result1 if self.lockin_channel1 == "Y" else (self.result2 if self.lockin_channel2 == "Y" else math.nan), 
+            'Phase': math.nan,
+            'Polar angle (deg)': np.nan,
+            'Azimuthal angle (deg)': math.nan
             }
         
         return data 
@@ -170,4 +150,4 @@ class HarmonicMode():
         HarmonicMode.idle()
 
     def idle(self):
-        pass #TODO: field to zero, #station to zero
+        self.field_obj.set_field(0)

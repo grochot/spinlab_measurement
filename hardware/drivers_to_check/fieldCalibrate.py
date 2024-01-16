@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 
-from hardware.drivers_to_check.FgenDriver_ok import *
+from hardware.fgen import *
 from SourceMeterDriver import *
-from hardware.drivers_to_check.StepperDriver_ok import *
+from hardware.stepper import *
 from FieldDriverLockIn import *
 from GaussmeterDriver import *
 from SpectrumDriver import *

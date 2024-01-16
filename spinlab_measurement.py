@@ -16,6 +16,7 @@ from pymeasure.experiment import (
 )
 from logic.unique_name import unique_name
 from modules.resistance_mode import ResistanceMode
+from modules.harmonic_mode import HarmonicMode
 from logic.find_instrument import FindInstrument
 from logic.save_parameters import SaveParameters
 
@@ -138,7 +139,9 @@ class SpinLabMeasurement(Procedure):
                 self.points = self.resistancemode.generate_points()
                 self.resistancemode.initializing()
             case "HarmonicMode":
-                pass
+                self.harmonicmode = HarmonicMode() #TODO add parameters
+                self.points = self.harmonicmode.generate_points()
+                self.harmonicmode.initializing()
                 
 
 #################################### PROCEDURE##############################################
@@ -148,6 +151,13 @@ class SpinLabMeasurement(Procedure):
                 self.counter = 0
                 for point in self.points:
                    self.result = self.resistancemode.operating(point)
+                   self.emit('results', self.result) 
+                   self.emit('progress', 100 * self.counter / len(self.points))
+                   self.counter = self.counter + 1
+            case "ResistanceMode":
+                self.counter = 0
+                for point in self.points:
+                   self.result = self.harmonicmode.operating(point)
                    self.emit('results', self.result) 
                    self.emit('progress', 100 * self.counter / len(self.points))
                    self.counter = self.counter + 1

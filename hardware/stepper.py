@@ -1,7 +1,6 @@
 import pyvisa
 import time
 from crc8dallas import crc8calc
-from plotSleep import *
 
 class StepperDriver:
     def __init__(self, port):
@@ -51,12 +50,4 @@ class StepperDriver:
     def checkBusyAzimuth(self):
         return self.query('MOVE {:d};{:d};'.format(0, 0)) == 'BUSY;'
 
-    def waitBusy(self):
-        while self.checkBusyAzimuth():
-            plotSleep(0.25)
-        while self.checkBusyPolar():
-            plotSleep(0.25)
 
-s = StepperDriver('ASRL3::INSTR')
-s.goToPolar(10)
-print(s.checkBusyAzimuth())
