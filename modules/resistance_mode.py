@@ -134,6 +134,13 @@ class ResistanceMode():
         #Field initialization 
         self.field_obj.set_field(self.point_list[0])
 
+        #Rotation station initialization 
+        if self.rotationstation:
+            pass 
+        else:
+            pass
+
+
         
 
     
@@ -146,6 +153,10 @@ class ResistanceMode():
             self.tmp_field = self.gaussmeter_obj.measure()
         sleep(self.delay_bias)
 
+
+
+
+        #Measure voltage/current/resistance
         if self.fourpoints:
             if self.sourcemeter_source == "VOLT":
                 self.tmp_voltage = self.sourcemeter_bias
@@ -187,7 +198,9 @@ class ResistanceMode():
             'Frequency (Hz)': math.nan, 
             'X (V)': math.nan, 
             'Y (V)': math.nan, 
-            'Phase':math.nan
+            'Phase':math.nan,
+            'Polar angle (deg)': self.polar_angle if self.rotationstation == True else math.nan,
+            'Azimuthal angle (deg)': self.azimuthal_angle if self.rotationstation == True else math.nan
             }
         
         return data 
@@ -197,3 +210,4 @@ class ResistanceMode():
 
     def idle(self):
         self.sourcemeter_obj.shutdown()
+        self.field_obj.set_field(0)

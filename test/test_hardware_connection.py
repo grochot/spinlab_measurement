@@ -25,5 +25,5 @@ print(rm.list_resources())
 # # sleep(2)
 # # #print(inst.read())
 
-print(inst.query('*IDN?'))
+# print(inst.query('*IDN?'))
 # inst.close()
