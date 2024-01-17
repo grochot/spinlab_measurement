@@ -17,6 +17,7 @@ from pymeasure.experiment import (
 from logic.unique_name import unique_name
 from modules.resistance_mode import ResistanceMode
 from modules.harmonic_mode import HarmonicMode
+from modules.fmr_mode import FMRMode
 from logic.find_instrument import FindInstrument
 from logic.save_parameters import SaveParameters
 
@@ -142,6 +143,10 @@ class SpinLabMeasurement(Procedure):
                 self.harmonicmode = HarmonicMode() #TODO add parameters
                 self.points = self.harmonicmode.generate_points()
                 self.harmonicmode.initializing()
+            case "FMRMode":
+                self.fmrmode = FMRMode(self.set_automaticstation, self.set_lockin, self.set_field, self.set_gaussmeter, self.set_generator, self.set_rotationstation, selg ) #TODO add parameters
+                self.points = self.fmrmode.generate_points()
+                self.fmrmode.initializing()
                 
 
 #################################### PROCEDURE##############################################
@@ -154,10 +159,17 @@ class SpinLabMeasurement(Procedure):
                    self.emit('results', self.result) 
                    self.emit('progress', 100 * self.counter / len(self.points))
                    self.counter = self.counter + 1
-            case "ResistanceMode":
+            case "HarmonicMode":
                 self.counter = 0
                 for point in self.points:
                    self.result = self.harmonicmode.operating(point)
+                   self.emit('results', self.result) 
+                   self.emit('progress', 100 * self.counter / len(self.points))
+                   self.counter = self.counter + 1
+            case "FMRMode":
+                self.counter = 0
+                for point in self.points:
+                   self.result = self.fmrmode.operating(point)
                    self.emit('results', self.result) 
                    self.emit('progress', 100 * self.counter / len(self.points))
                    self.counter = self.counter + 1
@@ -167,6 +179,10 @@ class SpinLabMeasurement(Procedure):
          match self.mode:
             case "ResistanceMode":
                 self.resistancemode.idle()
+            case "HarmonicMode":
+                self.harmonicmode.idle()
+            case "FMRMode":
+                self.fmrmode.idle()
     
     # def get_estimates(self, sequence_length=None, sequence=None):
     #                 self.iterations = self.points

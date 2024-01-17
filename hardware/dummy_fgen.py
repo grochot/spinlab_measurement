@@ -1,7 +1,7 @@
 import pyvisa
 
 
-class FgenDriver:
+class DummyFgenDriver:
     def __init__(self, port):
         pass
 
