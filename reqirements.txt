@@ -13,3 +13,4 @@ zhinst
 keithley2600
 nidaqmx
 pyvisa
+windfreak

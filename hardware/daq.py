@@ -30,6 +30,7 @@ class DAQ():
         """ Disable output, call parent function"""
         self.set_field(0)
 
-
+# d = DAQ('Dev4/ao0')
+# d.set_field(0)
 
 

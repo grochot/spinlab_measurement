@@ -33,7 +33,7 @@ class ERRStatus(IntFlag):
     MATH_ERR = 128
 
 
-class DummyLockin(Instrument):
+class DummyLockin():
 
     SAMPLE_FREQUENCIES = [
         62.5e-3, 125e-3, 250e-3, 500e-3, 1, 2, 4, 8, 16,

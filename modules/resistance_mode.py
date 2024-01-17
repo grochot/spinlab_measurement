@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler()) 
 
 class ResistanceMode():
-    def __init__(self, vector:str, fourpoints:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool, address_sourcemeter:str, address_multimeter:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_lockin:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str) -> None:   
+    def __init__(self, vector:str, fourpoints:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool, address_sourcemeter:str, address_multimeter:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_lockin:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str) -> None:   
         ## parameter initialization 
         self.sourcemeter = sourcemeter
         self.multimeter = multimeter
@@ -56,6 +56,7 @@ class ResistanceMode():
         self.gaussmeter_resolution = gaussmeter_resolution
         self.vector = vector
         self.fourpoints = fourpoints
+        self.address_daq = address_daq
         
         
     def generate_points(self):
@@ -98,7 +99,7 @@ class ResistanceMode():
         
         match self.field:
             case "DAQ": 
-                self.field_obj = DAQ()
+                self.field_obj = DAQ(self.address_daq)
             case _:
                 self.field_obj = DummyField()
 
