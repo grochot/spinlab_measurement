@@ -137,6 +137,7 @@ class FMRMode():
                 self.generator_obj.setPower(self.generator_power)
                 #Field initialization 
                 self.field_obj.set_field(self.set_field_constant_value)
+        self.generator_obj.setOutput("ON")
 
     def operating(self, point):
         sleep(self.delay_field)
