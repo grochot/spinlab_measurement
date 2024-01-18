@@ -11,6 +11,7 @@ from hardware.dummy_lockin import DummyLockin
 from hardware.dummy_gaussmeter import DummyGaussmeter
 from hardware.dummy_field import DummyField
 from logic.vector import Vector
+from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity 
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
 
@@ -91,8 +92,11 @@ class HarmonicMode():
        
         #Lockin initialization
         self.lockin_obj.frequency = self.lockin_frequency
-        self.lockin_obj.sensitivity = self.lockin_sensitivity
-        self.lockin_obj.time_constant = self.lockin_timeconstant
+        if self.lockin_sensitivity == "Auto Gain":
+            self.lockin_obj.auto_gain()
+        else:
+            self.lockin_obj.sensitivity = _lockin_sensitivity(self.lockin_sensitivity)
+        self.lockin_obj.time_constant = _lockin_timeconstant(self.lockin_timeconstant)
         self.lockin_obj.harmonic = self.lockin_harmonic
         self.lockin_obj.sine_voltage = self.lockin_sine_amplitude
         self.lockin_obj.channel1 = self.lockin_channel1
@@ -148,7 +152,7 @@ class HarmonicMode():
         
 
     def end(self):
-        HarmonicMode.idle()
+        HarmonicMode.idle(self)
 
     def idle(self):
         self.field_obj.set_field(0)

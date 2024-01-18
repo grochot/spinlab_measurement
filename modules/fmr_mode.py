@@ -14,11 +14,48 @@ from hardware.dummy_lockin import DummyLockin
 from hardware.dummy_gaussmeter import DummyGaussmeter
 from hardware.dummy_field import DummyField
 from logic.vector import Vector
+from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity 
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
 
 class FMRMode():
-    def __init__(self, set_automaticstation:bool, set_lockin:str, set_field:str, set_gaussmeter:str, set_generator:str, set_roationstation:bool,address_lockin:str, address_gaussmeter:str, vector:list, delay_field:float, delay_lockin:float,delay_bias:float, lockin_average, lockin_input_coupling,lockin_reference_source,lockin_dynamic_reserve,lockin_input_connection,lockin_sensitivity,lockin_timeconstant,lockin_autophase,lockin_frequency, lockin_harmonic, lockin_sine_amplitude, lockin_channel1, lockin_channel2,set_field_value ,field_constant,gaussmeter_range, gaussmeter_resolution, address_generator:str, set_field_constant_value:float, set_frequency_constant_value:float, generator_power:float, generator_output:str, generator_measurement_mode:str, address_daq:str ) -> None: 
+    def __init__(self, set_automaticstation:bool, 
+        set_lockin:str, 
+        set_field:str, 
+        set_gaussmeter:str, 
+        set_generator:str, 
+        set_roationstation:bool,
+        address_lockin:str, 
+        address_gaussmeter:str, 
+        vector:list, 
+        delay_field:float, 
+        delay_lockin:float,
+        delay_bias:float, 
+        lockin_average, 
+        lockin_input_coupling,
+        lockin_reference_source,
+        lockin_dynamic_reserve,
+        lockin_input_connection,
+        lockin_sensitivity,
+        lockin_timeconstant,
+        lockin_autophase,
+        lockin_frequency, 
+        lockin_harmonic, 
+        lockin_sine_amplitude, 
+        lockin_channel1, 
+        lockin_channel2,
+        set_field_value,
+        field_constant,
+        gaussmeter_range, 
+        gaussmeter_resolution, 
+        address_generator:str, 
+        set_field_constant_value:float, 
+        set_frequency_constant_value:float, 
+        generator_power:float, 
+        generator_measurement_mode:str, 
+        address_daq:str ) -> None: 
+        
+        
         self.set_automaticstation = set_automaticstation
         self.set_lockin = set_lockin
         self.set_field = set_field
@@ -54,7 +91,6 @@ class FMRMode():
         self.gaussmeter_resolution = gaussmeter_resolution  
 
         self.generator_power = generator_power
-        self.generator_output = generator_output
         self.generator_measurement_mode = generator_measurement_mode
         self.address_daq = address_daq
         ## parameter initialization 
@@ -110,8 +146,11 @@ class FMRMode():
        
         #Lockin initialization
         self.lockin_obj.frequency = self.lockin_frequency
-        self.lockin_obj.sensitivity = self.lockin_sensitivity
-        self.lockin_obj.time_constant = self.lockin_timeconstant
+        if self.lockin_sensitivity == "Auto Gain":
+            self.lockin_obj.auto_gain()
+        else:
+            self.lockin_obj.sensitivity = _lockin_sensitivity(self.lockin_sensitivity)
+        self.lockin_obj.time_constant = _lockin_timeconstant(self.lockin_timeconstant)
         self.lockin_obj.harmonic = self.lockin_harmonic
         self.lockin_obj.sine_voltage = self.lockin_sine_amplitude
         self.lockin_obj.channel1 = self.lockin_channel1
@@ -201,7 +240,7 @@ class FMRMode():
         
 
     def end(self):
-        FMRMode.idle()
+        FMRMode.idle(self)
 
     def idle(self):
         self.field_obj.set_field(0)

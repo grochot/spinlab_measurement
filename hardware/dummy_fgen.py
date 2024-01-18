@@ -2,7 +2,7 @@ import pyvisa
 
 
 class DummyFgenDriver:
-    def __init__(self, port):
+    def __init__(self):
         pass
 
     def errorQuery(self):
