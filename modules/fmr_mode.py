@@ -8,7 +8,7 @@ from hardware.lakeshore import Lakeshore
 from hardware.windfreak import Windfreak
 
 from hardware.sr830 import SR830
-from hardware.fgen import FgenDriver
+from hardware.generator_agilent import FGenDriver
 from hardware.dummy_fgen import DummyFgenDriver
 from hardware.dummy_lockin import DummyLockin
 from hardware.dummy_gaussmeter import DummyGaussmeter
@@ -137,13 +137,13 @@ class FMRMode():
                 pass
         
         match self.set_generator: 
-            case "Generator": 
-                self.generator_obj = FgenDriver(self.address_generator)
+            case "Agilent": 
+                self.generator_obj = FGenDriver(self.address_generator)
             case "Windfreak":
                 self.generator_obj = Windfreak(self.address_generator)
             case _:
                 self.generator_obj = DummyFgenDriver()
-       
+        self.generator_obj.initialization()
         #Lockin initialization
         self.lockin_obj.frequency = self.lockin_frequency
         if self.lockin_sensitivity == "Auto Gain":
@@ -177,7 +177,8 @@ class FMRMode():
                 self.generator_obj.setPower(self.generator_power)
                 #Field initialization 
                 self.field_obj.set_field(self.set_field_constant_value)
-        self.generator_obj.setOutput("ON")
+        self.generator_obj.set_lf_signal()
+        self.generator_obj.setOutput(True, True)
 
     def operating(self, point):
         sleep(self.delay_field)
@@ -244,4 +245,4 @@ class FMRMode():
 
     def idle(self):
         self.field_obj.set_field(0)
-        self.generator_obj.setOutput("OFF")
+        self.generator_obj.setOutput(False, True)

@@ -217,7 +217,7 @@ class MainWindow(ManagedDockWindow):
             
         )
        
-        self.setWindowTitle('SpinLab Measurement System v.0.3')
+        self.setWindowTitle('SpinLab Measurement System v.0.4')
         #self.directory = self.procedure_class.path_file.ReadFile()
         
 

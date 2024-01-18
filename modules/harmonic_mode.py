@@ -16,7 +16,35 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler()) 
 
 class HarmonicMode():
-    def __init__(self, set_automaticstation:bool, set_lockin:str, set_field:str, set_gaussmeter:str, set_roationstation:bool,address_lockin:str, address_gaussmeter:str, vector:list, delay_field:float, delay_lockin:float,delay_bias:float, lockin_average, lockin_input_coupling,lockin_reference_source,lockin_dynamic_reserve,lockin_input_connection,lockin_sensitivity,lockin_timeconstant,lockin_autophase,lockin_frequency, lockin_harmonic, lockin_sine_amplitude, lockin_channel1, lockin_channel2,set_field_value ,field_constant,gaussmeter_range, gaussmeter_resolution, address_daq:str ) -> None: 
+    def __init__(self, set_automaticstation:bool, 
+        set_lockin:str, 
+        set_field:str, 
+        set_gaussmeter:str, 
+        set_roationstation:bool,
+        address_lockin:str, 
+        address_gaussmeter:str, 
+        vector:list, 
+        delay_field:float, 
+        delay_lockin:float,
+        delay_bias:float, 
+        lockin_average, 
+        lockin_input_coupling,
+        lockin_reference_source,
+        lockin_dynamic_reserve,
+        lockin_input_connection,
+        lockin_sensitivity,
+        lockin_timeconstant,
+        lockin_autophase,
+        lockin_frequency, 
+        lockin_harmonic, 
+        lockin_sine_amplitude, 
+        lockin_channel1, 
+        lockin_channel2,
+        set_field_value ,
+        field_constant,
+        gaussmeter_range, 
+        gaussmeter_resolution, 
+        address_daq:str ) -> None: 
         self.set_automaticstation = set_automaticstation
         self.set_lockin = set_lockin
         self.set_field = set_field

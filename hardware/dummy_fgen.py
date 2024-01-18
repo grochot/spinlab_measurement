@@ -16,4 +16,7 @@ class DummyFgenDriver:
 
     def setOutput(self, on, mod=False):
         pass
+    
+    def initialization(self):
+        pass
 
