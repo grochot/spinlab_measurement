@@ -107,7 +107,7 @@ class SpinLabMeasurement(Procedure):
     
     
     #FieldParameters 
-    field_constant = FloatParameter("Field Constant", default = parameters_from_file["field_constant"])
+    field_constant = FloatParameter("Field Calibration Constant", default = parameters_from_file["field_constant"])
     set_field_value = FloatParameter("Set Field", default = parameters_from_file["set_field_value"], units="Oe", group_by={"mode_fmr": lambda v: v == "ST-FMR"})
     #GeneratorParameters 
     generator_frequency = FloatParameter("Generator Frequency", default = parameters_from_file["generator_frequency"], units="Hz", group_by={"mode": lambda v: v == "FMRMode", "set_generator": lambda v: v != "none"})
@@ -175,6 +175,7 @@ class SpinLabMeasurement(Procedure):
                    self.emit('results', self.result) 
                    self.emit('progress', 100 * self.counter / len(self.points))
                    self.counter = self.counter + 1
+                   window.set_calibration_constant(self.result[1])
 
     
     def shutdown(self):
@@ -219,6 +220,9 @@ class MainWindow(ManagedDockWindow):
        
         self.setWindowTitle('SpinLab Measurement System v.0.4')
         #self.directory = self.procedure_class.path_file.ReadFile()
+    
+    def set_calibration_constant(self, value):
+        self.inputs.field_constant.setValue(value)
         
 
     def queue(self, procedure=None):

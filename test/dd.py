@@ -23,6 +23,8 @@ class RandomProcedure(Procedure):
     def startup(self):
         log.info("Setting the seed of the random number generator")
         random.seed(self.seed)
+      
+       
 
     def execute(self):
         log.info("Starting the loop of %d iterations" % self.iterations)
@@ -38,7 +40,7 @@ class RandomProcedure(Procedure):
             if self.should_stop():
                 log.warning("Caught the stop flag in the procedure")
                 break
-
+        window.test(i-8)
 
 class MainWindow(ManagedWindow):
 
@@ -50,7 +52,16 @@ class MainWindow(ManagedWindow):
             x_axis='Iteration',
             y_axis='Random Number'
         )
-        self.setWindowTitle('GUI Example')
+        self.setWindowTitle('GUI Example') 
+        
+        
+    
+    
+    def test(self, bb):
+        self.inputs.iterations.setValue(bb)
+        
+            
+   
 
     def queue(self):
         filename = tempfile.mktemp()
