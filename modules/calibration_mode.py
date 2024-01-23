@@ -2,15 +2,8 @@ from time import sleep
 import math
 import numpy as np
 import logging
-from hardware.daq import DAQ
 
-from hardware.lakeshore import Lakeshore
-
-
-from hardware.dummy_gaussmeter import DummyGaussmeter
-from hardware.dummy_field import DummyField
-from logic.vector import Vector
-from logic.field_calibration import FieldCalibration
+from ..logic.field_calibration import FieldCalibration
 
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
@@ -62,3 +55,5 @@ class FieldCalibrationMode():
 
     def idle(self):
         self.calibration.set_calibrated_field(0, self.calibration_constant )
+
+test = FieldCalibrationMode("ff", "dfd", 'Dev4/ao0', 'GPIB1::12::INSTR')

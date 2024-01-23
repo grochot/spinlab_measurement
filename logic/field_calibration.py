@@ -8,7 +8,7 @@ from time import sleep
 class FieldCalibration(): 
     def __init__(self, daq_address, gaussmeter_address):
         self.daq = DAQ(daq_address)
-        self.gaussmeter = Lakeshore(gaussmeter_address)
+        self.gaussmeter = Lakeshore(gaussmeter_address)  
   
     
     
