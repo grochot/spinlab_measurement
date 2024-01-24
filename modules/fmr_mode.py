@@ -9,7 +9,9 @@ from hardware.windfreak import Windfreak
 
 from hardware.sr830 import SR830
 from hardware.generator_agilent import FGenDriver
+from hardware.hp_33120a import LFGenDriver
 from hardware.dummy_fgen import DummyFgenDriver
+from hardware.dummy_lfgen import DummyLFGenDriver
 from hardware.dummy_lockin import DummyLockin
 from hardware.dummy_gaussmeter import DummyGaussmeter
 from hardware.dummy_field import DummyField
@@ -26,7 +28,7 @@ class FMRMode():
         set_generator:str, 
         set_roationstation:bool,
         address_lockin:str, 
-        address_gaussmeter:str, 
+        address_gaussmeter:str,
         vector:list, 
         delay_field:float, 
         delay_lockin:float,
@@ -54,9 +56,10 @@ class FMRMode():
         generator_power:float, 
         generator_measurement_mode:str, 
         address_daq:str,
-        set_modulation:str,
-        modulation_freq:float,
-        modulation_amp:float ) -> None: 
+        set_lfgen:str,
+        address_lfgen:str,
+        lfgen_freq:float,
+        lfgen_amp:float ) -> None: 
         
         
         self.set_automaticstation = set_automaticstation
@@ -69,6 +72,7 @@ class FMRMode():
         self.address_lockin = address_lockin
         self.address_gaussmeter = address_gaussmeter
         self.address_generator = address_generator
+        self.address_lfgen = address_lfgen
         self.vector = vector
         self.set_field_constant_value = set_field_constant_value 
         self.set_frequency_constant_value = set_frequency_constant_value
@@ -97,9 +101,9 @@ class FMRMode():
         self.generator_measurement_mode = generator_measurement_mode
         self.address_daq = address_daq
 
-        self.set_modulation = set_modulation
-        self.modulation_freq = modulation_freq
-        self.modulation_amp = modulation_amp
+        self.set_lfgen = set_lfgen
+        self.lfgen_freq = lfgen_freq
+        self.lfgen_amp = lfgen_amp
         ## parameter initialization 
         
         
@@ -150,6 +154,16 @@ class FMRMode():
                 self.generator_obj = Windfreak(self.address_generator)
             case _:
                 self.generator_obj = DummyFgenDriver()
+
+        match self.set_lfgen:
+            case "SR830":
+                if type(self.lockin_obj) is DummyLockin:
+                    self.lockin_obj = SR830(self.address_lockin)
+            case "HP33120A":
+                self.lfgen_obj = LFGenDriver(self.address_lfgen)
+            case _:
+                self.lfgen_obj = DummyLFGenDriver()
+
         self.generator_obj.initialization()
         #Lockin initialization
         self.lockin_obj.frequency = self.lockin_frequency
@@ -165,6 +179,14 @@ class FMRMode():
         self.lockin_obj.input_config = self.lockin_input_connection
         self.lockin_obj.input_coupling = self.lockin_input_coupling
         self.lockin_obj.reference_source = self.lockin_reference_source
+
+        #Modulation initalization
+        if self.set_lfgen == "SR830":
+            self.lockin_obj.reference_source = "Internal"
+        else:
+            self.lfgen_obj.set_shape("SIN")
+            self.lfgen_obj.set_freq(self.lfgen_freq)
+            self.lfgen_obj.set_amp(self.lfgen_amp)
    
 
         #Lakeshore initalization 
@@ -184,8 +206,7 @@ class FMRMode():
                 self.generator_obj.setPower(self.generator_power)
                 #Field initialization 
                 self.field_obj.set_field(self.set_field_constant_value)
-        if self.set_modulation:
-            self.generator_obj.set_lf_signal()
+        self.generator_obj.set_lf_signal()
         self.generator_obj.setOutput(True, True)
 
     def operating(self, point):
