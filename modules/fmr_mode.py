@@ -54,9 +54,9 @@ class FMRMode():
         generator_power:float, 
         generator_measurement_mode:str, 
         address_daq:str,
-        set_modulation:bool,
-        generator_lfo_freq:float,
-        generator_lfo_amp:float ) -> None: 
+        set_modulation:str,
+        modulation_freq:float,
+        modulation_amp:float ) -> None: 
         
         
         self.set_automaticstation = set_automaticstation
@@ -98,8 +98,8 @@ class FMRMode():
         self.address_daq = address_daq
 
         self.set_modulation = set_modulation
-        self.generator_lfo_freq = generator_lfo_freq
-        self.generator_lfo_amp = generator_lfo_amp
+        self.modulation_freq = modulation_freq
+        self.modulation_amp = modulation_amp
         ## parameter initialization 
         
         
@@ -185,7 +185,7 @@ class FMRMode():
                 #Field initialization 
                 self.field_obj.set_field(self.set_field_constant_value)
         if self.set_modulation:
-            self.generator_obj.set_lf_signal(True, self.generator_lfo_freq, self.generator_lfo_amp)
+            self.generator_obj.set_lf_signal()
         self.generator_obj.setOutput(True, True)
 
     def operating(self, point):
@@ -254,4 +254,3 @@ class FMRMode():
     def idle(self):
         self.field_obj.set_field(0)
         self.generator_obj.setOutput(False, True)
-        self.generator_obj.set_lf_signal(False, np.nan, np.nan)
