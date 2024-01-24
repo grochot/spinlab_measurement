@@ -20,3 +20,6 @@ class DummyFgenDriver:
     def initialization(self):
         pass
 
+    def set_lf_signal(self, on, freq, amp):
+        pass
+

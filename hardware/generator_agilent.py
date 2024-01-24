@@ -45,13 +45,15 @@ class FGenDriver(Instrument):
         self.write('*RST')
         self.write('*ESE 61;*SRE 48;*CLS;')
     
-    def set_lf_signal(self): 
-         self.write(':LFO:AMPL 1VP')
-         self.write(':LFO:FUNC2:FREQ 200HZ')
-         self.write(':LFO:FUNC2:SHAP SINE')
-         self.write(':LFO:FUNC2:SWE:TRIG IMM')
-         self.write(':LFO:SOUR FUNC2')
-         self.write(':LFO:STAT ON')
-
-
-
+    def set_lf_signal(self, on, freq, amp):
+        if on:
+            self.write(':LFO:AMPL {:.3f}VP'.format(amp))
+            self.write(':LFO:FUNC2:FREQ {:.6f}HZ'.format(freq))
+            self.write(':LFO:FUNC2:SHAP SINE')
+            # self.write(':LFO:FUNC2:SWE:TRIG IMM') # sweep not used (SHAPe Sine not Swept-Sine)
+            self.write(':LFO:SOUR FUNC2')
+            lfo_state = "ON"
+        else:
+            lfo_state = "OFF"
+        
+        self.write(':LFO:STAT ' + lfo_state)
