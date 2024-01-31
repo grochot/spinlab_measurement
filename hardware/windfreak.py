@@ -1,7 +1,7 @@
 from windfreak import SynthHD
 
 
-class DriverRfGen:
+class Windfreak:
     def __init__(self, address):
         self.address = address
         self.rfgen = SynthHD(address)

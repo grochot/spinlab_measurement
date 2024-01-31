@@ -1,8 +1,8 @@
 import pyvisa
 
 
-class FgenDriver:
-    def __init__(self, port):
+class DummyFgenDriver:
+    def __init__(self):
         pass
 
     def errorQuery(self):
@@ -15,5 +15,11 @@ class FgenDriver:
         pass
 
     def setOutput(self, on, mod=False):
+        pass
+    
+    def initialization(self):
+        pass
+
+    def set_lf_signal(self):
         pass
 

@@ -19,5 +19,5 @@ class Lakeshore(Instrument):
         self.field = self.ask("RDGFIELD?")
         return float(self.field)
     
-# gg = Lakeshore("GPIB0::12::INSTR")
+# gg = Lakeshore("GPIB1::12::INSTR")
 # print(float(gg.measure()))
