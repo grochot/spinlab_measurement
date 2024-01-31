@@ -24,6 +24,7 @@ class DAQ():
         return value
 
 
+
     
 
     def shutdown(self):
@@ -31,6 +32,8 @@ class DAQ():
         self.set_field(0)
 
 # d = DAQ('Dev4/ao0')
-# d.set_field(0)
+# d.set_field(1)
+
+# print(d.read_field())
 
 

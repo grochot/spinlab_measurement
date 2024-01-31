@@ -12,6 +12,8 @@ from hardware.dummy_gaussmeter import DummyGaussmeter
 from hardware.dummy_field import DummyField
 from logic.vector import Vector
 from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity 
+from logic.sweep_field_to_zero import sweep_field_to_zero 
+from logic.sweep_field_to_value import sweep_field_to_value
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
 
@@ -44,7 +46,8 @@ class HarmonicMode():
         field_constant,
         gaussmeter_range, 
         gaussmeter_resolution, 
-        address_daq:str ) -> None: 
+        address_daq:str,
+        field_step:float ) -> None: 
         self.set_automaticstation = set_automaticstation
         self.set_lockin = set_lockin
         self.set_field = set_field
@@ -75,6 +78,7 @@ class HarmonicMode():
         self.gaussmeter_range = gaussmeter_range
         self.gaussmeter_resolution = gaussmeter_resolution  
         self.address_daq = address_daq
+        self.field_step = field_step
         ## parameter initialization 
         
         
@@ -139,13 +143,14 @@ class HarmonicMode():
         self.gaussmeter_obj.resolution(self.gaussmeter_resolution)
       
         #Field initialization 
-        self.field_obj.set_field(self.point_list[0])
+        sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
+
     
     def operating(self, point):
         #set temporary result list
         self.result_list = []
         #set_field
-        self.field_obj.set_field(point)
+        self.field_obj.set_field(point*self.field_constant)
         sleep(self.delay_field)
         #measure_field
         if self.set_gaussmeter == "none":
@@ -183,4 +188,4 @@ class HarmonicMode():
         HarmonicMode.idle(self)
 
     def idle(self):
-        self.field_obj.set_field(0)
+        sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)

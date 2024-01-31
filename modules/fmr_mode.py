@@ -17,11 +17,14 @@ from hardware.dummy_gaussmeter import DummyGaussmeter
 from hardware.dummy_field import DummyField
 from logic.vector import Vector
 from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity 
+from logic.sweep_field_to_zero import sweep_field_to_zero 
+from logic.sweep_field_to_value import sweep_field_to_value
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
 
 class FMRMode():
-    def __init__(self, set_automaticstation:bool, 
+    def __init__(self, 
+        set_automaticstation:bool, 
         set_lockin:str, 
         set_field:str, 
         set_gaussmeter:str, 
@@ -59,7 +62,8 @@ class FMRMode():
         set_lfgen:str,
         address_lfgen:str,
         lfgen_freq:float,
-        lfgen_amp:float ) -> None: 
+        lfgen_amp:float, 
+        field_step:float ) -> None: 
         
         
         self.set_automaticstation = set_automaticstation
@@ -104,6 +108,7 @@ class FMRMode():
         self.set_lfgen = set_lfgen
         self.lfgen_freq = lfgen_freq
         self.lfgen_amp = lfgen_amp
+        self.field_step = field_step
         ## parameter initialization 
         
         
@@ -199,13 +204,13 @@ class FMRMode():
                 self.generator_obj.setFreq(self.set_frequency_constant_value)
                 self.generator_obj.setPower(self.generator_power)
                  #Field initialization 
-                self.field_obj.set_field(self.point_list[0])
+                sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
             case "ST-FMR":
                 #Generator initialization
                 self.generator_obj.setFreq(self.point_list[0])
                 self.generator_obj.setPower(self.generator_power)
                 #Field initialization 
-                self.field_obj.set_field(self.set_field_constant_value)
+                self.field_obj.set_field(self.set_field_constant_value*self.field_constant)
         self.generator_obj.set_lf_signal()
         self.generator_obj.setOutput(True, True)
 
@@ -216,7 +221,7 @@ class FMRMode():
 
         match self.generator_measurement_mode:
             case "V-FMR":
-                self.field_obj.set_field(point)
+                self.field_obj.set_field(point*self.field_constant)
                 sleep(self.delay_field)
                 if self.set_gaussmeter == "none":
                     self.tmp_field = point
@@ -273,5 +278,5 @@ class FMRMode():
         FMRMode.idle(self)
 
     def idle(self):
-        self.field_obj.set_field(0)
+        sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
         self.generator_obj.setOutput(False, True)

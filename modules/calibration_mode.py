@@ -2,19 +2,24 @@ from time import sleep
 import math
 import numpy as np
 import logging
-
-from ..logic.field_calibration import FieldCalibration
+from hardware.daq import DAQ 
+from hardware.dummy_field import DummyField
+from hardware.lakeshore import Lakeshore 
+from hardware.dummy_gaussmeter import DummyGaussmeter
+from logic.field_calibration import calibration, set_calibrated_field
+from logic.sweep_field_to_zero import sweep_field_to_zero
 
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
 
 class FieldCalibrationMode():
-    def __init__(self, set_field, set_gaussmeter, address_daq, address_gaussmeter, vector ) -> None: 
+    def __init__(self, set_field, set_gaussmeter, address_daq, address_gaussmeter, vector, delay ) -> None: 
         self.set_field = set_field
         self.set_gaussmeter = set_gaussmeter
         self.address_gaussmeter = address_gaussmeter
         self.address_daq = address_daq
         self.vector = vector
+        self.delay = delay
        
         ## parameter initialization 
         
@@ -25,14 +30,22 @@ class FieldCalibrationMode():
 
 
     def initializing(self):
-        self.calibration = FieldCalibration(self.address_daq, self.address_gaussmeter)
+        self.vector = self.vector.split(",")
+        if self.set_field == 'none': 
+            self.daq = DummyField()
+        else:
+            self.daq = DAQ(self.address_daq)
+        if self.set_gaussmeter == 'none': 
+            self.gaussmeter = DummyGaussmeter()
+        else:
+            self.gaussmeter = Lakeshore(self.address_gaussmeter)
 
     def operating(self):
-        self.start = self.vector[0]
-        self.stop = self.vector[2]
-        self.points = self.vector[1]
+        self.start = float(self.vector[0])
+        self.stop = float(self.vector[2])
+        self.points = int(self.vector[1])
 
-        self.calibration_constant = self.calibration.calibration(self.start, self.stop, self.points)
+        self.calibration_constant = calibration(self, self.start, self.stop, self.points, self.daq, self.gaussmeter, self.delay)
 
         data = {
             'Voltage (V)': math.nan,
@@ -46,7 +59,6 @@ class FieldCalibrationMode():
             'Polar angle (deg)': math.nan,
             'Azimuthal angle (deg)': math.nan
             }
-        
         return data, self.calibration_constant
         
 
@@ -54,6 +66,13 @@ class FieldCalibrationMode():
         FieldCalibrationMode.idle(self)
 
     def idle(self):
-        self.calibration.set_calibrated_field(0, self.calibration_constant )
+        sweep_field_to_zero(self.stop/self.calibration_constant, self.calibration_constant, int((self.stop/self.calibration_constant)/10), self.daq)
 
-test = FieldCalibrationMode("ff", "dfd", 'Dev4/ao0', 'GPIB1::12::INSTR')
+
+
+# test = FieldCalibrationMode("ff", "dfd", 'Dev4/ao0', 'GPIB1::12::INSTR',[0,5,1], 2)
+# test.initializing()
+# test.operating()
+# sleep(5)
+# test.end()
+
