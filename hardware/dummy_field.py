@@ -1,5 +1,5 @@
 class DummyField:
-    def __init__(self):
+    def __init__(self, adapter):
         pass
     def set_field(self, field):
         pass
