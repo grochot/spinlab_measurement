@@ -144,7 +144,7 @@ class FMRMode():
             case "DAQ": 
                 self.field_obj = DAQ(self.address_daq)
             case _:
-                self.field_obj = DummyField()
+                self.field_obj = DummyField(self.address_daq)
 
         match self.set_automaticstation:
             case True: 
