@@ -14,7 +14,8 @@ def calibration(self, start, stop, points, daq, gaussmeter, delay):
         self.daq.set_field(i)
         sleep(delay)
         self.result = self.gaussmeter.measure()
-        if self.result == np.nan:
+        print(self.result)
+        if type(self.result) != int or float:
             self.result = 0
         self.fields.append(self.result)
         log.info("Voltage: {}, Field: {}".format(i,self.result))
