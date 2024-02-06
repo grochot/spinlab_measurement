@@ -16,6 +16,8 @@ from hardware.dummy_sourcemeter import DummySourcemeter
 from hardware.dummy_multimeter import DummyMultimeter
 from hardware.dummy_gaussmeter import DummyGaussmeter
 from hardware.dummy_field import DummyField
+from hardware.rotation_stage import RotationStage
+from hardware.rotation_stage_dummy import RotationStageDummy
 from logic.vector import Vector
 from logic.sweep_field_to_zero import sweep_field_to_zero 
 from logic.sweep_field_to_value import sweep_field_to_value
@@ -23,7 +25,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler()) 
 
 class ResistanceMode():
-    def __init__(self, vector:str, fourpoints:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool, address_sourcemeter:str, address_multimeter:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_lockin:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float) -> None:   
+    def __init__(self, vector:str, fourpoints:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool, address_sourcemeter:str, address_multimeter:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_lockin:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float) -> None:   
         ## parameter initialization 
         self.sourcemeter = sourcemeter
         self.multimeter = multimeter
@@ -34,7 +36,7 @@ class ResistanceMode():
         self.kriostat = kriostat
         self.rotationstation = rotationstation
         self.address_sourcemeter = address_sourcemeter
-        self.address_multimeter = address_multimeter 
+        self.address_multimeter = address_multimeter
         self.address_gaussmeter = address_gaussmeter
         self.address_switch = address_switch
         self.delay_field = delay_field
@@ -60,6 +62,8 @@ class ResistanceMode():
         self.fourpoints = fourpoints
         self.address_daq = address_daq
         self.field_step = field_step
+        self.rotationstation_port = rotationstation_port
+        self.constant_field_value = constant_field_value
         
         
     def generate_points(self):
@@ -106,6 +110,15 @@ class ResistanceMode():
             case _:
                 self.field_obj = DummyField(self.address_daq)
 
+        #rotation_station initialization
+
+        if self.rotationstation: 
+            try:
+                self.rotationstation_obj = RotationStage(self.rotationstation_port)
+            except:
+                log.error("Rotation station is not initialized")
+                self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
+
         #Sourcemeter initialization
         self.sourcemeter_obj.source_mode = self.sourcemeter_source #Set source type 
         if self.sourcemeter_source == "VOLT":
@@ -136,18 +149,12 @@ class ResistanceMode():
       
 
         #Field initialization 
-        sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
-
-        #Rotation station initialization 
         if self.rotationstation:
-            pass 
+            sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
         else:
-            pass
+            sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
 
 
-        
-
-    
     def operating(self, point):
         self.actual_set_field = self.field_obj.set_field(point*self.field_constant)
         sleep(self.delay_field)

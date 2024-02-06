@@ -2,7 +2,7 @@ import pyvisa
 import time
 from crc8dallas import crc8calc
 
-class StepperDriver:
+class RotationStage:
     def __init__(self, port):
         rm = pyvisa.ResourceManager()
         self.dev = rm.open_resource(port)
@@ -49,5 +49,3 @@ class StepperDriver:
 
     def checkBusyAzimuth(self):
         return self.query('MOVE {:d};{:d};'.format(0, 0)) == 'BUSY;'
-
-
