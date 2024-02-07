@@ -49,3 +49,7 @@ class RotationStage:
 
     def checkBusyAzimuth(self):
         return self.query('MOVE {:d};{:d};'.format(0, 0)) == 'BUSY;'
+
+    def goToZero(self):
+        self.goToAzimuth(0)
+        self.goToPolar(0)

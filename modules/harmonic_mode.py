@@ -10,6 +10,8 @@ from hardware.sr830 import SR830
 from hardware.dummy_lockin import DummyLockin
 from hardware.dummy_gaussmeter import DummyGaussmeter
 from hardware.dummy_field import DummyField
+from hardware.rotation_stage import RotationStage
+from hardware.rotation_stage_dummy import RotationStageDummy
 from logic.vector import Vector
 from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity 
 from logic.sweep_field_to_zero import sweep_field_to_zero 
@@ -47,7 +49,13 @@ class HarmonicMode():
         gaussmeter_range, 
         gaussmeter_resolution, 
         address_daq:str,
-        field_step:float ) -> None: 
+        field_step:float,
+        rotationstation:bool,
+        rotationstation_port:str, 
+        constant_field_value:float, 
+        rotation_axis:str, 
+        rotation_polar_constant:float, 
+        rotation_azimuth_constant:float ) -> None: 
         self.set_automaticstation = set_automaticstation
         self.set_lockin = set_lockin
         self.set_field = set_field
@@ -79,6 +87,12 @@ class HarmonicMode():
         self.gaussmeter_resolution = gaussmeter_resolution  
         self.address_daq = address_daq
         self.field_step = field_step
+        self.rotationstation_port = rotationstation_port
+        self.constant_field_value = constant_field_value
+        self.rotation_axis = rotation_axis
+        self.rotation_polar_constant = rotation_polar_constant
+        self.rotation_azimuth_constant = rotation_azimuth_constant
+        self.rotationstation = rotationstation
         ## parameter initialization 
         
         
@@ -141,17 +155,54 @@ class HarmonicMode():
         #Lakeshore initalization 
         self.gaussmeter_obj.range(self.gaussmeter_range)
         self.gaussmeter_obj.resolution(self.gaussmeter_resolution)
+
+
+        if self.rotationstation: 
+            try:
+                self.rotationstation_obj = RotationStage(self.rotationstation_port)
+                match self.rotation_axis:
+                    case "Polar": 
+                        self.rotationstation_obj.goToAzimuth(self.rotation_azimuth_constant)
+                    case "Azimuthal": 
+                        self.rotationstation_obj.goToPolar(self.rotation_polar_constant)
+            except:
+                log.error("Rotation station is not initialized")
+                self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
       
         #Field initialization 
-        sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
+        if self.rotationstation:
+            sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
+        else:
+            sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
 
     
     def operating(self, point):
         #set temporary result list
         self.result_list = []
-        #set_field
-        self.field_obj.set_field(point*self.field_constant)
-        sleep(self.delay_field)
+        if self.rotationstation:
+            match self.rotation_axis:
+                case "Polar":
+                    self.rotationstation_obj.goToPolar(point)
+                    self.polar_angle = point
+                    self.azimuthal_angle = np.nan
+                    while self.rotationstation_obj.checkBusyPolar() == 'BUSY;':
+                        sleep(0.01)
+                case "Azimuthal":
+                    self.rotationstation_obj.goToAzimuth(point)
+                    self.polar_angle = np.nan
+                    self.azimuthal_angle = point
+                    while self.rotationstation_obj.checkBusyAzimuth() == 'BUSY;':
+                        sleep(0.01)
+        else:                
+            #set_field
+            self.field_obj.set_field(point*self.field_constant)
+            sleep(self.delay_field)
+            
+
+
+
+
+
         #measure_field
         if self.set_gaussmeter == "none":
             self.tmp_field = point
@@ -177,8 +228,8 @@ class HarmonicMode():
             'X (V)':  self.result1 if self.lockin_channel1 == "X" else (self.result2 if self.lockin_channel2 == "X" else math.nan),   
             'Y (V)':  self.result1 if self.lockin_channel1 == "Y" else (self.result2 if self.lockin_channel2 == "Y" else math.nan), 
             'Phase': self.result1 if self.lockin_channel1 == "Phase" else (self.result2 if self.lockin_channel2 == "Phase" else math.nan),
-            'Polar angle (deg)': np.nan,
-            'Azimuthal angle (deg)': math.nan
+            'Polar angle (deg)': self.polar_angle if self.rotationstation == True else math.nan,
+            'Azimuthal angle (deg)': self.azimuthal_angle if self.rotationstation == True else math.nan
             }
         
         return data 
