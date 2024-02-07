@@ -1,6 +1,6 @@
 import pyvisa
 import time
-from crc8dallas import crc8calc
+from hardware.crc8dallas import crc8calc
 
 
 class RotationStageDummy:
