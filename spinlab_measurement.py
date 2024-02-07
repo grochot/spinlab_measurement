@@ -46,7 +46,7 @@ class SpinLabMeasurement(Procedure):
     
     #Hardware
     set_sourcemeter=ListParameter("Sourcemeter", choices=["Keithley 2400", "Keithley 2636", "Agilent 2912", "none"], default = parameters_from_file["set_sourcemeter"], group_by="mode", group_condition=lambda v: v == "ResistanceMode")
-    set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"],default = parameters_from_file["set_multimeter"], group_by={"mode": lambda v: v=="ResistanceMode", "mode_resistance": lambda v: v=="4-points"})
+    set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"],default = parameters_from_file["set_multimeter"], group_by={"mode": lambda v: v=="ResistanceMode" or v == "FMRMode", "mode_resistance": lambda v: v=="4-points"})
     set_gaussmeter = ListParameter("Gaussmeter", default = parameters_from_file["set_gaussmeter"], choices=["Lakeshore", "none"], group_by={"mode":lambda v: v == "ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" })
     set_field = ListParameter("Magnetic Field", default = parameters_from_file["set_field"], choices = ["DAQ", "Lockin", "none"], group_by = {"mode": lambda v: v == "ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" })
     set_lockin = ListParameter("Lockin", default = parameters_from_file["set_lockin"], choices = ["Zurich", "SR830", "none"], group_by = {"mode": lambda v: v == "HarmonicMode" or v == "FMRMode"})
@@ -103,9 +103,9 @@ class SpinLabMeasurement(Procedure):
     lockin_sensitivity = ListParameter("Lockin Sensitivity",default = parameters_from_file["lockin_sensitivity"], choices=["Auto Gain", "2 nV/fA", "5 nV/fA", "10 nV/fA", "20 nV/fA", "50 nV/fA", "100 nV/fA", "200 nV/fA", "500 nV/fA", "1 uV/pA", "2 uV/pA", "5 uV/pA", "10 uV/pA", "20 uV/pA", "50 uV/pA", "100 uV/pA", "200 uV/pA", "500 uV/pA", "1 mV/nA", "2 mV/nA", "5 mV/nA", "10 mV/nA", "20 mV/nA", "50 mV/nA", "100 mV/nA", "200 mV/nA", "500 mV/nA", "1 V/uA"], group_by={"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "set_lockin": lambda v: v != "none"})
     lockin_timeconstant = ListParameter("Lockin Time Constant", default = parameters_from_file["lockin_timeconstant"], choices = ["10 us", "30 us", "100 us", "300 us", "1 ms", "3 ms", "10 ms", "30 ms", "100 ms", "300 ms", "1 s", "3 s", "10 s", "30 s", "100 s", "300 s", "1 ks", "3 ks", "10 ks", "30 ks"],group_by={"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "set_lockin": lambda v: v != "none"})
     lockin_autophase = BooleanParameter("Lockin Autophase", default = parameters_from_file["lockin_autophase"], group_by={"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "set_lockin": lambda v: v != "none"})
-    lockin_frequency = FloatParameter("Lockin Frequency", default = parameters_from_file["lockin_frequency"], units="Hz", group_by={"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "set_lockin": lambda v: v != "none"})
-    lockin_harmonic = IntegerParameter("Lockin Harmonic", default = parameters_from_file["lockin_harmonic"],group_by={"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "set_lockin": lambda v: v != "none"})
-    lockin_sine_amplitude = FloatParameter("Lockin Sine Amplitude", default = parameters_from_file["lockin_sine_amplitude"], units="V", group_by={"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "set_lockin": lambda v: v != "none"})
+    lockin_frequency = FloatParameter("Lockin Frequency", default = parameters_from_file["lockin_frequency"], units="Hz", group_by={"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "set_lockin": lambda v: v != "none", "lockin_reference_source": lambda v: v == "Internal"} )
+    lockin_harmonic = IntegerParameter("Lockin Harmonic", default = parameters_from_file["lockin_harmonic"],group_by={"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "set_lockin": lambda v: v != "none", "lockin_reference_source": lambda v: v == "Internal"})
+    lockin_sine_amplitude = FloatParameter("Lockin Sine Amplitude", default = parameters_from_file["lockin_sine_amplitude"], units="V", group_by={"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "set_lockin": lambda v: v != "none", "lockin_reference_source": lambda v: v == "Internal"})
     lockin_channel1 = ListParameter("Lockin Channel 1", default = parameters_from_file["lockin_channel1"], choices = ["X", "Y", "R", "Theta", "Aux In 1", "Aux In 2", "Aux In 3", "Aux In 4"], group_by={"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "set_lockin": lambda v: v != "none"})
     lockin_channel2 = ListParameter("Lockin Channel 2", default = parameters_from_file["lockin_channel2"], choices = ["X", "Y", "R", "Theta", "Aux In 1", "Aux In 2", "Aux In 3", "Aux In 4"], group_by={"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "set_lockin": lambda v: v != "none"})
     
@@ -116,7 +116,7 @@ class SpinLabMeasurement(Procedure):
     set_field_value= FloatParameter("Set Constant Field Value", default = parameters_from_file["set_field_value"], units="Oe", group_by={ "set_rotationstation": lambda v: v == True, "mode": lambda v: v != "CalibrationFieldMode" })
     field_step = FloatParameter("Field sweep step", default = parameters_from_file["field_step"], units="Oe", group_by={"mode": lambda v: v != "CalibrationFieldMode"})
     #GeneratorParameters 
-    generator_frequency = FloatParameter("Generator Frequency", default = parameters_from_file["generator_frequency"], units="Hz", group_by={"mode": lambda v: v == "FMRMode", "set_generator": lambda v: v != "none"})
+    generator_frequency = FloatParameter("Generator Frequency", default = parameters_from_file["generator_frequency"], units="Hz", maximum=31.8e9, group_by={"mode": lambda v: v == "FMRMode", "set_generator": lambda v: v != "none"})
     generator_power = FloatParameter("Generator Power", default = parameters_from_file["generator_power"], units="dBm", group_by={"mode": lambda v: v == "FMRMode", "set_generator": lambda v: v != "none"})
     #Analyzer Parameters 
 
@@ -134,7 +134,7 @@ class SpinLabMeasurement(Procedure):
     path_file = SaveFilePath() 
    
     
-    ################ STARTUP ##################
+    ################ STARTUP ################## 
     def startup(self):
         for i in self.used_parameters_list:
             self.param = eval("self."+i)
@@ -172,6 +172,9 @@ class SpinLabMeasurement(Procedure):
                    self.emit('results', self.result) 
                    self.emit('progress', 100 * self.counter / len(self.points))
                    self.counter = self.counter + 1
+                   if self.should_stop():
+                    log.warning("Caught the stop flag in the procedure")
+                    break
                 self.resistancemode.end()
             case "HarmonicMode":
                 self.counter = 0
@@ -180,6 +183,9 @@ class SpinLabMeasurement(Procedure):
                    self.emit('results', self.result) 
                    self.emit('progress', 100 * self.counter / len(self.points))
                    self.counter = self.counter + 1
+                   if self.should_stop():
+                    log.warning("Caught the stop flag in the procedure")
+                    break
                 self.harmonicmode.end()
             case "FMRMode":
                 self.counter = 0
@@ -188,6 +194,9 @@ class SpinLabMeasurement(Procedure):
                    self.emit('results', self.result) 
                    self.emit('progress', 100 * self.counter / len(self.points))
                    self.counter = self.counter + 1
+                   if self.should_stop():
+                    log.warning("Caught the stop flag in the procedure")
+                    break
                 self.fmrmode.end()
                 #    self.set_calibration_constant(self.result[1])
             case "CalibrationFieldMode": 
@@ -230,7 +239,7 @@ class MainWindow(ManagedDockWindow):
             
         )
        
-        self.setWindowTitle('SpinLab Measurement System v.0.5')
+        self.setWindowTitle('SpinLab Measurement System v.0.55')
         #self.directory = self.procedure_class.path_file.ReadFile()
     
     def set_calibration_constant(self, value):

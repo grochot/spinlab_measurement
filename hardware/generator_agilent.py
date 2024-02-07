@@ -40,15 +40,26 @@ class FGenDriver(Instrument):
         #print("fgen_output = "+outp)
         #print("fgen_modulation = " + outpMod)
         self.write(':OUTP '+outp+';:OUTP:MOD '+outpMod+';:OUTP:BLAN:AUTO ON;:OUTP:BLAN:STAT ON;:OUTP:PROT ON;')
+
+        self.write(":AM:SOUR INT")
+        self.write(":AM:INT:FUNC:SHAP SINE")
+        self.write(":AM:INT:FREQ 300 HZ")
+        self.write(":AM:INT:FREQ:ALT 300 HZ")
+        self.write(":AM:STAT ON")
+        self.write(":AM:MODE NORM")
+        self.write(":AM:TYPE LIN")
+        self.write(":AM:TRAC ON")
+        self.write(":AM:DEPTH 90 PCT")
+
     
     def initialization(self):
         self.write('*RST')
         self.write('*ESE 61;*SRE 48;*CLS;')
     
     def set_lf_signal(self):
+        self.write(':LFO:SOUR INT')
         self.write(':LFO:AMPL 1VP')
-        self.write(':LFO:FUNC2:FREQ 200HZ')
-        self.write(':LFO:FUNC2:SHAP SINE')
-        self.write(':LFO:FUNC2:SWE:TRIG IMM')
-        self.write(':LFO:SOUR FUNC2')
+        # self.write(':LFO:FUNC1:FREQ 287HZ')
+        # self.write(':LFO:FUNC1:SHAP SINE')
+        # self.write(":LFO:FUNC1:FREQ:ALT 287HZ")
         self.write(':LFO:STAT ON')

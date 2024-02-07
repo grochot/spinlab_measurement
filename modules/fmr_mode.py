@@ -184,7 +184,7 @@ class FMRMode():
         self.lockin_obj.input_config = self.lockin_input_connection
         self.lockin_obj.input_coupling = self.lockin_input_coupling
         self.lockin_obj.reference_source = self.lockin_reference_source
-
+        
         #Modulation initalization
         if self.set_lfgen == "SR830":
             self.lockin_obj.reference_source = "Internal"
@@ -214,6 +214,15 @@ class FMRMode():
         self.generator_obj.set_lf_signal()
         self.generator_obj.setOutput(True, True)
 
+        #set lockin phase: 
+        if self.set_lfgen == "SR830": 
+            self.lockin_obj.phase = 0 
+        else: 
+            self.lockin_obj.phase = 180
+
+        sleep(1)
+        
+
     def operating(self, point):
         sleep(self.delay_field)
         #set temporary result list
@@ -228,7 +237,7 @@ class FMRMode():
                 else: 
                     self.tmp_field = self.gaussmeter_obj.measure()
         
-                sleep(self.delay_bias)
+                sleep(self.delay_lockin)
 
                 #measure_lockin 
                 for i in range(self.lockin_average):
@@ -247,7 +256,7 @@ class FMRMode():
                 else: 
                     self.tmp_field = self.gaussmeter_obj.measure()
         
-                sleep(self.delay_bias)
+                sleep(self.delay_lockin)
 
                 #measure_lockin 
                 for i in range(self.lockin_average):
