@@ -1,7 +1,7 @@
 {
     "mode": "ResistanceMode",
     "sample_name": "test",
-    "vector": "0,10,90",
+    "vector": "0,10,45",
     "mode_resistance": false,
     "mode_fmr": "V-FMR",
     "mode_harmonic": "Field harmonic",
@@ -64,5 +64,10 @@
     "field_step": 100.0,
     "delay_field": 1.0,
     "delay_lockin": 0.1,
-    "delay_bias": 1.0
+    "delay_bias": 1.0,
+    "rotation_axis": "Azimuthal",
+    "rotation_polar_constant": 0.0,
+    "rotation_azimuth_constant": 0.0,
+    "constant_field_value": 0.0,
+    "address_rotationstation": "COM4"
 }

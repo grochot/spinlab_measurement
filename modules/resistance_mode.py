@@ -169,15 +169,13 @@ class ResistanceMode():
                 case "Polar":
                     self.rotationstation_obj.goToPolar(point)
                     self.polar_angle = point
-                    self.azimuthal_angle = np.nan
-                    while self.rotationstation_obj.checkBusyPolar() == 'BUSY;':
-                        sleep(0.01)
+                    self.azimuthal_angle = self.rotation_azimuth_constant
+                   
                 case "Azimuthal":
                     self.rotationstation_obj.goToAzimuth(point)
-                    self.polar_angle = np.nan
+                    self.polar_angle = self.rotation_polar_constant
                     self.azimuthal_angle = point
-                    while self.rotationstation_obj.checkBusyAzimuth() == 'BUSY;':
-                        sleep(0.01)
+                   
 
         else:
             self.actual_set_field = self.field_obj.set_field(point*self.field_constant)
