@@ -1,8 +1,9 @@
 import pyvisa
 import time
-from crc8dallas import crc8calc
+from hardware.crc8dallas import crc8calc
 
-class StepperDriver:
+
+class RotationStageDummy:
     def __init__(self, port):
         pass
 
@@ -29,4 +30,3 @@ class StepperDriver:
 
     def checkBusyAzimuth(self):
         pass
-

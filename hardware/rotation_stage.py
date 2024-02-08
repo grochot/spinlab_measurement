@@ -1,8 +1,8 @@
 import pyvisa
 import time
-from crc8dallas import crc8calc
+from hardware.crc8dallas import crc8calc
 
-class StepperDriver:
+class RotationStage:
     def __init__(self, port):
         rm = pyvisa.ResourceManager()
         self.dev = rm.open_resource(port)
@@ -39,10 +39,16 @@ class StepperDriver:
         return self.query('POS {:d};{:d};'.format(motor, pos)) == 'OK;'
 
     def goToPolar(self, angle):
-        return self.goToRaw(1, int(angle * self.PGain + self.POffset))
+        self.goToRaw(1, int(angle * self.PGain + self.POffset))
+        while self.checkBusyPolar() == True:
+            time.sleep(0.1)
+        return 'OK;'
 
     def goToAzimuth(self, angle):
-        return self.goToRaw(0, int(angle * self.AGain + self.AOffset))
+        self.goToRaw(0, int(angle * self.AGain + self.AOffset))
+        while self.checkBusyAzimuth() == True:
+            time.sleep(0.1)
+        return 'OK;'
 
     def checkBusyPolar(self):
         return self.query('MOVE {:d};{:d};'.format(1, 0)) == 'BUSY;'
@@ -50,4 +56,11 @@ class StepperDriver:
     def checkBusyAzimuth(self):
         return self.query('MOVE {:d};{:d};'.format(0, 0)) == 'BUSY;'
 
+    def goToZero(self):
+        self.goToAzimuth(0)
+        self.goToPolar(0)
 
+# k = RotationStage('COM4')
+# k.goToAzimuth(45)
+
+# print("Done")

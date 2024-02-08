@@ -1,7 +1,7 @@
 {
-    "mode": "HarmonicMode",
-    "sample_name": "calibration",
-    "vector": "0,10,1000",
+    "mode": "ResistanceMode",
+    "sample_name": "test",
+    "vector": "0,10,45",
     "mode_resistance": false,
     "mode_fmr": "V-FMR",
     "mode_harmonic": "Field harmonic",
@@ -11,7 +11,7 @@
     "set_field": "none",
     "set_lockin": "none",
     "set_automaticstation": false,
-    "set_rotationstation": false,
+    "set_rotationstation": true,
     "set_switch": false,
     "set_kriostat": false,
     "set_lfgen": "none",
@@ -59,10 +59,15 @@
     "generator_power": -20.0,
     "lfgen_freq": 330.0,
     "lfgen_amp": 2.0,
-    "set_field_value": 0.0,
+    "set_field_value": 100.0,
     "set_field_value_fmr": 0.0,
     "field_step": 100.0,
-    "delay_field": 0.5,
+    "delay_field": 1.0,
     "delay_lockin": 0.1,
-    "delay_bias": 0.23
+    "delay_bias": 1.0,
+    "rotation_axis": "Azimuthal",
+    "rotation_polar_constant": 0.0,
+    "rotation_azimuth_constant": 0.0,
+    "constant_field_value": 0.0,
+    "address_rotationstation": "COM4"
 }
