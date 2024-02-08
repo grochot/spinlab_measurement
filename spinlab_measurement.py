@@ -126,6 +126,7 @@ class SpinLabMeasurement(Procedure):
     #GeneratorParameters 
     generator_frequency = FloatParameter("Generator Frequency", default = parameters_from_file["generator_frequency"], units="Hz", maximum=31.8e9, group_by={"mode": lambda v: v == "FMRMode", "set_generator": lambda v: v != "none"})
     generator_power = FloatParameter("Generator Power", default = parameters_from_file["generator_power"], units="dBm", group_by={"mode": lambda v: v == "FMRMode", "set_generator": lambda v: v != "none"})
+    
     #Analyzer Parameters 
 
     #GaussmeterParameters 

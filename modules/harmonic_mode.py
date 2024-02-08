@@ -117,18 +117,21 @@ class HarmonicMode():
                 pass
             case _: 
                 self.lockin_obj = DummyLockin()
+                log.warning('Used dummy Lockin.')
         
         match self.set_gaussmeter: 
             case "Lakeshore": 
                 self.gaussmeter_obj = Lakeshore(self.address_gaussmeter)
             case _:
                 self.gaussmeter_obj = DummyGaussmeter(self.address_gaussmeter)
+                log.warning('Used dummy Gaussmeter.')
         
         match self.set_field:
             case "DAQ": 
                 self.field_obj = DAQ(self.address_daq)
             case _:
                 self.field_obj = DummyField(self.address_daq)
+                log.warning('Used dummy DAQ.')
 
         match self.set_automaticstation:
             case True: 

@@ -94,26 +94,30 @@ class ResistanceMode():
                 self.sourcemeter_obj = Agilent2912(self.address_sourcemeter)
             case _: 
                 self.sourcemeter_obj = DummySourcemeter(self.address_sourcemeter)
+                log.warning('Used dummy Sourcemeter.')
         
         match self.multimeter:
             case "Agilent 34400": 
                 self.multimeter_obj = Agilent34410A(self.address_multimeter)
             case _: 
                 self.multimeter_obj = DummyMultimeter(self.address_multimeter)
+                log.warning('Used dummy Multimeter.')
         
         match self.gaussmeter: 
             case "Lakeshore": 
                 self.gaussmeter_obj = Lakeshore(self.address_gaussmeter)
             case _:
                 self.gaussmeter_obj = DummyGaussmeter(self.address_gaussmeter)
+                log.warning('Used dummy Gaussmeter.')
         
         match self.field:
             case "DAQ": 
                 self.field_obj = DAQ(self.address_daq)
             case _:
                 self.field_obj = DummyField(self.address_daq)
+                log.warning('Used dummy DAQ.')
 
-        #rotation_station initialization
+        #Rotation_station object initialization
 
         if self.rotationstation: 
             try:
