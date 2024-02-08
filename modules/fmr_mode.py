@@ -63,7 +63,13 @@ class FMRMode():
         address_lfgen:str,
         lfgen_freq:float,
         lfgen_amp:float, 
-        field_step:float ) -> None: 
+        field_step:float, 
+        rotationstation:bool,
+        rotationstation_port:str, 
+        constant_field_value:float, 
+        rotation_axis:str, 
+        rotation_polar_constant:float, 
+        rotation_azimuth_constant:float) -> None: 
         
         
         self.set_automaticstation = set_automaticstation
@@ -109,6 +115,12 @@ class FMRMode():
         self.lfgen_freq = lfgen_freq
         self.lfgen_amp = lfgen_amp
         self.field_step = field_step
+        self.rotationstation = rotationstation
+        self.rotationstation_port = rotationstation_port
+        self.constant_field_value = constant_field_value
+        self.rotation_axis = rotation_axis
+        self.rotation_polar_constant = rotation_polar_constant
+        self.rotation_azimuth_constant = rotation_azimuth_constant
         ## parameter initialization 
         
         
@@ -133,18 +145,21 @@ class FMRMode():
                 pass
             case _: 
                 self.lockin_obj = DummyLockin()
+                log.warning('Used dummy Lockin.')
         
         match self.set_gaussmeter: 
             case "Lakeshore": 
                 self.gaussmeter_obj = Lakeshore(self.address_gaussmeter)
             case _:
                 self.gaussmeter_obj = DummyGaussmeter(self.address_gaussmeter)
+                log.warning('Used dummy Gaussmeter.')
         
         match self.set_field:
             case "DAQ": 
                 self.field_obj = DAQ(self.address_daq)
             case _:
                 self.field_obj = DummyField(self.address_daq)
+                log.warning('Used dummy DAQ.')
 
         match self.set_automaticstation:
             case True: 
@@ -159,6 +174,7 @@ class FMRMode():
                 self.generator_obj = Windfreak(self.address_generator)
             case _:
                 self.generator_obj = DummyFgenDriver()
+                log.warning('Used dummy Frequency Generator.')
 
         match self.set_lfgen:
             case "SR830":
@@ -168,6 +184,7 @@ class FMRMode():
                 self.lfgen_obj = LFGenDriver(self.address_lfgen)
             case _:
                 self.lfgen_obj = DummyLFGenDriver()
+                log.warning('Used dummy Modulation Generator.')
 
         self.generator_obj.initialization()
         #Lockin initialization
@@ -184,7 +201,7 @@ class FMRMode():
         self.lockin_obj.input_config = self.lockin_input_connection
         self.lockin_obj.input_coupling = self.lockin_input_coupling
         self.lockin_obj.reference_source = self.lockin_reference_source
-
+        
         #Modulation initalization
         if self.set_lfgen == "SR830":
             self.lockin_obj.reference_source = "Internal"
@@ -197,22 +214,54 @@ class FMRMode():
         #Lakeshore initalization 
         self.gaussmeter_obj.range(self.gaussmeter_range)
         self.gaussmeter_obj.resolution(self.gaussmeter_resolution)
-      
+        
+        #RotationStation initialization
+        if self.rotationstation: 
+            try:
+                self.rotationstation_obj = RotationStage(self.rotationstation_port)
+                match self.rotation_axis:
+                    case "Polar": 
+                        self.rotationstation_obj.goToAzimuth(self.rotation_azimuth_constant)
+                    case "Azimuthal": 
+                        self.rotationstation_obj.goToPolar(self.rotation_polar_constant)
+            except:
+                log.error("Rotation station is not initialized")
+                self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
+
+
+
+    def begin(self):
         match self.generator_measurement_mode:
             case "V-FMR": 
                  #Generator initialization
                 self.generator_obj.setFreq(self.set_frequency_constant_value)
                 self.generator_obj.setPower(self.generator_power)
                  #Field initialization 
-                sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
+                if self.rotationstation:
+                    sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
+                else:
+                    sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
             case "ST-FMR":
                 #Generator initialization
                 self.generator_obj.setFreq(self.point_list[0])
                 self.generator_obj.setPower(self.generator_power)
                 #Field initialization 
-                self.field_obj.set_field(self.set_field_constant_value*self.field_constant)
+                if self.rotationstation:
+                    sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
+                else:
+                    sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
         self.generator_obj.set_lf_signal()
         self.generator_obj.setOutput(True, True)
+
+
+        #set lockin phase: 
+        if self.set_lfgen == "SR830": 
+            self.lockin_obj.phase = 0 
+        else: 
+            self.lockin_obj.phase = 180
+
+        sleep(1)
+
 
     def operating(self, point):
         sleep(self.delay_field)
@@ -221,14 +270,35 @@ class FMRMode():
 
         match self.generator_measurement_mode:
             case "V-FMR":
-                self.field_obj.set_field(point*self.field_constant)
-                sleep(self.delay_field)
+                if self.rotationstation:
+                    match self.rotation_axis:
+                        case "Polar":
+                            self.rotationstation_obj.goToPolar(point)
+                            self.polar_angle = point
+                            self.azimuthal_angle = np.nan
+                            while self.rotationstation_obj.checkBusyPolar() == 'BUSY;':
+                                sleep(0.01)
+                        case "Azimuthal":
+                            self.rotationstation_obj.goToAzimuth(point)
+                            self.polar_angle = np.nan
+                            self.azimuthal_angle = point
+                            while self.rotationstation_obj.checkBusyAzimuth() == 'BUSY;':
+                                sleep(0.01)
+
+                else:
+                    self.actual_set_field = self.field_obj.set_field(point*self.field_constant)
+                    sleep(self.delay_field)
+
+
+
+
+                #measure field
                 if self.set_gaussmeter == "none":
                     self.tmp_field = point
                 else: 
                     self.tmp_field = self.gaussmeter_obj.measure()
         
-                sleep(self.delay_bias)
+                sleep(self.delay_lockin)
 
                 #measure_lockin 
                 for i in range(self.lockin_average):
@@ -240,14 +310,32 @@ class FMRMode():
                 self.result2 = np.average([i[1] for i in self.result_list])
             
             case "ST-FMR":
-                self.generator_obj.setFreq(point)
-                sleep(self.delay_field)
+                if self.rotationstation:
+                    match self.rotation_axis:
+                        case "Polar":
+                            self.rotationstation_obj.goToPolar(point)
+                            self.polar_angle = point
+                            self.azimuthal_angle = np.nan
+                            while self.rotationstation_obj.checkBusyPolar() == 'BUSY;':
+                                sleep(0.01)
+                        case "Azimuthal":
+                            self.rotationstation_obj.goToAzimuth(point)
+                            self.polar_angle = np.nan
+                            self.azimuthal_angle = point
+                            while self.rotationstation_obj.checkBusyAzimuth() == 'BUSY;':
+                                sleep(0.01)
+
+                else:
+                    self.generator_obj.setFreq(point)
+                    sleep(self.delay_field)
+
+                #measure field
                 if self.set_gaussmeter == "none":
                     self.tmp_field = point
                 else: 
                     self.tmp_field = self.gaussmeter_obj.measure()
         
-                sleep(self.delay_bias)
+                sleep(self.delay_lockin)
 
                 #measure_lockin 
                 for i in range(self.lockin_average):
@@ -267,8 +355,8 @@ class FMRMode():
             'X (V)':  self.result1 if self.lockin_channel1 == "X" else (self.result2 if self.lockin_channel2 == "X" else math.nan),   
             'Y (V)':  self.result1 if self.lockin_channel1 == "Y" else (self.result2 if self.lockin_channel2 == "Y" else math.nan), 
             'Phase': self.result1 if self.lockin_channel1 == "Phase" else (self.result2 if self.lockin_channel2 == "Phase" else math.nan),
-            'Polar angle (deg)': np.nan,
-            'Azimuthal angle (deg)': math.nan
+            'Polar angle (deg)': self.polar_angle if self.rotationstation == True else math.nan,
+            'Azimuthal angle (deg)': self.azimuthal_angle if self.rotationstation == True else math.nan
             }
         
         return data 
@@ -280,3 +368,7 @@ class FMRMode():
     def idle(self):
         sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
         self.generator_obj.setOutput(False, True)
+        if self.rotationstation: 
+            self.rotationstation_obj.goToZero()
+
+

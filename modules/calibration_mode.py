@@ -33,10 +33,12 @@ class FieldCalibrationMode():
         self.vector = self.vector.split(",")
         if self.set_field == 'none': 
             self.daq = DummyField(self.address_daq)
+            log.warning('Used dummy DAQ')
         else:
             self.daq = DAQ(self.address_daq)
         if self.set_gaussmeter == 'none': 
             self.gaussmeter = DummyGaussmeter(self.address_gaussmeter)
+            log.warning('Used dummy Gaussmeter')
         else:
             self.gaussmeter = Lakeshore(self.address_gaussmeter)
 
