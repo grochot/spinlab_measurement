@@ -180,14 +180,14 @@ class FMRMode():
 
         match self.set_lfgen:
             case "SR830":
-                if type(self.lockin_obj) is DummyLockin:
+                if type(self.lockin_obj) is DummyLockin: 
                     self.lockin_obj = SR830(self.address_lockin)
             case "HP33120A":
                 self.lfgen_obj = LFGenDriver(self.address_lfgen)
             case _:
                 self.lfgen_obj = DummyLFGenDriver()
                 log.warning('Used dummy Modulation Generator.')
-
+     
         self.generator_obj.initialization()
         #Lockin initialization
         self.lockin_obj.frequency = self.lockin_frequency
@@ -231,13 +231,14 @@ class FMRMode():
                 self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
 
 
-
+       
     def begin(self):
         match self.generator_measurement_mode:
             case "V-FMR": 
                  #Generator initialization
                 self.generator_obj.setFreq(self.set_frequency_constant_value)
                 self.generator_obj.setPower(self.generator_power)
+                print("flag")
                  #Field initialization 
                 if self.rotationstation:
                     sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
