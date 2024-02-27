@@ -66,13 +66,53 @@ class Agilent2912(Instrument):
         	time.sleep(50/1000)
         #return self.write("*WAI")
 
-    #[:SOURce]:PULSe:WIDTh #czas trwania
+    #[:SOURce]:PULSe:WIDTh #czas trwania -ok
 
-    #pewnie sie nie przyda [:SOURce]:FUNCtion:MODE #przelaczenie trybu 
+    #pewnie sie nie przyda [:SOURce]:FUNCtion:MODE #przelaczenie trybu -ok
 
-    #[:SOURce]:FUNCtion[:SHAPe] #przelaczanie trybu
+    #[:SOURce]:FUNCtion[:SHAPe] #przelaczanie trybu -ok
 
     #[:SOURce]:<CURRent|VOLTage>[:LEVel][:IMMediate][:AMPLitude] #amplituda
 
     
     #[:SOURce]:TOUTput:SIGNal ustawia trigger (tym triggerem potem strzela sie impulsem)
+            
+
+    def duration(self,time,channel=1):
+        self.write(":SOUR%s:PULS:WIDTh %s"%(channel,time))
+
+    def switch_mode(self,shape,channel=1):
+        #shape=["DC","PULSE"]
+        self.write(":SOUR%s:FUNC:SHAP %s"%(channel,shape))
+
+    def amplitude(self,amplitude,channel=1):
+        self.write(":SOUR%s:VOLT:IMM:AMPL %s"%(channel,amplitude))
+
+    def give_one_pulse():
+        pass
+
+
+
+
+
+
+    def test_command(self):
+        print(self.ask(":SOUR1:PULS:WIDTh?"))
+
+    def test_command2(self):
+        self.write(":ARM:TRAN:IMMediate @1")
+
+    def test_command3(self):
+        self.write(":PULS:WIDT 2E-2")
+            
+
+if __name__:
+    
+    dev=Agilent2912("GPIB0::23::INSTR")
+    dev.switch_mode("PULSE","1")
+    dev.duration("1E-4")
+    dev.amplitude(1)
+    dev.test_command()
+    #dev.test_command3()
+    dev.test_command2()
+    print("dziala")
