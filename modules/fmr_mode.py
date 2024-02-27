@@ -15,6 +15,8 @@ from hardware.dummy_lfgen import DummyLFGenDriver
 from hardware.dummy_lockin import DummyLockin
 from hardware.dummy_gaussmeter import DummyGaussmeter
 from hardware.dummy_field import DummyField
+from hardware.rotation_stage import RotationStage
+from hardware.rotation_stage_dummy import RotationStageDummy
 from logic.vector import Vector
 from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity 
 from logic.sweep_field_to_zero import sweep_field_to_zero 
