@@ -1,4 +1,6 @@
 from pymeasure.instruments import Instrument
+from time import sleep
+
 ######## TO DO #########
 class Agilent2912(Instrument):
     def __init__(self, resourceName, **kwargs):
@@ -26,7 +28,7 @@ class Agilent2912(Instrument):
         pass
    
     def measure_current(self):
-       pass
+        pass
        
     def source_current_range(self, range):
         pass
@@ -54,3 +56,23 @@ class Agilent2912(Instrument):
     
     def voltage(self):
         pass
+
+
+
+#Mariusz
+    def WAI(self):
+        #pozwala zaczekać aż dana procedura się zakończy
+        while self.qr("*OPC?")==1:
+        	time.sleep(50/1000)
+        #return self.write("*WAI")
+
+    #[:SOURce]:PULSe:WIDTh #czas trwania
+
+    #pewnie sie nie przyda [:SOURce]:FUNCtion:MODE #przelaczenie trybu 
+
+    #[:SOURce]:FUNCtion[:SHAPe] #przelaczanie trybu
+
+    #[:SOURce]:<CURRent|VOLTage>[:LEVel][:IMMediate][:AMPLitude] #amplituda
+
+    
+    #[:SOURce]:TOUTput:SIGNal ustawia trigger (tym triggerem potem strzela sie impulsem)
