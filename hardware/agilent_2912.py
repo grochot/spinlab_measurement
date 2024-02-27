@@ -97,22 +97,41 @@ class Agilent2912(Instrument):
 
 
     def test_command(self):
-        print(self.ask(":SOUR1:PULS:WIDTh?"))
+        print(self.ask(":ARM:TRAN:SOUR?"))
 
     def test_command2(self):
-        self.write(":ARM:TRAN:IMMediate @1")
+        self.write(":ARM:SOUR BUS")
 
     def test_command3(self):
         self.write(":PULS:WIDT 2E-2")
+
+    def test_command4(self):
+        self.write("VOLT:TRIG 3")
+
+    def trigger(self):
+        self.write('*TRG')
+
+    def reset(self):
+        self.write("*RST")
+
+    def trigger_source(self,trigger_source):
+        self.write(':TRIG:SOUR %s'%trigger_source)
             
 
 if __name__:
     
     dev=Agilent2912("GPIB0::23::INSTR")
+    dev.trigger_source("BUS")
     dev.switch_mode("PULSE","1")
-    dev.duration("1E-4")
-    dev.amplitude(1)
-    dev.test_command()
+    dev.duration("1")
+    dev.amplitude(0)
+    #dev.test_command()
     #dev.test_command3()
-    dev.test_command2()
+    
+    #dev.test_command4()
+    #dev.test_command2()
+    sleep(1)
+    dev.trigger()
+    #sleep(1)
+    #dev.reset()
     print("dziala")

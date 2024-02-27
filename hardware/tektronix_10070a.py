@@ -34,7 +34,7 @@ class Tektronix10070a(Instrument):
     def reset():
         self.write('*RST')
     
-    def give_one_pulse():
+    def trigger():
         self.write('*TRG')
 
     def trigger_source(trigger_source):
