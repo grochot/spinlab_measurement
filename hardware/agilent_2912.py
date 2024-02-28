@@ -60,78 +60,97 @@ class Agilent2912(Instrument):
 
 
 #Mariusz
-    def WAI(self):
-        #pozwala zaczekać aż dana procedura się zakończy
-        while self.qr("*OPC?")==1:
-        	time.sleep(50/1000)
-        #return self.write("*WAI")
-
-    #[:SOURce]:PULSe:WIDTh #czas trwania -ok
-
-    #pewnie sie nie przyda [:SOURce]:FUNCtion:MODE #przelaczenie trybu -ok
-
-    #[:SOURce]:FUNCtion[:SHAPe] #przelaczanie trybu -ok
-
-    #[:SOURce]:<CURRent|VOLTage>[:LEVel][:IMMediate][:AMPLitude] #amplituda
-
-    
-    #[:SOURce]:TOUTput:SIGNal ustawia trigger (tym triggerem potem strzela sie impulsem)
-            
+    def opc(self):
+        return 1
+        while self.ask("*OPC?")==1:
+        	time.sleep(100/1000)
 
     def duration(self,time,channel=1):
-        self.write(":SOUR%s:PULS:WIDTh %s"%(channel,time))
+        self.opc()
+        self.write(":SOUR%s:PULS:WIDT %s"%(channel,time))
 
     def switch_mode(self,shape,channel=1):
         #shape=["DC","PULSE"]
+        self.opc()
         self.write(":SOUR%s:FUNC:SHAP %s"%(channel,shape))
 
+    def source_mode(self,source_mode,channel=1):
+        #source_mode=[VOLT,CURR]
+        self.opc()
+        self.write(':SOUR%s:FUNC:MODE %s'%(channel,source_mode))
+
+    def offset(self,amplitude,source_mode,channel=2):
+        #source_mode=[VOLT,CURR]
+        self.opc()
+        self.write(":SOUR%s:%s:IMM %s"%(channel,source_mode,amplitude))
+
     def amplitude(self,amplitude,channel=1):
-        self.write(":SOUR%s:VOLT:IMM:AMPL %s"%(channel,amplitude))
-
-    def give_one_pulse():
-        pass
-
-
-
-
-
-
-    def test_command(self):
-        print(self.ask(":ARM:TRAN:SOUR?"))
-
-    def test_command2(self):
-        self.write(":ARM:SOUR BUS")
-
-    def test_command3(self):
-        self.write(":PULS:WIDT 2E-2")
-
-    def test_command4(self):
-        self.write("VOLT:TRIG 3")
+        self.opc()
+        self.write("SOUR%s:VOLT:TRIG %s"%(channel,amplitude))
 
     def trigger(self):
-        self.write('*TRG')
+        self.opc()
+        self.write("*TRG")
 
     def reset(self):
+        self.opc()
         self.write("*RST")
 
     def trigger_source(self,trigger_source):
+        self.opc()
         self.write(':TRIG:SOUR %s'%trigger_source)
-            
+
+    '''def arm_source(self,arm_source):
+        self.write(':ARM:SOUR %s'%arm_source)'''
+
+    def init(self,channel=1):
+        #you can pass list like 2:1
+        self.opc()
+        self.write(':INIT:TRAN (@%s)'%channel)
+
+    def enable_output(self,switch,channel=1):
+        self.opc()
+        self.write(":OUTP%s %s"%(channel,switch))
+
+
+
+#examples
+def give_one_pulse():
+    dev=Agilent2912("GPIB0::23::INSTR")
+    dev.reset()
+
+
+    dev.source_mode("VOLT")
+    dev.switch_mode("PULSE")
+    dev.trigger_source("BUS")
+
+    dev.offset(0,"VOLT")
+    dev.amplitude(3)
+    dev.duration("5e-3")
+    
+    
+    #dev.enable_output() 
+    dev.init()
+    dev.trigger()
+
+
 
 if __name__:
     
-    dev=Agilent2912("GPIB0::23::INSTR")
+
+    give_one_pulse()
+
+
+    '''
+    dev.arm_source("BUS")
     dev.trigger_source("BUS")
-    dev.switch_mode("PULSE","1")
-    dev.duration("1")
-    dev.amplitude(0)
-    #dev.test_command()
-    #dev.test_command3()
-    
-    #dev.test_command4()
-    #dev.test_command2()
-    sleep(1)
-    dev.trigger()
+    dev.switch_mode("PULSE","2")
+    dev.duration("2")
+    dev.offset(0) #to jest offset
+    dev.amplitude(3)
+    dev.init()
+    for i in range(1):
+        dev.trigger()
     #sleep(1)
-    #dev.reset()
+'''
     print("dziala")
