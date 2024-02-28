@@ -15,8 +15,10 @@ class Agilent2912(Instrument):
     def select_channel(self, channel):
        pass
 
-    def source_mode(self, source_type):
-       pass
+    def source_mode(self,source_type,channel=1):
+        #source_mode=[VOLT,CURR]
+        self.opc()
+        self.write(':SOUR%s:FUNC:MODE %s'%(channel,source_type))
 
     def source_voltage_range(self, voltage):
         pass
@@ -74,10 +76,7 @@ class Agilent2912(Instrument):
         self.opc()
         self.write(":SOUR%s:FUNC:SHAP %s"%(channel,shape))
 
-    def source_mode(self,source_mode,channel=1):
-        #source_mode=[VOLT,CURR]
-        self.opc()
-        self.write(':SOUR%s:FUNC:MODE %s'%(channel,source_mode))
+
 
     def offset(self,amplitude,source_mode,channel=2):
         #source_mode=[VOLT,CURR]
@@ -136,21 +135,4 @@ def give_one_pulse():
 
 
 if __name__:
-    
-
     give_one_pulse()
-
-
-    '''
-    dev.arm_source("BUS")
-    dev.trigger_source("BUS")
-    dev.switch_mode("PULSE","2")
-    dev.duration("2")
-    dev.offset(0) #to jest offset
-    dev.amplitude(3)
-    dev.init()
-    for i in range(1):
-        dev.trigger()
-    #sleep(1)
-'''
-    print("dziala")
