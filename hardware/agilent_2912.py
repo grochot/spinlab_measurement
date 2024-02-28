@@ -134,5 +134,5 @@ def give_one_pulse():
 
 
 
-if __name__:
-    give_one_pulse()
+#if __name__:
+#    give_one_pulse()
