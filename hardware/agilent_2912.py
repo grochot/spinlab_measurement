@@ -78,7 +78,7 @@ class Agilent2912(Instrument):
 
 
 
-    def offset(self,amplitude,source_mode,channel=2):
+    def offset(self,amplitude,source_mode,channel=1):
         #source_mode=[VOLT,CURR]
         self.opc()
         self.write(":SOUR%s:%s:IMM %s"%(channel,source_mode,amplitude))
@@ -110,6 +110,10 @@ class Agilent2912(Instrument):
     def enable_output(self,switch,channel=1):
         self.opc()
         self.write(":OUTP%s %s"%(channel,switch))
+
+    def disable(self,channel=1):
+        self.opc()
+        self.write(":OUTP%s OFF"%channel)
 
 
 

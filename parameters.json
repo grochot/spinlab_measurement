@@ -1,13 +1,13 @@
 {
     "mode": "CIMSMode",
     "sample_name": "test",
-    "vector": "0,2,2",
+    "vector": "0,10,3",
     "mode_resistance": false,
     "mode_fmr": "V-FMR",
     "mode_harmonic": "Field harmonic",
     "set_sourcemeter": "Keithley 2636",
     "set_multimeter": "none",
-    "set_pulsegenerator": "none",
+    "set_pulsegenerator": "Agilent 2912",
     "set_gaussmeter": "none",
     "set_field": "none",
     "set_lockin": "SR830",
@@ -27,7 +27,7 @@
     "address_analyzer": "None",
     "address_generator": "None",
     "address_lfgen": "None",
-    "address_pulsegenerator": "None",
+    "address_pulsegenerator": "GPIB0::23::INSTR",
     "sourcemter_source": "VOLT",
     "sourcemeter_compliance": 1.0,
     "sourcemeter_channel": "Channel A",
@@ -72,5 +72,8 @@
     "rotation_azimuth_constant": 0.0,
     "constant_field_value": 0.0,
     "address_rotationstation": "COM4",
-    "mode_cims": true
+    "mode_cims": true,
+    "pulsegenerator_offset": 0.0,
+    "pulsegenerator_duration": 0.01,
+    "pulsegenerator_pulsetype": "VOLT"
 }
