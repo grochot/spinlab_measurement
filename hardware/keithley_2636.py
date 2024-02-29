@@ -41,8 +41,9 @@ class Keithley2636(Instrument):
             name,
             **kwargs
         )
-        self.ChA = Channel(self, 'a')
+        self.ChA=Channel(self, 'a')
         self.ChB = Channel(self, 'b')
+
 
     @property
     def error(self):
@@ -76,6 +77,9 @@ class Keithley2636(Instrument):
     def opc(self): 
         kk= self.ask("*OPC?")
         return kk
+    
+
+
 class Channel:
 
     def __init__(self, instrument, channel):
@@ -121,7 +125,7 @@ class Channel:
         """Property controlling the channel soource function (Voltage or Current)
         """,
         validator=strict_discrete_set,
-        values={'voltage': 1, 'current': 0},
+        values={'voltage': 1, 'current': 0,'VOLT':1,'CURR':0},
         map_values=True
     )
 
@@ -399,9 +403,18 @@ class Channel:
 
     def read_current(self): 
         return self.ask('measure.i()')
+    
+    def enable_source(self):
+        self.source_output="ON"
+    
 
-# from time import sleep
-# k = Keithley2600('GPIB0::26::INSTR', timeout=50000)
+
+#from time import sleep
+#k = Keithley2636('GPIB0::26::INSTR', timeout=50000)
+#k.ChA.source_output="ON"
+#k.ChA.measure_current()
+#k.ChA.shutdown()
+
 # #print(k.opc())
 # # k.reset()
 # k.ChB.pulse_script_v(0, 0.1, 2,2, 2, 0.001)

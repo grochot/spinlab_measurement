@@ -59,7 +59,7 @@ class SpinLabMeasurement(Procedure):
     set_lfgen = ListParameter("LF Generator", default = parameters_from_file["set_lfgen"], choices = ["SR830", "HP33120A","none"], group_by = {"mode": lambda v: v == "FMRMode"})
     set_analyzer = ListParameter("Vector Analyzer", default = parameters_from_file["set_analyzer"], choices = ['VectorAnalyzer', 'none'], group_by={'mode': lambda v: v=='VSMMode'})
     set_generator = ListParameter("RF Generator", default = parameters_from_file["set_generator"], choices = ["Agilent","WindFreak", "none"], group_by = {"mode": lambda v: v == "FMRMode"})
-    set_pulsegenerator=ListParameter("Pulse Generator", choices=["Agilent 2912","Tektronix 10,070A", "none"], default = parameters_from_file["set_sourcemeter"], group_by="mode", group_condition=lambda v: v=="CIMSMode")
+    set_pulsegenerator=ListParameter("Pulse Generator", choices=["Agilent 2912","Tektronix 10,070A", "none"], default = parameters_from_file["set_pulsegenerator"], group_by="mode", group_condition=lambda v: v=="CIMSMode")
    
     #Hardware address
     address_sourcemeter=ListParameter("Sourcemeter address", default = parameters_from_file["address_sourcemeter"] if parameters_from_file["address_sourcemeter"] in finded_instruments else 'None', choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode" or v=="CIMSMode", "set_sourcemeter": lambda v: v != "none"})
@@ -87,13 +87,13 @@ class SpinLabMeasurement(Procedure):
     
     #########  SETTINGS PARAMETERS ##############
     #SourcemeterParameters 
-    sourcemter_source = ListParameter("Sourcemeter Source", default = parameters_from_file["sourcemter_source"], choices=["VOLT", "CURR"], group_by={"mode": lambda v: v == "ResistanceMode", "set_sourcemeter": lambda v: v != "none"})
-    sourcemeter_compliance = FloatParameter("Sourcemeter compliance", default = parameters_from_file["sourcemeter_compliance"], group_by={"mode": lambda v: v == "ResistanceMode", "set_sourcemeter": lambda v: v != "none"})
-    sourcemeter_channel = ListParameter("Sourcemeter CH", default = parameters_from_file["sourcemeter_channel"], choices = ["Channel A", "Channel B"], group_by={"mode": lambda v: v == "ResistanceMode", "set_sourcemeter": lambda v: v != "none"})
-    sourcemeter_limit = FloatParameter("Sourcemeter limit", default = parameters_from_file["sourcemeter_limit"], group_by={"mode": lambda v: v == "ResistanceMode", "set_sourcemeter": lambda v: v != "none"})
-    sourcemeter_nplc = FloatParameter("Sourcemeter NPLC", default = parameters_from_file["sourcemeter_nplc"], group_by={"mode": lambda v: v == "ResistanceMode", "set_sourcemeter": lambda v: v != "none"})
-    sourcemeter_average = IntegerParameter("Sourcemeter average", default = parameters_from_file["sourcemeter_average"], group_by={"mode": lambda v: v == "ResistanceMode", "set_sourcemeter": lambda v: v != "none"})
-    sourcemeter_bias = FloatParameter("Sourcemeter bias", default = parameters_from_file["sourcemeter_bias"], group_by={"mode": lambda v: v == "ResistanceMode", "set_sourcemeter": lambda v: v != "none"})
+    sourcemter_source = ListParameter("Sourcemeter Source", default = parameters_from_file["sourcemter_source"], choices=["VOLT", "CURR"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode", "set_sourcemeter": lambda v: v != "none"})
+    sourcemeter_compliance = FloatParameter("Sourcemeter compliance", default = parameters_from_file["sourcemeter_compliance"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode", "set_sourcemeter": lambda v: v != "none"})
+    sourcemeter_channel = ListParameter("Sourcemeter CH", default = parameters_from_file["sourcemeter_channel"], choices = ["Channel A", "Channel B"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode", "set_sourcemeter": lambda v: v != "none"})
+    sourcemeter_limit = FloatParameter("Sourcemeter limit", default = parameters_from_file["sourcemeter_limit"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode", "set_sourcemeter": lambda v: v != "none"})
+    sourcemeter_nplc = FloatParameter("Sourcemeter NPLC", default = parameters_from_file["sourcemeter_nplc"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode", "set_sourcemeter": lambda v: v != "none"})
+    sourcemeter_average = IntegerParameter("Sourcemeter average", default = parameters_from_file["sourcemeter_average"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode", "set_sourcemeter": lambda v: v != "none"})
+    sourcemeter_bias = FloatParameter("Sourcemeter bias", default = parameters_from_file["sourcemeter_bias"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode", "set_sourcemeter": lambda v: v != "none"})
 
     #MultimeterParameters 
     multimeter_function = ListParameter("Multimeter function", default = parameters_from_file["multimeter_function"], choices=[ "DCV", "DCV_RATIO", "ACV", "DCI", "ACI", "R2W", "R4W", "FREQ", "PERIOD", "CONTINUITY", "DIODE"], group_by={"mode": lambda v: v == "ResistanceMode", "mode_resistance": lambda v: v == "4-points"})

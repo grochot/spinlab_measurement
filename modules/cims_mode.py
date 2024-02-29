@@ -92,9 +92,12 @@ class CIMSMode():
             case "Keithley 2400":
                 self.sourcemeter_obj = Keithley2400(self.address_sourcemeter)
                 self.sourcemeter_obj.config_average(self.sourcemeter_average)
-            case "Keithley 2636": 
-                self.sourcemeter_obj = Keithley2636(self.address_sourcemeter)
-                self.sourcemeter_obj.set_channel(self.sourcemeter_channel)
+            case "Keithley 2636":
+                if self.sourcemeter_channel=="Channel A":
+                    self.sourcemeter_obj = Keithley2636(self.address_sourcemeter).ChA
+                else:
+                    self.sourcemeter_obj = Keithley2636(self.address_sourcemeter).ChB
+                #self.sourcemeter_obj.set_channel(self.sourcemeter_channel)
                
             case "Agilent 2912": 
                 self.sourcemeter_obj = Agilent2912(self.address_sourcemeter)
