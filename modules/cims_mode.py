@@ -263,7 +263,7 @@ class CIMSMode():
 
     def idle(self):
         self.sourcemeter_obj.shutdown()
-        self.pulsegenerator.disable()
+        self.pulsegenerator_obj.disable()
         sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
         if self.rotationstation: 
             self.rotationstation_obj.goToZero() 
