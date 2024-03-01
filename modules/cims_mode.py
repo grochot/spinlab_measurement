@@ -115,10 +115,11 @@ class CIMSMode():
                 pass
             case "Agilent 2912":
                 self.pulsegenerator_obj=Agilent2912("GPIB0::23::INSTR")
-                self.pulsegenerator_obj.trigger_source("BUS")
                 self.pulsegenerator_obj.source_mode("VOLT")
                 self.pulsegenerator_obj.switch_mode("PULSE")
+                self.pulsegenerator_obj.trigger_source("BUS")
                 self.pulsegenerator_obj.offset(0,"VOLT")
+                
             case _:
                 pass
                 self.pulsegenerator_obj = DummyPulsegenerator(self.address_pulsegenerator)

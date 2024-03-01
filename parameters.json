@@ -5,7 +5,7 @@
     "mode_resistance": false,
     "mode_fmr": "V-FMR",
     "mode_harmonic": "Field harmonic",
-    "set_sourcemeter": "Keithley 2636",
+    "set_sourcemeter": "none",
     "set_multimeter": "none",
     "set_pulsegenerator": "Agilent 2912",
     "set_gaussmeter": "none",

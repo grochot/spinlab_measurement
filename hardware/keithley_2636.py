@@ -412,12 +412,14 @@ class Channel:
 #from time import sleep
 #k = Keithley2636('GPIB0::26::INSTR', timeout=50000)
 #k.ChA.source_output="ON"
+#k.ChA.single_pulse_prepare(1,5e-3,0.1)
+#k.ChA.single_pulse_run()
 #k.ChA.measure_current()
 #k.ChA.shutdown()
 
 # #print(k.opc())
 # # k.reset()
-# k.ChB.pulse_script_v(0, 0.1, 2,2, 2, 0.001)
+#k.ChB.pulse_script_v(0, 0.1, 2,2, 2, 0.001)
 # flag = True
 # pp = k.opc()
 # # while flag:

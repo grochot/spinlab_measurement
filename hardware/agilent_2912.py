@@ -64,8 +64,8 @@ class Agilent2912(Instrument):
 #Mariusz
     def opc(self):
         return 1
-        while self.ask("*OPC?")==1:
-        	time.sleep(100/1000)
+        #while self.ask("*OPC?")==1:
+        #	time.sleep(100/1000)
 
     def duration(self,time,channel=1):
         self.opc()
@@ -115,12 +115,16 @@ class Agilent2912(Instrument):
         self.opc()
         self.write(":OUTP%s OFF"%channel)
 
+    def cls(self):
+        self.opc()
+        self.write("*CLS")
+
 
 
 #examples
-def give_one_pulse():
-    dev=Agilent2912("GPIB0::23::INSTR")
-    dev.reset()
+def give_one_pulse(dev):
+    #dev=Agilent2912("GPIB0::23::INSTR")
+    #dev.reset()
 
 
     dev.source_mode("VOLT")
@@ -128,7 +132,7 @@ def give_one_pulse():
     dev.trigger_source("BUS")
 
     dev.offset(0,"VOLT")
-    dev.amplitude(3)
+    dev.amplitude(1)
     dev.duration("5e-3")
     
     
@@ -136,7 +140,20 @@ def give_one_pulse():
     dev.init()
     dev.trigger()
 
+    sleep(1)
+    #dev.disable()
+
+def clear_error(dev):
+    #dev=Agilent2912("GPIB0::23::INSTR")
+    dev.cls()
 
 
-#if __name__:
-#    give_one_pulse()
+if __name__ == "__main__":
+    dev=Agilent2912("GPIB0::23::INSTR")
+    dev.cls()
+    #give_one_pulse(dev)
+    #dev.init()
+    #dev.trigger()
+    #clear_error()
+
+    pass
