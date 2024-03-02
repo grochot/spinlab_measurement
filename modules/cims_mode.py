@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler()) 
 
 class CIMSMode():
-    def __init__(self, vector:str, fourpoints:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str,pulsegenerator:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool, address_sourcemeter:str, address_multimeter:str,address_pulsegenerator:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_lockin:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float, rotation_axis:str, rotation_polar_constant:float, rotation_azimuth_constant:float,pulsegenerator_duration,pulsegenerator_offset,pulsegenerator_pulsetype) -> None:
+    def __init__(self, vector:str, fourpoints:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str,pulsegenerator:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool, address_sourcemeter:str, address_multimeter:str,address_pulsegenerator:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_measurement:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float, rotation_axis:str, rotation_polar_constant:float, rotation_azimuth_constant:float,pulsegenerator_duration,pulsegenerator_offset,pulsegenerator_pulsetype,pulsegenerator_channel) -> None:
     
         ## parameter initialization
         self.sourcemeter = sourcemeter
@@ -45,7 +45,7 @@ class CIMSMode():
         self.address_gaussmeter = address_gaussmeter
         self.address_switch = address_switch
         self.delay_field = delay_field
-        #self.delay_lockin = delay_lockin
+        self.delay_measurement = delay_measurement
         self.delay_bias = delay_bias
         self.sourcemeter_source = sourcemeter_source
         self.sourcemeter_compliance = sourcemeter_compliance
@@ -76,6 +76,7 @@ class CIMSMode():
         self.pulsegenerator_duration=pulsegenerator_duration
         self.pulsegenerator_offset=pulsegenerator_offset
         self.pulsegenerator_pulsetype=pulsegenerator_pulsetype
+        self.pulsegenerator_channel=pulsegenerator_channel
 
 
     def generate_points(self):
@@ -115,10 +116,10 @@ class CIMSMode():
                 pass
             case "Agilent 2912":
                 self.pulsegenerator_obj=Agilent2912("GPIB0::23::INSTR")
-                self.pulsegenerator_obj.source_mode("VOLT")
-                self.pulsegenerator_obj.switch_mode("PULSE")
+                self.pulsegenerator_obj.source_mode(self.pulsegenerator_pulsetype,channel=self.pulsegenerator_channel)
+                self.pulsegenerator_obj.switch_mode("PULSE",channel=self.pulsegenerator_channel)
                 self.pulsegenerator_obj.trigger_source("BUS")
-                self.pulsegenerator_obj.offset(0,"VOLT")
+                self.pulsegenerator_obj.offset(self.pulsegenerator_offset,self.pulsegenerator_pulsetype,channel=self.pulsegenerator_channel)
                 
             case _:
                 pass
@@ -183,7 +184,7 @@ class CIMSMode():
 
 
         #pulsegenerator initialization
-        self.pulsegenerator_obj.duration("5e-3")
+        self.pulsegenerator_obj.duration(self.pulsegenerator_duration)
             
         
 
@@ -204,10 +205,7 @@ class CIMSMode():
 
         else:
             self.pulsegenerator_obj.amplitude(point)
-            sleep(0.5)
-            #tutaj zmiany amplitudy impulsu
-            #self.actual_set_field = self.field_obj.set_field(point*self.field_constant)
-            #sleep(self.delay_field)
+            sleep(self.delay_measurement)
 
 
         #measure field
@@ -219,7 +217,7 @@ class CIMSMode():
 
 
         #----Give pulse-----------------------------------------------------
-        self.pulsegenerator_obj.init()
+        self.pulsegenerator_obj.init(channel=self.pulsegenerator_channel)
         self.pulsegenerator_obj.trigger()
 
 
@@ -264,7 +262,7 @@ class CIMSMode():
 
     def idle(self):
         self.sourcemeter_obj.shutdown()
-        self.pulsegenerator_obj.disable()
+        self.pulsegenerator_obj.disable(channel=self.pulsegenerator_channel)
         sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
         if self.rotationstation: 
             self.rotationstation_obj.goToZero() 

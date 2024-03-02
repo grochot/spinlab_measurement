@@ -6,33 +6,40 @@ class DummyPulsegenerator:
     
     
 #--------------------------------tektronix10070a------------------------------------------    
-    def amplitude(amplitude):
+    def amplitude(self,amplitude):
         pass
 
     
-    def disable():
+    def disable(self,channel=1):
         pass
 
-    def enable():
+    def enable(self):
         pass
 
-    def duration():
+    def duration(self,time):
         pass
 
-    def offset(offset):
+    def offset(self,offset):
         pass
 
-    def period(period):
+    def period(self,period):
         pass
 
-    def reset():
+    def reset(self):
         pass
     
-    def give_one_pulse():
+    def give_one_pulse(self):
         pass
 
-    def trigger_source(trigger_source):
+    def trigger_source(self,trigger_source):
         #possible values = "INT", "EXT", "MAN", "GPIB"
+        pass
+
+    def init(self,channel=1):
+        pass
+
+
+    def trigger(self):
         pass
 #*-------------------------------------------------------------------------------------
     
