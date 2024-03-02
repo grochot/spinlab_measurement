@@ -228,6 +228,13 @@ class Channel:
         map_values=True
     )
 
+    source_offmode = Instrument.control(
+        'smuX.source.offmode', 'smuX.source.offmode'
+
+
+
+    )
+
     #######################
     # Measurement Methods #
     #######################

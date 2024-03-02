@@ -63,9 +63,10 @@ class Agilent2912(Instrument):
 
 #Mariusz
     def opc(self):
+        #print(self.ask("*OPC?"))
         return 1
         #while self.ask("*OPC?")==1:
-        #	time.sleep(100/1000)
+        #	time.sleep(300/1000)
 
     def duration(self,time,channel=1):
         self.opc()
@@ -150,7 +151,10 @@ def clear_error(dev):
 
 if __name__ == "__main__":
     dev=Agilent2912("GPIB0::23::INSTR")
-    dev.cls()
+    #dev.reset()
+    #dev.disable(channel=1)
+    #dev.opc()
+    #dev.cls()
     #give_one_pulse(dev)
     #dev.init()
     #dev.trigger()
