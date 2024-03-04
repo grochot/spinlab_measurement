@@ -16,28 +16,28 @@ class Tektronix10070a(Instrument):
         self.write('AMPL %d'%amplitude)
 
     
-    def disable():
+    def disable_source(self):
         self.write('DIS')
 
-    def enable():
+    def enable_source(self):
         self.write('ENAB')
 
-    def duration():
+    def duration(self):
         self.write('DUR')
 
-    def offset(offset):
+    def offset(self,offset):
         self.write('OFFS')
 
-    def period(period):
+    def period(self,period):
         self.write('PER %d'%period)
 
-    def reset():
+    def reset(self):
         self.write('*RST')
     
-    def trigger():
+    def trigger(self):
         self.write('*TRG')
 
-    def trigger_source(trigger_source):
+    def trigger_source(self,trigger_source):
         #possible values = "INT", "EXT", "MAN", "GPIB"
         self.write('TRIG %s'%trigger_source)
 

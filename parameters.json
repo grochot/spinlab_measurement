@@ -7,7 +7,7 @@
     "mode_harmonic": "Field harmonic",
     "set_sourcemeter": "none",
     "set_multimeter": "none",
-    "set_pulsegenerator": "Agilent 2912",
+    "set_pulsegenerator": "none",
     "set_gaussmeter": "none",
     "set_field": "none",
     "set_lockin": "SR830",
@@ -27,7 +27,7 @@
     "address_analyzer": "None",
     "address_generator": "None",
     "address_lfgen": "None",
-    "address_pulsegenerator": "GPIB0::23::INSTR",
+    "address_pulsegenerator": "None",
     "sourcemter_source": "VOLT",
     "sourcemeter_compliance": 1.0,
     "sourcemeter_channel": "Channel A",
@@ -72,10 +72,12 @@
     "rotation_azimuth_constant": 0.0,
     "constant_field_value": 0.0,
     "address_rotationstation": "COM4",
-    "mode_cims_internal_relays": true,
+    "mode_cims_relays": true,
     "pulsegenerator_offset": 0.0,
     "pulsegenerator_duration": 0.01,
     "pulsegenerator_pulsetype": "VOLT",
     "pulsegenerator_channel": "2",
-    "delay_measurement": 0.01
+    "delay_measurement": 0.01,
+    "set_relay": "none",
+    "address_relay": "None"
 }

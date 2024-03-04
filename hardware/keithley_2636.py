@@ -116,9 +116,10 @@ class Channel:
         """Property controlling the channel output state (ON of OFF)
         """,
         validator=strict_discrete_set,
-        values={'OFF': 0, 'ON': 1},
+        values={'OFF': 0, 'ON': 1, 'HIGH_Z':2},
         map_values=True
     )
+
 
     source_mode = Instrument.control(
         'source.func', 'source.func=%d',
@@ -228,12 +229,6 @@ class Channel:
         map_values=True
     )
 
-    source_offmode = Instrument.control(
-        'smuX.source.offmode', 'smuX.source.offmode'
-
-
-
-    )
 
     #######################
     # Measurement Methods #
@@ -413,6 +408,9 @@ class Channel:
     
     def enable_source(self):
         self.source_output="ON"
+
+    def high_z_source(self):
+        self.source_output="HIGH_Z"
     
 
 

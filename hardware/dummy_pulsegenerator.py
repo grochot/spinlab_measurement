@@ -10,10 +10,10 @@ class DummyPulsegenerator:
         pass
 
     
-    def disable(self,channel=1):
+    def disable_source(self,channel=1):
         pass
 
-    def enable(self):
+    def enable_source(self):
         pass
 
     def duration(self,time):

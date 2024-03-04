@@ -13,11 +13,13 @@ from hardware.autostation import AutoStation
 from hardware.kriostat import Kriostat
 from hardware.switch import Switch
 from hardware.agilent_2912 import Agilent2912
+from hardware.tektronix_10070a import Tektronix10070a
 from hardware.dummy_sourcemeter import DummySourcemeter
 from hardware.dummy_multimeter import DummyMultimeter
 from hardware.dummy_gaussmeter import DummyGaussmeter
 from hardware.dummy_pulsegenerator import DummyPulsegenerator
 from hardware.dummy_field import DummyField
+from hardware.dummy_relay import DummyRelay
 from hardware.rotation_stage import RotationStage
 from hardware.rotation_stage_dummy import RotationStageDummy
 from logic.vector import Vector
@@ -27,7 +29,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler()) 
 
 class CIMSMode():
-    def __init__(self, vector:str, mode_cims_internal_relays:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str,pulsegenerator:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool, address_sourcemeter:str, address_multimeter:str,address_pulsegenerator:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_measurement:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float, rotation_axis:str, rotation_polar_constant:float, rotation_azimuth_constant:float,pulsegenerator_duration,pulsegenerator_offset,pulsegenerator_pulsetype,pulsegenerator_channel) -> None:
+    def __init__(self, vector:str, mode_cims_relays:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str,pulsegenerator:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool, address_sourcemeter:str, address_multimeter:str,address_pulsegenerator:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_measurement:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float, rotation_axis:str, rotation_polar_constant:float, rotation_azimuth_constant:float,pulsegenerator_duration,pulsegenerator_offset,pulsegenerator_pulsetype,pulsegenerator_channel,set_relay,address_relay) -> None:
     
         ## parameter initialization
         self.sourcemeter = sourcemeter
@@ -64,7 +66,7 @@ class CIMSMode():
         self.gaussmeter_range = gaussmeter_range
         self.gaussmeter_resolution = gaussmeter_resolution
         self.vector = vector
-        self.mode_cims_internal_relays = mode_cims_internal_relays
+        self.mode_cims_relays = mode_cims_relays
         self.address_daq = address_daq
         self.field_step = field_step
         self.rotationstation_port = rotationstation_port
@@ -78,6 +80,8 @@ class CIMSMode():
         self.pulsegenerator_pulsetype=pulsegenerator_pulsetype
         self.pulsegenerator_channel=pulsegenerator_channel
 
+        self.set_relay=set_relay
+        self.address_relay=address_relay
 
     def generate_points(self):
         #Vector initialization
@@ -113,9 +117,9 @@ class CIMSMode():
 
         match self.pulsegenerator:
             case "Tektronix 10,070A":
-                pass
+                self.pulsegenerator_obj=Tektronix10070a(self.address_pulsegenerator)
             case "Agilent 2912":
-                self.pulsegenerator_obj=Agilent2912("GPIB0::23::INSTR")
+                self.pulsegenerator_obj=Agilent2912(self.address_pulsegenerator)
                 self.pulsegenerator_obj.source_mode(self.pulsegenerator_pulsetype,channel=self.pulsegenerator_channel)
                 self.pulsegenerator_obj.switch_mode("PULSE",channel=self.pulsegenerator_channel)
                 self.pulsegenerator_obj.trigger_source("BUS")
@@ -142,6 +146,14 @@ class CIMSMode():
                 self.field_obj = DummyField(self.address_daq)
                 log.warning('Used dummy DAQ.')
 
+        
+        match self.set_relay:
+            case "THIS_DEVICE":
+                pass
+                log.warning("Used THIS_DEVICE")
+            case _:
+                self.relay_obj = DummyRelay(self.address_daq)
+                log.warning('Used dummy relay.')              
         #Rotation_station object initialization
         if self.rotationstation: 
             try:
@@ -161,13 +173,19 @@ class CIMSMode():
             self.sourcemeter_obj.current_range = self.sourcemeter_limit
             self.sourcemeter_obj.compliance_current = self.sourcemeter_compliance
             self.sourcemeter_obj.source_voltage = self.sourcemeter_bias
-            self.sourcemeter_obj.enable_source()
+            if self.mode_cims_relays:
+                self.sourcemeter_obj.high_z_source()
+            else:
+                self.sourcemeter_obj.enable_source()
             self.sourcemeter_obj.measure_current(self.sourcemeter_nplc, self.sourcemeter_limit)
         else: 
             self.sourcemeter_obj.voltage_range = self.sourcemeter_limit
             self.sourcemeter_obj.compliance_voltage = self.sourcemeter_compliance
             self.sourcemeter_obj.source_current = self.sourcemeter_bias
-            self.sourcemeter_obj.enable_source()
+            if self.mode_cims_relays:
+                self.sourcemeter_obj.high_z_source()
+            else:
+                self.sourcemeter_obj.enable_source()
             self.sourcemeter_obj.measure_voltage(self.sourcemeter_nplc, self.sourcemeter_limit)
         
 
@@ -185,6 +203,8 @@ class CIMSMode():
 
         #pulsegenerator initialization
         self.pulsegenerator_obj.duration(self.pulsegenerator_duration)
+        #dodajj od tektronixa wlaczenie generatora (jego outputu low_Z)
+        #jeszcze od agilenta
             
         
 
@@ -221,18 +241,39 @@ class CIMSMode():
 
 
         #----Give pulse-----------------------------------------------------
-        self.pulsegenerator_obj.init(channel=self.pulsegenerator_channel)
-        self.pulsegenerator_obj.trigger()
+        '''if self.pulsegenerator=="Agilent 2912":
+            self.pulsegenerator_obj.init(channel=self.pulsegenerator_channel) #turn on channel
+        self.pulsegenerator_obj.trigger()'''
+
+
+        match self.pulsegenerator:
+            case "Tektronix 10,070A":
+                if self.mode_cims_relays:
+                    self.relay_obj.enable_source()
+                    self.pulsegenerator_obj.trigger()
+                else:
+                    self.pulsegenerator_obj.trigger()
+            case "Agilent 2912":
+                self.pulsegenerator_obj.init(channel=self.pulsegenerator_channel)
+                self.pulsegenerator_obj.trigger()
+
         #-------------------------------------------------------------------
 
-        if self.mode_cims_internal_relays:
-            #wyłączam output generatora
-            sleep(1)
-            self.pulsegenerator_obj.disable(channel=self.pulsegenerator_channel)
-            sleep(1)
+        #wyłączam output generatora
+        if self.mode_cims_relays:
+            match self.pulsegenerator:
+                case "Tektronix 10,070A":
+                    self.relay_obj.high_z_source()
+                    log.info("Disabling output by external relay")
+                case "Agilent 2912":
+                    sleep(1) #do wyrzucenia gdy opc() bedzie dzialac
+                    self.pulsegenerator_obj.disable_source(channel=self.pulsegenerator_channel)
+                    sleep(1)
 
 
-        #zalaczenie miernika    
+        #turn on sourcemeter inputs
+        if self.mode_cims_relays:
+            self.sourcemeter_obj.enable_source()
 
         #Measure voltage/current/resistance
         if self.sourcemeter_source == "VOLT":
@@ -259,6 +300,8 @@ class CIMSMode():
 
 
         #odlaczenie miernika
+        if self.mode_cims_relays:
+            self.sourcemeter_obj.high_z_source()
             
         data = {
             'Voltage (V)':self.tmp_voltage, 
@@ -277,7 +320,7 @@ class CIMSMode():
 
     def idle(self):
         self.sourcemeter_obj.shutdown()
-        self.pulsegenerator_obj.disable(channel=self.pulsegenerator_channel)
+        self.pulsegenerator_obj.disable_source(channel=self.pulsegenerator_channel)
         sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
         if self.rotationstation: 
             self.rotationstation_obj.goToZero() 

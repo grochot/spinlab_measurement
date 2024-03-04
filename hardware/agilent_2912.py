@@ -108,11 +108,11 @@ class Agilent2912(Instrument):
         self.opc()
         self.write(':INIT:TRAN (@%s)'%channel)
 
-    def enable_output(self,switch,channel=1):
+    def enable_source(self,channel=1):
         self.opc()
-        self.write(":OUTP%s %s"%(channel,switch))
+        self.write(":OUTP%s ON"%(channel))
 
-    def disable(self,channel=1):
+    def disable_source(self,channel=1):
         self.opc()
         self.write(":OUTP%s OFF"%channel)
 
