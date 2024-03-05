@@ -23,8 +23,8 @@ class Agilent2912(Instrument):
     def source_voltage_range(self, voltage):
         pass
 
-    def compliance_current(self, current):
-        pass
+    def compliance_current(self, current,channel=1):
+        self.write(':SENS%s:CURR:PROT %s'%(channel,current))
         
     def enable_source(self):
         pass
@@ -36,8 +36,9 @@ class Agilent2912(Instrument):
         pass
     def voltage_nplc(self, nplc):
         pass
-    def compliance_voltage(self, voltage):
-        pass
+    
+    def compliance_voltage(self, voltage,channel=1):
+        self.write(':SENS%s:VOLT:PROT %s'%(channel,voltage))
     
     def current_nplc(self, nplc):
         pass
@@ -63,11 +64,9 @@ class Agilent2912(Instrument):
 
 #Mariusz
     def opc(self):
-        #print(self.ask("*OPC?"))
-        return 1
-        #while self.ask("*OPC?")==1:
-        #	time.sleep(300/1000)
-
+        while self.ask("*OPC?")==1:
+            sleep(350/1000)
+        
     def duration(self,time,channel=1):
         self.opc()
         self.write(":SOUR%s:PULS:WIDT %s"%(channel,time))
@@ -125,24 +124,24 @@ class Agilent2912(Instrument):
 #examples
 def give_one_pulse(dev):
     #dev=Agilent2912("GPIB0::23::INSTR")
-    #dev.reset()
+    dev.reset()
 
 
-    dev.source_mode("VOLT")
-    dev.switch_mode("PULSE")
+    dev.source_mode("VOLT",channel=2)
+    dev.switch_mode("PULSE",channel=2)
     dev.trigger_source("BUS")
 
-    dev.offset(0,"VOLT")
-    dev.amplitude(1)
-    dev.duration("5e-3")
+    dev.offset(0,"VOLT",channel=2)
+    dev.amplitude(4,channel=2)
+    dev.duration("5e-3",channel=2)
     
     
     #dev.enable_output() 
-    dev.init()
+    dev.init(channel=2)
     dev.trigger()
 
     sleep(1)
-    #dev.disable()
+    dev.disable_source(channel=2)
 
 def clear_error(dev):
     #dev=Agilent2912("GPIB0::23::INSTR")
@@ -153,11 +152,12 @@ if __name__ == "__main__":
     dev=Agilent2912("GPIB0::23::INSTR")
     #dev.reset()
     #dev.disable(channel=1)
+    dev.compliance_voltage(1e-3,1)
     #dev.opc()
     #dev.cls()
     #give_one_pulse(dev)
     #dev.init()
     #dev.trigger()
-    #clear_error()
+    #clear_error(dev)
 
     pass
