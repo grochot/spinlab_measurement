@@ -231,11 +231,7 @@ class CIMSMode():
                    
 
         else:
-            match self.pulsegenerator:
-                case "Agilent 2912":
-                    self.pulsegenerator_obj.amplitude(point,channel=self.pulsegenerator_channel)
-                case "Tektronix 10070A":
-                    pass
+            pass
             
 
 
@@ -252,19 +248,16 @@ class CIMSMode():
 
 
         #----Give pulse-----------------------------------------------------
-        '''if self.pulsegenerator=="Agilent 2912":
-            self.pulsegenerator_obj.init(channel=self.pulsegenerator_channel) #turn on channel
-        self.pulsegenerator_obj.trigger()'''
-
-
         match self.pulsegenerator:
             case "Tektronix 10,070A":
                 if self.mode_cims_relays:
+                    self.pulsegenerator_obj.amplitude(point,channel=self.pulsegenerator_channel)
                     self.relay_obj.enable_source()
                     self.pulsegenerator_obj.trigger()
                 else:
                     self.pulsegenerator_obj.trigger()
             case "Agilent 2912":
+                self.pulsegenerator_obj.amplitude(point,channel=self.pulsegenerator_channel)
                 self.pulsegenerator_obj.init(channel=self.pulsegenerator_channel)
                 self.pulsegenerator_obj.trigger()
 

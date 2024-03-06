@@ -264,23 +264,23 @@ class Channel:
             self.current_range = current
        
     
-    def single_pulse_prepare(self, voltage, time, range):
+    def single_pulse_prepare(self, voltage, time, range,channel="a"):
         log.info("generate pulse")
         self.write('trigger.source.listv({%f})' %voltage )
-        self.write('trigger.source.action = smub.ENABLE ')
-        self.write('trigger.measure.action = smub.DISABLE ')
+        self.write('trigger.source.action = smu%s.ENABLE '%channel)
+        self.write('trigger.measure.action = smu%s.DISABLE '%channel)
         self.write('trigger.source.limiti = 0.1')
         self.write('source.rangev = %f' %range)
         self.writeall('trigger.timer[1].delay = %f' %time)
         self.writeall('trigger.timer[1].count = 1 ')
         self.writeall('trigger.timer[1].passthrough = false ')
-        self.writeall('trigger.timer[1].stimulus = smub.trigger.ARMED_EVENT_ID ')
+        self.writeall('trigger.timer[1].stimulus = smu%s.trigger.ARMED_EVENT_ID '%channel)
         self.write('trigger.source.stimulus = 0')
-        self.write('trigger.endpulse.action = smub.SOURCE_IDLE ')
+        self.write('trigger.endpulse.action = smu%s.SOURCE_IDLE '%channel)
         self.write('trigger.endpulse.stimulus = trigger.timer[1].EVENT_ID ')
         self.write('trigger.count = 1')
         self.write('trigger.arm.count = 1 ')
-        self.write('source.output = smub.OUTPUT_ON')
+        self.write('source.output = smu%s.OUTPUT_ON'%channel)
         
     def single_pulse_run(self):
         self.write('trigger.initiate()')
@@ -411,16 +411,18 @@ class Channel:
 
     def high_z_source(self):
         self.source_output="HIGH_Z"
+
     
 
 if __name__ == "__main__":
 #from time import sleep
     k = Keithley2636('GPIB0::26::INSTR', timeout=50000)
-    k.ChB.source_output="ON"
-    k.ChB.single_pulse_prepare(1,5e-3,1)
-    k.ChB.single_pulse_run()
-    k.ChB.measure_current()
-    k.ChB.shutdown()
+   #k.reset()
+    k.ChA.source_output="ON"
+    k.ChA.single_pulse_prepare(4,1e-6,5)
+    k.ChA.single_pulse_run()
+    #k.ChA.measure_current()
+    k.ChA.shutdown()
 
 # #print(k.opc())
 # # k.reset()
