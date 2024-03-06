@@ -1,16 +1,12 @@
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+
 from time import sleep
 
 import logging
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler())
 
-######## TO DO #########
-class channel:
-    def __init__(instrument,channel):
-        self.channel=channel
-
-    
 
 
 class Agilent2912(Instrument):
@@ -22,6 +18,11 @@ class Agilent2912(Instrument):
             includeSCPI=True,
             **kwargs
         )
+
+        
+        self.ChA=Channel('1')
+        self.ChB=Channel('2')
+
 
     def opc(self):
         while self.ask("*OPC?")==1:
@@ -177,8 +178,21 @@ class Agilent2912(Instrument):
         log.warning("Using exscessed function")
         self.disable_source(channel)
 
+class Channel():
 
+    def __init__(self,channel):
+        self.channel=channel
 
+    source_mode = Instrument.control(
+        ":SOUR:FUNC?", ":SOUR{}:FUNC %s".format(self.channel),
+        """ A string property that controls the source mode, which can
+        take the values 'current' or 'voltage'. """,
+        validator=strict_discrete_set,
+        values={'CURR': 'CURR', 'VOLT': 'VOLT'},
+        map_values=True
+    )
+    
+ 
 #examples they need an instance of class
 def give_one_pulse(dev):
     #dev=Agilent2912("GPIB0::23::INSTR")
@@ -211,10 +225,11 @@ def measure():
 
 if __name__ == "__main__":
     dev=Agilent2912("GPIB0::23::INSTR")
+    dev.ChA.source_mode="CURR"
     #dev.reset()
     #dev.disable(channel=1)
     #dev.compliance_voltage(1e-3,1)
-    #dev.opc()
+    dev.opc()
     #dev.cls()
     #give_one_pulse(dev)
     #dev.init()
