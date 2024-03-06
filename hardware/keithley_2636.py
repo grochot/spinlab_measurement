@@ -413,14 +413,14 @@ class Channel:
         self.source_output="HIGH_Z"
     
 
-
+if __name__ == "__main__":
 #from time import sleep
-#k = Keithley2636('GPIB0::26::INSTR', timeout=50000)
-#k.ChA.source_output="ON"
-#k.ChA.single_pulse_prepare(1,5e-3,0.1)
-#k.ChA.single_pulse_run()
-#k.ChA.measure_current()
-#k.ChA.shutdown()
+    k = Keithley2636('GPIB0::26::INSTR', timeout=50000)
+    k.ChB.source_output="ON"
+    k.ChB.single_pulse_prepare(1,5e-3,1)
+    k.ChB.single_pulse_run()
+    k.ChB.measure_current()
+    k.ChB.shutdown()
 
 # #print(k.opc())
 # # k.reset()
