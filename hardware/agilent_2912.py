@@ -1,6 +1,6 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
-
+from pymeasure.adapters import Adapter
 from time import sleep
 
 import logging
@@ -10,18 +10,17 @@ log.addHandler(logging.NullHandler())
 
 
 class Agilent2912(Instrument):
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, name="Agilent 2912 SourceMeter", **kwargs):
         kwargs.setdefault('read_termination', '\n')
         super().__init__(
-            resourceName,
-            "Agilent 2912",
-            includeSCPI=True,
+            adapter,
+            name,
             **kwargs
         )
 
         
-        self.ChA=Channel('1')
-        self.ChB=Channel('2')
+        self.ChA=Channel(self,'1')
+        self.ChB=Channel(self,'2')
 
 
     def opc(self):
@@ -178,19 +177,25 @@ class Agilent2912(Instrument):
         log.warning("Using exscessed function")
         self.disable_source(channel)
 
-class Channel():
 
-    def __init__(self,channel):
-        self.channel=channel
+channel=1
+class Channel:
+    def write(self, cmd):
+        self.instrument.write(f'{cmd}')
 
+    def __init__(self, instrument, channel2):
+        self.instrument = instrument
+        channel = channel2
+
+
+    
     source_mode = Instrument.control(
-        ":SOUR:FUNC?", ":SOUR{}:FUNC %s".format(self.channel),
-        """ A string property that controls the source mode, which can
-        take the values 'current' or 'voltage'. """,
-        validator=strict_discrete_set,
-        values={'CURR': 'CURR', 'VOLT': 'VOLT'},
-        map_values=True
-    )
+        ":SOUR:FUNC?", ":SOUR{}:FUNC:MODE %s".format(channel),
+    """ A string property that controls the source mode, which can
+    take the values 'current' or 'voltage'. """,
+    validator=strict_discrete_set,
+    values={'CURR': 'CURR', 'VOLT': 'VOLT'},
+    map_values=True)
     
  
 #examples they need an instance of class
@@ -229,7 +234,7 @@ if __name__ == "__main__":
     #dev.reset()
     #dev.disable(channel=1)
     #dev.compliance_voltage(1e-3,1)
-    dev.opc()
+    #dev.opc()
     #dev.cls()
     #give_one_pulse(dev)
     #dev.init()
