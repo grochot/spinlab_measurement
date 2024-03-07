@@ -178,19 +178,21 @@ class Agilent2912(Instrument):
         self.disable_source(channel)
 
 
-channel=1
-class Channel:
+class Channel(Agilent2912):
+    def ask(self, cmd):
+        return self.instrument.ask(f'{cmd}')
+
     def write(self, cmd):
+        while self.ask("*OPC?")==1:
+            sleep(350/1000)
         self.instrument.write(f'{cmd}')
 
-    def __init__(self, instrument, channel2):
+    def __init__(self, instrument, channel):
         self.instrument = instrument
-        channel = channel2
-
-
+        self.channel=channel
     
-    source_mode = Instrument.control(
-        ":SOUR:FUNC?", ":SOUR{}:FUNC:MODE %s".format(channel),
+    source_mode = Instrument.control(self,
+        ":SOUR:FUNC?", ":SOUR{}:FUNC:MODE %s".format(self.channel),
     """ A string property that controls the source mode, which can
     take the values 'current' or 'voltage'. """,
     validator=strict_discrete_set,
@@ -230,7 +232,8 @@ def measure():
 
 if __name__ == "__main__":
     dev=Agilent2912("GPIB0::23::INSTR")
-    dev.ChA.source_mode="CURR"
+    dev.ChA.source_mode2="VOLT"
+    #dev.ChA.source_mode2("COS")
     #dev.reset()
     #dev.disable(channel=1)
     #dev.compliance_voltage(1e-3,1)
