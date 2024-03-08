@@ -1,4 +1,4 @@
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 from pymeasure.adapters import Adapter
 from time import sleep
@@ -10,22 +10,33 @@ log.addHandler(logging.NullHandler())
 
 
 class Agilent2912(Instrument):
-    def __init__(self, adapter, name="Agilent 2912 SourceMeter", **kwargs):
+    def __init__(self, adapter, name="Agilent 2912 SourceMeter",placeholder='ch', **kwargs):
         kwargs.setdefault('read_termination', '\n')
         super().__init__(
             adapter,
+            placeholder,
             name,
             **kwargs
         )
 
         
-        self.ChA=Channel(self,'1')
-        self.ChB=Channel(self,'2')
+        #self.ChA=My_channel(self,'1')
+        #self.ChB=My_channel(self,'2')
 
 
     def opc(self):
         while self.ask("*OPC?")==1:
             sleep(350/1000)
+
+
+    source_mode = Instrument.control(
+        ":SOUR:FUNC?", ":SOUR{ch}:FUNC:MODE %s",
+    """ A string property that controls the source mode, which can
+    take the values 'current' or 'voltage'. """)
+    #validator=strict_discrete_set,
+    #values={'CURR': 'CURR', 'VOLT': 'VOLT'},
+    #map_values=True)
+
 
     def select_channel(self, channel):
         log.error("Not implemented yet")
@@ -178,11 +189,12 @@ class Agilent2912(Instrument):
         self.disable_source(channel)
 
 
-class Channel(Agilent2912):
+class My_channel(Agilent2912,Channel):
     def ask(self, cmd):
         return self.instrument.ask(f'{cmd}')
 
     def write(self, cmd):
+        print("to ten write")
         while self.ask("*OPC?")==1:
             sleep(350/1000)
         self.instrument.write(f'{cmd}')
@@ -190,14 +202,16 @@ class Channel(Agilent2912):
     def __init__(self, instrument, channel):
         self.instrument = instrument
         self.channel=channel
+        #Channel.insert_id(Agilent2912,channel)
+
     
-    source_mode = Instrument.control(self,
-        ":SOUR:FUNC?", ":SOUR{}:FUNC:MODE %s".format(self.channel),
+    source_mode = Instrument.control(
+        ":SOUR:FUNC?", ":SOUR{ch}:FUNC:MODE %s",
     """ A string property that controls the source mode, which can
-    take the values 'current' or 'voltage'. """,
-    validator=strict_discrete_set,
-    values={'CURR': 'CURR', 'VOLT': 'VOLT'},
-    map_values=True)
+    take the values 'current' or 'voltage'. """)
+    #validator=strict_discrete_set,
+    #values={'CURR': 'CURR', 'VOLT': 'VOLT'},
+    #map_values=True)
     
  
 #examples they need an instance of class
@@ -232,7 +246,12 @@ def measure():
 
 if __name__ == "__main__":
     dev=Agilent2912("GPIB0::23::INSTR")
-    dev.ChA.source_mode2="VOLT"
+    ch=Channel(dev,'1')
+    ch.insert_id(":SOUR{ch}:FUNC:MODE CURR")
+    #dev.source_mode="CURR"
+    #ch.insert_id(dev,'1')
+
+    #dev.ChA.source_mode="CURR"
     #dev.ChA.source_mode2("COS")
     #dev.reset()
     #dev.disable(channel=1)
