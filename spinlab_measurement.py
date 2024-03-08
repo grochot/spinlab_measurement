@@ -251,11 +251,31 @@ class MainWindow(ManagedDockWindow):
             sequencer=True,                                  
             sequencer_inputs=[],
             inputs_in_scrollarea=True,
+            refresh_button=True,
             
         )
+
+        self.refresh_button = QtWidgets.QPushButton("Refresh")
+        self.refresh_button.clicked.connect(self.refresh_adresses)
+        self.toolbar.addWidget(self.refresh_button)
        
         self.setWindowTitle('SpinLab Measurement System v.0.55')
         #self.directory = self.procedure_class.path_file.ReadFile()
+
+    def refresh_adresses(self):
+        found_instruments = self.procedure_class.find_instruments.show_instrument()
+
+        self.inputs.address_sourcemeter.setChoices(found_instruments)
+        self.inputs.address_multimeter.setChoices(found_instruments)
+        self.inputs.address_gaussmeter.setChoices(found_instruments)
+        self.inputs.address_lockin.setChoices(found_instruments)
+        self.inputs.address_switch.setChoices(found_instruments)
+        self.inputs.address_analyzer.setChoices(found_instruments)
+        self.inputs.address_generator.setChoices(found_instruments)
+        self.inputs.address_daq.setChoices(found_instruments)
+        self.inputs.address_lfgen.setChoices(found_instruments)
+        self.inputs.address_rotationstation.setChoices(found_instruments)
+
     
     def set_calibration_constant(self, value):
         self.inputs.field_constant.setValue(value)
