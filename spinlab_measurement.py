@@ -47,7 +47,7 @@ class SpinLabMeasurement(Procedure):
     #Hardware
     set_measdevice = ListParameter("Measurement Device", choices=["LockIn", "Multimeter"], default=parameters_from_file["set_measdevice"], group_by={"mode": lambda v: v=="FMRMode"})
     set_sourcemeter=ListParameter("Sourcemeter", choices=["Keithley 2400", "Keithley 2636", "Agilent 2912", "none"], default = parameters_from_file["set_sourcemeter"], group_by="mode", group_condition=lambda v: v == "ResistanceMode")
-    set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"],default = parameters_from_file["set_multimeter"], group_by={"mode": lambda v: v=="ResistanceMode" or v == "FMRMode", "mode_resistance": lambda v: v=="4-points"})
+    set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"],default = parameters_from_file["set_multimeter"], group_by={"mode": lambda v: v=="ResistanceMode" or v == "FMRMode", "set_measdevice":"Multimeter"})
     set_gaussmeter = ListParameter("Gaussmeter", default = parameters_from_file["set_gaussmeter"], choices=["Lakeshore", "none"], group_by={"mode":lambda v: v == "ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" })
     set_field = ListParameter("Magnetic Field", default = parameters_from_file["set_field"], choices = ["DAQ", "Lockin", "none"], group_by = {"mode": lambda v: v == "ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" })
     set_lockin = ListParameter("Lockin", default = parameters_from_file["set_lockin"], choices = ["Zurich", "SR830", "none"], group_by = {"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "set_measdevice":lambda v: v=="LockIn"})
@@ -61,7 +61,7 @@ class SpinLabMeasurement(Procedure):
    
     #Hardware address
     address_sourcemeter=ListParameter("Sourcemeter address", default = parameters_from_file["address_sourcemeter"] if parameters_from_file["address_sourcemeter"] in finded_instruments else 'None', choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode", "set_sourcemeter": lambda v: v != "none"})
-    address_multimeter=ListParameter("Multimeter address", default = parameters_from_file["address_multimeter"] if parameters_from_file["address_multimeter"] in finded_instruments else 'None', choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode" or v=="FMRMode", "mode_resistance": lambda v: v == "4-points"})
+    address_multimeter=ListParameter("Multimeter address", default = parameters_from_file["address_multimeter"] if parameters_from_file["address_multimeter"] in finded_instruments else 'None', choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode" or v=="FMRMode", "set_measdevice":"Multimeter"})
     address_gaussmeter=ListParameter("Gaussmeter address",default = parameters_from_file["address_gaussmeter"] if parameters_from_file["address_gaussmeter"] in finded_instruments else 'None',   choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" , "set_gaussmeter": lambda v: v != "none"})
     address_lockin=ListParameter("Lockin address", default = parameters_from_file["address_lockin"] if parameters_from_file["address_lockin"] in finded_instruments else 'None',  choices=finded_instruments, group_by = {"mode": lambda v: v=="HarmonicMode" or v == "FMRMode", "set_lockin": lambda v: v!="none", "set_measdevice":lambda v: v=="LockIn"})
     address_switch=ListParameter("Switch address",default = parameters_from_file["address_switch"] if parameters_from_file["address_switch"] in finded_instruments else 'None',  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode"})
@@ -92,12 +92,12 @@ class SpinLabMeasurement(Procedure):
     sourcemeter_bias = FloatParameter("Sourcemeter bias", default = parameters_from_file["sourcemeter_bias"], group_by={"mode": lambda v: v == "ResistanceMode", "set_sourcemeter": lambda v: v != "none"})
 
     #MultimeterParameters 
-    multimeter_function = ListParameter("Multimeter function", default = parameters_from_file["multimeter_function"], choices=[ "DCV", "DCV_RATIO", "ACV", "DCI", "ACI", "R2W", "R4W", "FREQ", "PERIOD", "CONTINUITY", "DIODE"], group_by={"mode": lambda v: v == "ResistanceMode" or "FMRMode", "mode_resistance": lambda v: v == "4-points"})
-    multimeter_resolution = FloatParameter("Multimeter resolution",default = parameters_from_file["multimeter_resolution"], group_by={"mode": lambda v: v == "ResistanceMode" or "FMRMode", "mode_resistance": lambda v: v == "4-points"})
-    multimeter_autorange = BooleanParameter("Multimeter autorange", default = parameters_from_file["multimeter_autorange"], group_by={"mode": lambda v: v == "ResistanceMode" or "FMRMode", "mode_resistance": lambda v: v == "4-points"})
-    multimeter_range = FloatParameter("Multimeter range", default = parameters_from_file["multimeter_range"], group_by={"mode": lambda v: v == "ResistanceMode" or "FMRMode", "mode_resistance": lambda v: v == "4-points"})
-    multimeter_average = IntegerParameter("Multimeter average", default = parameters_from_file["multimeter_average"], group_by={"mode": lambda v: v == "ResistanceMode" or "FMRMode", "mode_resistance": lambda v: v == "4-points"})
-    multimeter_nplc = ListParameter("Multimeter NPLC", default = parameters_from_file["multimeter_nplc"], choices=[0.02, 0.2, 1, 10, 100, 'MIN', 'MAX'], group_by={"mode": lambda v: v == "ResistanceMode" or "FMRMode", "mode_resistance": lambda v: v == "4-points"})
+    multimeter_function = ListParameter("Multimeter function", default = parameters_from_file["multimeter_function"], choices=[ "DCV", "DCV_RATIO", "ACV", "DCI", "ACI", "R2W", "R4W", "FREQ", "PERIOD", "CONTINUITY", "DIODE"], group_by={"mode": lambda v: v == "ResistanceMode" or "FMRMode", "set_measdevice":"Multimeter"})
+    multimeter_resolution = FloatParameter("Multimeter resolution",default = parameters_from_file["multimeter_resolution"], group_by={"mode": lambda v: v == "ResistanceMode" or "FMRMode", "set_measdevice":"Multimeter"})
+    multimeter_autorange = BooleanParameter("Multimeter autorange", default = parameters_from_file["multimeter_autorange"], group_by={"mode": lambda v: v == "ResistanceMode" or "FMRMode", "set_measdevice":"Multimeter"})
+    multimeter_range = FloatParameter("Multimeter range", default = parameters_from_file["multimeter_range"], group_by={"mode": lambda v: v == "ResistanceMode" or "FMRMode", "set_measdevice":"Multimeter"})
+    multimeter_average = IntegerParameter("Multimeter average", default = parameters_from_file["multimeter_average"], group_by={"mode": lambda v: v == "ResistanceMode" or "FMRMode", "set_measdevice":"Multimeter"})
+    multimeter_nplc = ListParameter("Multimeter NPLC", default = parameters_from_file["multimeter_nplc"], choices=[0.02, 0.2, 1, 10, 100, 'MIN', 'MAX'], group_by={"mode": lambda v: v == "ResistanceMode" or "FMRMode", "set_measdevice":"Multimeter"})
     
     #LockinParameters
     lockin_average = IntegerParameter("Lockin Average", default = parameters_from_file["lockin_average"], group_by={"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "set_lockin": lambda v: v != "none", "set_measdevice":lambda v: v=="LockIn"})
@@ -204,6 +204,7 @@ class SpinLabMeasurement(Procedure):
                 self.harmonicmode.end()
             case "FMRMode":
                 self.counter = 0
+                sleep(15)
                 for point in self.points:
                    self.result = self.fmrmode.operating(point)
                    self.emit('results', self.result) 
@@ -219,6 +220,10 @@ class SpinLabMeasurement(Procedure):
                 self.emit('results', self.result[0])
                 window.set_calibration_constant(self.result[1])
                 self.calibrationmode.end()
+                
+                self.parameters["field_constant"] = self.result[1]
+                self.save_parameter.WriteFile(self.parameters)
+
 
     
     def shutdown(self):
