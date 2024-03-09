@@ -109,8 +109,11 @@ class CIMSMode():
                     self.sourcemeter_obj = Keithley2636(self.address_sourcemeter).ChB
                 #self.sourcemeter_obj.set_channel(self.sourcemeter_channel)
                
-            case "Agilent 2912": 
-                self.sourcemeter_obj = Agilent2912(self.address_sourcemeter)
+            case "Agilent 2912":
+                if self.sourcemeter_channel="Channel 1"
+                    self.sourcemeter_obj = Agilent2912(self.address_sourcemeter).ChA
+                else:
+                    self.sourcemeter_obj = Agilent2912(self.address_sourcemeter).ChB
             case _: 
                 self.sourcemeter_obj = DummySourcemeter(self.address_sourcemeter)
                 log.warning('Used dummy Sourcemeter.')
@@ -120,11 +123,15 @@ class CIMSMode():
             case "Tektronix 10,070A":
                 self.pulsegenerator_obj=Tektronix10070a(self.address_pulsegenerator)
             case "Agilent 2912":
-                self.pulsegenerator_obj=Agilent2912(self.address_pulsegenerator)
-                self.pulsegenerator_obj.source_mode(self.pulsegenerator_pulsetype,channel=self.pulsegenerator_channel)
-                self.pulsegenerator_obj.switch_mode("PULSE",channel=self.pulsegenerator_channel)
-                self.pulsegenerator_obj.trigger_source("BUS")
-                self.pulsegenerator_obj.offset(self.pulsegenerator_offset,self.pulsegenerator_pulsetype,channel=self.pulsegenerator_channel)
+                if self.sourcemeter_channel="Channel 1"
+                    self.pulsegenerator_obj = Agilent2912(self.address_sourcemeter).ChA
+                else:
+                    self.pulsegenerator_obj = Agilent2912(self.address_sourcemeter).ChB
+
+                self.pulsegenerator_obj.source_mode=self.pulsegenerator_pulsetype
+                self.pulsegenerator_obj.switch_mode="PULSE"
+                self.pulsegenerator_obj.trigger_source="BUS"
+                self.pulsegenerator_obj.offset=(self.pulsegenerator_offset,self.pulsegenerator_pulsetype)
                 
             case _:
                 pass
