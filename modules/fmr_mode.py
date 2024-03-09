@@ -2,11 +2,10 @@ from time import sleep
 import math
 import numpy as np
 import logging
-from hardware.daq import DAQ
 
+from hardware.daq import DAQ
 from hardware.lakeshore import Lakeshore
 from hardware.windfreak import Windfreak
-
 from hardware.sr830 import SR830
 from hardware.generator_agilent import FGenDriver
 from hardware.hp_33120a import LFGenDriver
@@ -19,6 +18,7 @@ from hardware.dummy_gaussmeter import DummyGaussmeter
 from hardware.dummy_field import DummyField
 from hardware.rotation_stage import RotationStage
 from hardware.rotation_stage_dummy import RotationStageDummy
+
 from logic.vector import Vector
 from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity 
 from logic.sweep_field_to_zero import sweep_field_to_zero 
@@ -41,23 +41,23 @@ class FMRMode():
         delay_field:float, 
         delay_lockin:float,
         delay_bias:float, 
-        lockin_average, 
-        lockin_input_coupling,
-        lockin_reference_source,
-        lockin_dynamic_reserve,
-        lockin_input_connection,
-        lockin_sensitivity,
-        lockin_timeconstant,
-        lockin_autophase,
-        lockin_frequency, 
-        lockin_harmonic, 
-        lockin_sine_amplitude, 
-        lockin_channel1, 
-        lockin_channel2,
-        set_field_value,
-        field_constant,
-        gaussmeter_range, 
-        gaussmeter_resolution, 
+        lockin_average:int, 
+        lockin_input_coupling:str,
+        lockin_reference_source:str,
+        lockin_dynamic_reserve:str,
+        lockin_input_connection:str,
+        lockin_sensitivity:str,
+        lockin_timeconstant:str,
+        lockin_autophase:bool,
+        lockin_frequency:float, 
+        lockin_harmonic:int, 
+        lockin_sine_amplitude:float, 
+        lockin_channel1:str, 
+        lockin_channel2:str,
+        set_field_value:float,
+        field_constant:float,
+        gaussmeter_range:int, 
+        gaussmeter_resolution:str, 
         address_generator:str, 
         set_field_constant_value:float, 
         set_frequency_constant_value:float, 
@@ -184,7 +184,6 @@ class FMRMode():
 
             self.lockin_obj = DummyLockin()
             self.set_lfgen = "none"
-        
         match self.set_gaussmeter: 
             case "Lakeshore": 
                 self.gaussmeter_obj = Lakeshore(self.address_gaussmeter)
@@ -224,9 +223,9 @@ class FMRMode():
                 self.lfgen_obj = DummyLFGenDriver()
                 log.warning('Used dummy Modulation Generator.')
      
+        #Generator initialization
         self.generator_obj.initialization()
 
-  
         #Lockin initialization
         self.lockin_obj.frequency = self.lockin_frequency
         if self.lockin_sensitivity == "Auto Gain":

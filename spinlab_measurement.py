@@ -45,7 +45,6 @@ class SpinLabMeasurement(Procedure):
     mode_harmonic = ListParameter("Harmonic mode",default = parameters_from_file["mode_harmonic"],  choices = ["Field harmonic", "Angular harmonic"], group_by = {"mode": lambda v: v == "HarmonicMode"})
     
     #Hardware
-    set_measdevice = ListParameter("Measurement Device", choices=["LockIn", "Multimeter"], default=parameters_from_file["set_measdevice"], group_by={"mode": lambda v: v=="FMRMode"})
     set_sourcemeter=ListParameter("Sourcemeter", choices=["Keithley 2400", "Keithley 2636", "Agilent 2912", "none"], default = parameters_from_file["set_sourcemeter"], group_by="mode", group_condition=lambda v: v == "ResistanceMode")
     set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"],default = parameters_from_file["set_multimeter"], group_by={"mode": lambda v: v=="ResistanceMode" or v == "FMRMode", "set_measdevice":"Multimeter"})
     set_gaussmeter = ListParameter("Gaussmeter", default = parameters_from_file["set_gaussmeter"], choices=["Lakeshore", "none"], group_by={"mode":lambda v: v == "ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" })
@@ -75,6 +74,7 @@ class SpinLabMeasurement(Procedure):
     
    
     #MeasurementParameters
+    set_measdevice = ListParameter("Measurement Device", choices=["LockIn", "Multimeter"], default=parameters_from_file["set_measdevice"], group_by={"mode": lambda v: v=="FMRMode"})
     sample_name = Parameter("Sample name", default = parameters_from_file["sample_name"], group_by={"mode": lambda v: v != "CalibrationFieldMode"}) 
     vector = Parameter("Vector", default = parameters_from_file["vector"])
     delay_field = FloatParameter("Delay Field", default = parameters_from_file["delay_field"], units="s")
@@ -249,7 +249,7 @@ class MainWindow(ManagedDockWindow):
     def __init__(self):
         super().__init__(
             procedure_class= SpinLabMeasurement,
-            inputs = ['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'mode_harmonic', 'set_measdevice','set_sourcemeter', 'set_multimeter', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','address_rotationstation','rotation_axis', 'rotation_polar_constant', 'rotation_azimuth_constant','set_switch', 'set_kriostat', 'set_lfgen', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'constant_field_value', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp', 'set_field_value','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias' ],
+            inputs = ['mode', 'mode_fmr', 'sample_name', 'vector', 'mode_resistance', 'mode_harmonic', 'set_measdevice','set_sourcemeter', 'set_multimeter', 'set_lockin', 'set_gaussmeter', 'set_field', 'set_generator', 'set_automaticstation', 'set_rotationstation','address_rotationstation','rotation_axis', 'rotation_polar_constant', 'rotation_azimuth_constant','set_switch', 'set_kriostat', 'set_lfgen', 'set_analyzer', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'constant_field_value', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp', 'set_field_value','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias' ],
             x_axis=['Field (Oe)', 'Voltage (V)'],
             y_axis=['Field (Oe)', 'Resistance (ohm)'],
             directory_input=True,  
