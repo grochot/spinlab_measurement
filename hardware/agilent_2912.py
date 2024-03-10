@@ -70,7 +70,7 @@ class Channel:
 
     def prepare_command(self,cmd):
         while self.instrument.ask("*OPC?")==1:
-            sleep(350/1000)
+            sleep(450/1000)
 
         cmd_new=cmd.replace('{ch}',str(self.channel))
         print("CMD:",cmd_new)
@@ -115,7 +115,7 @@ class Channel:
     )
 
     def enable_source(self):
-        self.write(":OUTP ON")
+        self.write(":OUTP{ch} ON")
     
     def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
         """ Configures the measurement of current.

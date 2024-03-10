@@ -119,12 +119,12 @@ class CIMSMode():
                 self.sourcemeter_obj = DummySourcemeter(self.address_sourcemeter)
                 log.warning('Used dummy Sourcemeter.')
 
-
+        print("PULSEGENERATOR-->",self.pulsegenerator)
         match self.pulsegenerator:
             case "Tektronix 10,070A":
                 self.pulsegenerator_obj=Tektronix10070a(self.address_pulsegenerator)
             case "Agilent 2912":
-                if self.sourcemeter_channel=="Channel A":
+                if self.pulsegenerator_channel=="Channel A":
                     self.pulsegenerator_obj = Agilent2912(self.address_pulsegenerator).ChA
                 else:
                     self.pulsegenerator_obj = Agilent2912(self.address_pulsegenerator).ChB
@@ -135,7 +135,7 @@ class CIMSMode():
                 self.pulsegenerator_obj.offset=(self.pulsegenerator_pulsetype,self.pulsegenerator_offset)
 
             case "Keithley 2636":
-                if self.sourcemeter_channel=="Channel A":
+                if self.pulsegenerator_channel=="Channel A":
                     self.pulsegenerator_obj=Keithley2636(self.address_pulsegenerator).ChA
                 else:
                     self.pulsegenerator_obj=Keithley2636(self.address_pulsegenerator).ChB
@@ -217,8 +217,9 @@ class CIMSMode():
 
 
         #pulsegenerator initialization
+        print("self.pulsegenerator_duration",self.pulsegenerator_duration)
         self.pulsegenerator_obj.duration=self.pulsegenerator_duration
-        self.pulsegenerator_obj.source_range=self.pulsegenerator_sourcerange
+        self.pulsegenerator_obj.source_range=(self.pulsegenerator_pulsetype,self.pulsegenerator_sourcerange)
         if self.pulsegenerator_pulsetype == "VOLT":
             self.pulsegenerator_obj.compliance_current=self.pulsegenerator_compliance
         else:
@@ -261,6 +262,7 @@ class CIMSMode():
 
         #----Give pulse-----------------------------------------------------
         self.pulsegenerator_obj.amplitude=(self.pulsegenerator_pulsetype,point)
+        self.pulsegenerator_obj.enable_source()
         self.pulsegenerator_obj.init()
         self.pulsegenerator_obj.trigger()
 

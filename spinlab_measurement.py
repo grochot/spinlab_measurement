@@ -59,7 +59,7 @@ class SpinLabMeasurement(Procedure):
     set_lfgen = ListParameter("LF Generator", default = parameters_from_file["set_lfgen"], choices = ["SR830", "HP33120A","none"], group_by = {"mode": lambda v: v == "FMRMode"})
     set_analyzer = ListParameter("Vector Analyzer", default = parameters_from_file["set_analyzer"], choices = ['VectorAnalyzer', 'none'], group_by={'mode': lambda v: v=='VSMMode'})
     set_generator = ListParameter("RF Generator", default = parameters_from_file["set_generator"], choices = ["Agilent","WindFreak", "none"], group_by = {"mode": lambda v: v == "FMRMode"})
-    set_pulsegenerator=ListParameter("Pulse Generator", choices=["Agilent 2912","Tektronix 10,070A","Keithley 2636A", "none"], default = parameters_from_file["set_pulsegenerator"], group_by="mode", group_condition=lambda v: v=="CIMSMode")
+    set_pulsegenerator=ListParameter("Pulse Generator", choices=["Agilent 2912","Tektronix 10,070A","Keithley 2636", "none"], default = parameters_from_file["set_pulsegenerator"], group_by="mode", group_condition=lambda v: v=="CIMSMode")
     set_relay=ListParameter("External relay", choices=["THIS_DEVICE", "none"], default = parameters_from_file["set_relay"],group_by={'mode':lambda v: v=="CIMSMode", "set_pulsegenerator": lambda v: v=="Tektronix 10,070A"})
 
 
@@ -322,10 +322,7 @@ if __name__ == "__main__":
 
 '''
 To DO
--Zamiana miejscami 2636 - ok i 2912 
--Uruchomic 2400 i zobaczyc czy jest ok (sprawdzic HIGH_Z)
--Oprogramowac przekaznik
--scalic sterowniki agilenta z tektronixem aby byly te same funkcje
+-Queue full error 2636
 
 
 
