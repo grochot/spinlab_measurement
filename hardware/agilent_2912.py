@@ -2,6 +2,7 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 from pymeasure.adapters import Adapter
 from time import sleep
+import time
 
 import logging
 log = logging.getLogger(__name__) 
@@ -18,188 +19,79 @@ class Agilent2912(Instrument):
             **kwargs
         )
 
-        
         self.ChA=Channel(self,'1')
         self.ChB=Channel(self,'2')
 
 
+    #def reset(self):
+    #    print("ogolny reset")
+    #    self.write("*RST")
 
-    #errors itp
 
-'''    def opc(self):
-        while self.ask("*OPC?")==1:
-            sleep(350/1000)
 
-    def select_channel(self, channel):
-        log.error("Not implemented yet")
-
-    def source_mode(self,source_type,channel=1):
-        #source_mode=[VOLT,CURR]
-        self.opc()
-        self.write(':SOUR%s:FUNC:MODE %s'%(channel,source_type))
-
-    def source_voltage_range(self, voltage,channel):
-        self.opc()
-        self.write(":SOUR%s:VOLT:RANG:AUTO OFF;:SOUR%s:VOLT:RANG %s"%(channel,channel,voltage))
-
-    def compliance_current(self, current,channel=1):
-        self.opc()
-        self.write(':SENS{ch}%s:CURR:PROT %s'%(channel,current))
-        
-    def enable_source(self):
-        self.write(":OUTP ON")
-   
-    def measure_current(self, nplc=1, current=1.05e-4,channel=1, auto_range=True):
-        """ Configures the measurement of current.
-
-        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
-        :param current: Upper limit of current in Amps, from -3.03 A to 3.03 A
-        :param auto_range: Enables auto_range if True, else uses the set current
-        """
-        self.opc()
-        self.write(":SENS{ch}:FUNC 'CURR';"
-                    ":SENS{ch}:CURR:NPLC %s;:FORM:ELEM:SENS{ch} CURR;" % nplc)
-        if auto_range:
-            self.opc()
-            self.write(":SOUR:CURR:RANG:AUTO ON;")
+    @property
+    def error(self):
+        """ Returns a tuple of an error code and message from a
+        single error. """
+        err = self.ask(':SYSTem:ERRor:ALL?')
+        err = err.split(',')
+        # Keithley Instruments Inc. sometimes on startup
+        # if tab delimitated message is greater than one, grab first two as code, message
+        # otherwise, assign code & message to returned error
+        if len(err) > 1:
+            err = (int(float(err[0])), err[1])
+            code = err[0]
+            message = err[1].replace('"', '')
         else:
-            self.opc()
-            self.current_range = self.compliance_current(current,channel)
-        self.check_errors()
-       
-    def source_current_range(self, range,channel):
-        self.opc()
-        self.write(":SOUR%s:CURR:RANG:AUTO OFF;:SOUR%s:CURR:RANG %s"%(channel,channel,range))
+            code = message = err[0]
+        log.info(f"ERROR {str(code)},{str(message)} - len {str(len(err))}")
+        return (code, message)
 
-    def voltage_nplc(self, nplc):
-        log.error("Not implemented yet")
-    
-    def compliance_voltage(self, voltage,channel=1):
-        self.write(':SENS{ch}%s:VOLT:PROT %s'%(channel,voltage))
-    
-    def current_nplc(self, nplc):
-        log.error("Not implemented yet")
-
-    def measure_voltage(self, nplc=1, voltage=21.0,channel=1, auto_range=True):
-        """ Configures the measurement of voltage.
-
-        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
-        :param voltage: Upper limit of voltage in Volts, from -210 V to 210 V
-        :param auto_range: Enables auto_range if True, else uses the set voltage
+    def check_errors(self):
+        """ Logs any system errors reported by the instrument.
         """
-
-        self.opc()
-        self.write(":SENS%s:FUNC 'VOLT';"
-                    ":SENS%s:VOLT:NPLC %s;:FORM:ELEM:SENS%s VOLT;" % (channel,channel,nplc,channel))
-        if auto_range:
-            self.opc()
-            self.write(":SOUR:VOLT:RANG:AUTO ON;")
-        else:
-            self.opc()
-            self.voltage_range = self.source_voltage_range(voltage,channel)
-        self.check_errors()
-   
-    def shutdown(self):
-        self.opc()
-        self.write(":OUTP OFF")
-
-    def source_voltage(self, voltage,channel):
-        self.opc()
-        self.write(":SOUR%s:VOLT %g"%(channel,voltage))
-
-
-    def source_current(self, current,channel):
-        self.opc()
-        self.write(":SOUR%s:CURR %s"%(channel,current))
-   
-    def current(self,channel):
-        """ Reads the current in Amps, if configured for this reading.
-        """
-        self.opc()
-        return self.ask(":MEAS? (@%s)"%channel)
-    
-    def voltage(self,channel):
-        """ Reads the voltage in Volt, if configured for this reading.
-        """
-        self.opc()
-        return self.ask(":MEAS? (@%s)"%channel)
-        
-    def duration(self,time,channel=1):
-        self.opc()
-        self.write(":SOUR%s:PULS:WIDT %s"%(channel,time))
-
-    def switch_mode(self,shape,channel=1):
-        #shape=["DC","PULSE"]
-        self.opc()
-        self.write(":SOUR%s:FUNC:SHAP %s"%(channel,shape))
-
-
-
-    def offset(self,amplitude,source_mode,channel=1):
-        #source_mode=[VOLT,CURR]
-        self.opc()
-        self.write(":SOUR%s:%s:IMM %s"%(channel,source_mode,amplitude))
-
-    def amplitude(self,amplitude,channel=1):
-        self.opc()
-        self.write("SOUR%s:VOLT:TRIG %s"%(channel,amplitude))
-
-    def trigger(self):
-        self.opc()
-        self.write("*TRG")
-
-    def reset(self):
-        self.opc()
-        self.write("*RST")
-
-    def trigger_source(self,trigger_source):
-        self.opc()
-        self.write(':TRIG:SOUR %s'%trigger_source)
-
-    def arm_source(self,arm_source):
-        self.write(':ARM:SOUR %s'%arm_source)
-
-    def init(self,channel=1):
-        #you can pass list like 2:1
-        self.opc()
-        self.write(':INIT:TRAN (@%s)'%channel)
-
-    def enable_source(self,channel=1):
-        self.opc()
-        self.write(":OUTP%s ON"%(channel))
-
-    def disable_source(self,channel=1):
-        self.opc()
-        self.write(":OUTP%s OFF"%channel)
-
-    def cls(self):
-        self.opc()
-        self.write("*CLS")
-
-    def high_z_source(self,channel=1):
-        log.warning("Using exscessed function")
-        self.disable_source(channel)'''
-
+        code, message = self.error
+        while code != 0:
+            t = time.time()
+            log.info("Agilent 2912 reported error: %d, %s" % (code, message))
+            code, message = self.error
+            if (time.time() - t) > 10:
+                log.warning("Timed out for Keithley 2912 error retrieval.")
 
 class Channel:
     def __init__(self, instrument, channel):
         self.instrument = instrument
         self.channel = channel
 
+
+    def check_errors(self):
+        return self.instrument.check_errors()
+    
+
     def prepare_command(self,cmd):
         while self.instrument.ask("*OPC?")==1:
             sleep(350/1000)
-        return cmd.replace('{ch}',str(self.channel))
+
+        cmd_new=cmd.replace('{ch}',str(self.channel))
+        print("CMD:",cmd_new)
+        return cmd_new
 
     def ask(self, cmd):
         return self.instrument.ask(self.prepare_command(cmd))
 
     def write(self, cmd):
-        print("to ten write")
+        #print("to ten write")
         self.instrument.write(self.prepare_command(cmd))
+
+
+    def values(self, cmd, **kwargs):
+        """ Reads a set of values from the instrument through the adapter,
+        passing on any key-word arguments.
+        """
+        return self.instrument.values(self.prepare_command(cmd))
     
     source_mode = Instrument.control(
-        ":SOUR{ch}:FUNC?", ":SOUR{ch}:FUNC %s",
+        ":SOUR{ch}:FUNC?", ":SOUR{ch}:FUNC:MODE %s",
         """ A string property that controls the source mode, which can
         take the values 'current' or 'voltage'. """,
         validator=strict_discrete_set,
@@ -294,13 +186,13 @@ class Channel:
     )
 
     current = Instrument.measurement(
-        ":MEAS?",
+        ":MEAS? (@{ch})",
         """ Reads the current in Amps, if configured for this reading.
         """
     )
    
     voltage = Instrument.measurement(
-        ":MEAS?",
+        ":MEAS? (@{ch})",
         """ Reads the voltage in Volt, if configured for this reading.
         """
     )
@@ -350,10 +242,10 @@ class Channel:
     
  
 #examples they need an instance of class
-def give_one_pulse(dev):
+def give_one_pulse():
     dev=Agilent2912("GPIB0::23::INSTR")
 
-    ch=dev.ChA
+    ch=dev.ChB
 
     ch.reset()
 
@@ -362,21 +254,17 @@ def give_one_pulse(dev):
     ch.switch_mode="PULSE"
     ch.trigger_source="BUS"
 
-    ch.offset=(0,"VOLT")
-    ch.amplitude=4
+    ch.offset=("VOLT",0)
+    ch.amplitude=("VOLT",0.2)
     ch.duration="5e-3"
     
     
-    #dev.enable_output() 
+    #dev.enable_output()  #OLD
     ch.init()
     ch.trigger()
 
     sleep(1)
-    ch.disable_source(channel=2)
-
-
-def measure():
-    pass
+    ch.disable_source()
 
 
 
@@ -384,20 +272,10 @@ def measure():
 
 if __name__ == "__main__":
     dev=Agilent2912("GPIB0::23::INSTR")
-    dev.ChA.source_mode="CURR"
-    #dev.source_mode="CURR"
-    #ch.insert_id(dev,'1')
-
-    #dev.ChA.source_mode="CURR"
-    #dev.ChA.source_mode2("COS")
+    #ch=dev.ChB
     #dev.reset()
-    #dev.disable(channel=1)
-    #dev.compliance_voltage(1e-3,1)
-    #dev.opc()
-    #dev.cls()
-    #give_one_pulse(dev)
-    #dev.init()
-    #dev.trigger()
-    #clear_error(dev)
+    #print(ch.source_mode)
+    #dev.ChA.source_mode="CURR"
+    give_one_pulse()
 
     pass

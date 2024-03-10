@@ -110,7 +110,7 @@ class CIMSMode():
                 #self.sourcemeter_obj.set_channel(self.sourcemeter_channel)
                
             case "Agilent 2912":
-                if self.sourcemeter_channel="Channel 1"
+                if self.sourcemeter_channel=="Channel A":
                     self.sourcemeter_obj = Agilent2912(self.address_sourcemeter).ChA
                 else:
                     self.sourcemeter_obj = Agilent2912(self.address_sourcemeter).ChB
@@ -123,15 +123,21 @@ class CIMSMode():
             case "Tektronix 10,070A":
                 self.pulsegenerator_obj=Tektronix10070a(self.address_pulsegenerator)
             case "Agilent 2912":
-                if self.sourcemeter_channel="Channel 1"
-                    self.pulsegenerator_obj = Agilent2912(self.address_sourcemeter).ChA
+                if self.sourcemeter_channel=="Channel A":
+                    self.pulsegenerator_obj = Agilent2912(self.address_pulsegenerator).ChA
                 else:
-                    self.pulsegenerator_obj = Agilent2912(self.address_sourcemeter).ChB
+                    self.pulsegenerator_obj = Agilent2912(self.address_pulsegenerator).ChB
+
+            case "Keithley 2636":
+                if self.sourcemeter_channel=="Channel A":
+                    self.pulsegenerator_obj=Keithley2636(self.address_pulsegenerator).ChA
+                else:
+                    self.pulsegenerator_obj=Keithley2636(self.address_pulsegenerator).ChB
 
                 self.pulsegenerator_obj.source_mode=self.pulsegenerator_pulsetype
                 self.pulsegenerator_obj.switch_mode="PULSE"
                 self.pulsegenerator_obj.trigger_source="BUS"
-                self.pulsegenerator_obj.offset=(self.pulsegenerator_offset,self.pulsegenerator_pulsetype)
+                self.pulsegenerator_obj.offset=(self.pulsegenerator_pulsetype,self.pulsegenerator_offset)
                 
             case _:
                 pass
@@ -212,11 +218,11 @@ class CIMSMode():
         #pulsegenerator initialization
         match self.pulsegenerator:
             case "Agilent 2912":
-                self.pulsegenerator_obj.duration(self.pulsegenerator_duration,self.pulsegenerator_channel)
+                self.pulsegenerator_obj.duration=self.pulsegenerator_duration
                 if self.pulsegenerator_pulsetype == "VOLT":
-                    self.pulsegenerator_obj.compliance_current(self.pulsegenerator_compliance,channel=self.pulsegenerator_channel)
+                    self.pulsegenerator_obj.compliance_current=self.pulsegenerator_compliance
                 else:
-                    self.pulsegenerator_obj.compliance_voltage(self.pulsegenerator_compliance,channel=self.pulsegenerator_channel)    
+                    self.pulsegenerator_obj.compliance_voltage=self.pulsegenerator_compliance    
             case "Tektronix 10070A":
                 pass
             
@@ -264,8 +270,8 @@ class CIMSMode():
                 else:
                     self.pulsegenerator_obj.trigger()
             case "Agilent 2912":
-                self.pulsegenerator_obj.amplitude(point,channel=self.pulsegenerator_channel)
-                self.pulsegenerator_obj.init(channel=self.pulsegenerator_channel)
+                self.pulsegenerator_obj.amplitude=(self.pulsegenerator_pulsetype,point)
+                self.pulsegenerator_obj.init()
                 self.pulsegenerator_obj.trigger()
 
         
@@ -279,7 +285,7 @@ class CIMSMode():
                     log.info("Disabling output by external relay")
                 case "Agilent 2912":
                     #sleep(1) #do wyrzucenia gdy opc() bedzie dzialac
-                    self.pulsegenerator_obj.disable_source(channel=self.pulsegenerator_channel)
+                    self.pulsegenerator_obj.disable_source()
                     #sleep(1)
 
         sleep(self.delay_measurement)
@@ -332,7 +338,7 @@ class CIMSMode():
 
     def idle(self):
         self.sourcemeter_obj.shutdown()
-        self.pulsegenerator_obj.disable_source(channel=self.pulsegenerator_channel)
+        self.pulsegenerator_obj.disable_source()
         sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
         if self.rotationstation: 
             self.rotationstation_obj.goToZero() 

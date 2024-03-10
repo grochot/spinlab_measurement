@@ -1,7 +1,7 @@
 {
     "mode": "CIMSMode",
     "sample_name": "test",
-    "vector": "0,10,4",
+    "vector": "0,10,0.5",
     "mode_resistance": false,
     "mode_fmr": "V-FMR",
     "mode_harmonic": "Field harmonic",
@@ -28,8 +28,8 @@
     "address_generator": "None",
     "address_lfgen": "None",
     "address_pulsegenerator": "GPIB0::26::INSTR",
-    "sourcemter_source": "CURR",
-    "sourcemeter_compliance": 1.0,
+    "sourcemter_source": "VOLT",
+    "sourcemeter_compliance": 1e-05,
     "sourcemeter_channel": "Channel A",
     "sourcemeter_limit": 2.0,
     "sourcemeter_nplc": 0.1,
@@ -72,13 +72,13 @@
     "rotation_azimuth_constant": 0.0,
     "constant_field_value": 0.0,
     "address_rotationstation": "COM4",
-    "mode_cims_relays": true,
+    "mode_cims_relays": false,
     "pulsegenerator_offset": 0.0,
     "pulsegenerator_duration": 0.001,
     "pulsegenerator_pulsetype": "VOLT",
-    "pulsegenerator_channel": "2",
-    "delay_measurement": 1.0,
+    "pulsegenerator_channel": "Channel B",
+    "delay_measurement": 2.0,
     "set_relay": "none",
     "address_relay": "None",
-    "pulsegenerator_compliance": 0.1
+    "pulsegenerator_compliance": 1e-05
 }
