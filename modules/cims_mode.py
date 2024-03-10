@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler()) 
 
 class CIMSMode():
-    def __init__(self, vector:str, mode_cims_relays:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str,pulsegenerator:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool, address_sourcemeter:str, address_multimeter:str,address_pulsegenerator:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_measurement:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float, rotation_axis:str, rotation_polar_constant:float, rotation_azimuth_constant:float,pulsegenerator_duration,pulsegenerator_offset,pulsegenerator_pulsetype,pulsegenerator_channel,set_relay,address_relay,pulsegenerator_compliance) -> None:
+    def __init__(self, vector:str, mode_cims_relays:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str,pulsegenerator:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool, address_sourcemeter:str, address_multimeter:str,address_pulsegenerator:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_measurement:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float, rotation_axis:str, rotation_polar_constant:float, rotation_azimuth_constant:float,pulsegenerator_duration,pulsegenerator_offset,pulsegenerator_pulsetype,pulsegenerator_channel,set_relay,address_relay,pulsegenerator_compliance,pulsegenerator_sourcerange) -> None:
     
         ## parameter initialization
         self.sourcemeter = sourcemeter
@@ -80,6 +80,7 @@ class CIMSMode():
         self.pulsegenerator_pulsetype=pulsegenerator_pulsetype
         self.pulsegenerator_channel=pulsegenerator_channel
         self.pulsegenerator_compliance=pulsegenerator_compliance
+        self.pulsegenerator_sourcerange=pulsegenerator_sourcerange
 
         self.set_relay=set_relay
         self.address_relay=address_relay
@@ -128,22 +129,22 @@ class CIMSMode():
                 else:
                     self.pulsegenerator_obj = Agilent2912(self.address_pulsegenerator).ChB
 
+                self.pulsegenerator_obj.source_mode=self.pulsegenerator_pulsetype
+                self.pulsegenerator_obj.switch_mode="PULSE"
+                self.pulsegenerator_obj.trigger_source="BUS"
+                self.pulsegenerator_obj.offset=(self.pulsegenerator_pulsetype,self.pulsegenerator_offset)
+
             case "Keithley 2636":
                 if self.sourcemeter_channel=="Channel A":
                     self.pulsegenerator_obj=Keithley2636(self.address_pulsegenerator).ChA
                 else:
                     self.pulsegenerator_obj=Keithley2636(self.address_pulsegenerator).ChB
-
-                self.pulsegenerator_obj.source_mode=self.pulsegenerator_pulsetype
-                self.pulsegenerator_obj.switch_mode="PULSE"
-                self.pulsegenerator_obj.trigger_source="BUS"
-                self.pulsegenerator_obj.offset=(self.pulsegenerator_pulsetype,self.pulsegenerator_offset)
                 
+                self.pulsegenerator_obj.single_pulse_prepare(self.pulsegenerator_channel)
             case _:
                 pass
                 self.pulsegenerator_obj = DummyPulsegenerator(self.address_pulsegenerator)
                 log.warning('Used dummy Pulsegemerator.')
-
                 
         
         match self.gaussmeter: 
@@ -188,7 +189,7 @@ class CIMSMode():
             self.sourcemeter_obj.compliance_current = self.sourcemeter_compliance
             self.sourcemeter_obj.source_voltage = self.sourcemeter_bias
             if self.mode_cims_relays:
-                self.sourcemeter_obj.high_z_source()
+                self.sourcemeter_obj.disable_source()
             else:
                 self.sourcemeter_obj.enable_source()
             self.sourcemeter_obj.measure_current(self.sourcemeter_nplc, self.sourcemeter_limit)
@@ -197,7 +198,7 @@ class CIMSMode():
             self.sourcemeter_obj.compliance_voltage = self.sourcemeter_compliance
             self.sourcemeter_obj.source_current = self.sourcemeter_bias
             if self.mode_cims_relays:
-                self.sourcemeter_obj.high_z_source()
+                self.sourcemeter_obj.disable_source()
             else:
                 self.sourcemeter_obj.enable_source()
             self.sourcemeter_obj.measure_voltage(self.sourcemeter_nplc, self.sourcemeter_limit)
@@ -216,15 +217,13 @@ class CIMSMode():
 
 
         #pulsegenerator initialization
-        match self.pulsegenerator:
-            case "Agilent 2912":
-                self.pulsegenerator_obj.duration=self.pulsegenerator_duration
-                if self.pulsegenerator_pulsetype == "VOLT":
-                    self.pulsegenerator_obj.compliance_current=self.pulsegenerator_compliance
-                else:
-                    self.pulsegenerator_obj.compliance_voltage=self.pulsegenerator_compliance    
-            case "Tektronix 10070A":
-                pass
+        self.pulsegenerator_obj.duration=self.pulsegenerator_duration
+        self.pulsegenerator_obj.source_range=self.pulsegenerator_sourcerange
+        if self.pulsegenerator_pulsetype == "VOLT":
+            self.pulsegenerator_obj.compliance_current=self.pulsegenerator_compliance
+        else:
+            self.pulsegenerator_obj.compliance_voltage=self.pulsegenerator_compliance
+        
             
         
 
@@ -261,32 +260,16 @@ class CIMSMode():
 
 
         #----Give pulse-----------------------------------------------------
-        match self.pulsegenerator:
-            case "Tektronix 10,070A":
-                if self.mode_cims_relays:
-                    self.pulsegenerator_obj.amplitude(point,channel=self.pulsegenerator_channel)
-                    self.relay_obj.enable_source()
-                    self.pulsegenerator_obj.trigger()
-                else:
-                    self.pulsegenerator_obj.trigger()
-            case "Agilent 2912":
-                self.pulsegenerator_obj.amplitude=(self.pulsegenerator_pulsetype,point)
-                self.pulsegenerator_obj.init()
-                self.pulsegenerator_obj.trigger()
+        self.pulsegenerator_obj.amplitude=(self.pulsegenerator_pulsetype,point)
+        self.pulsegenerator_obj.init()
+        self.pulsegenerator_obj.trigger()
 
         
         #-------------------------------------------------------------------
 
         #wyłączam output generatora
         if self.mode_cims_relays:
-            match self.pulsegenerator:
-                case "Tektronix 10,070A":
-                    self.relay_obj.high_z_source()
-                    log.info("Disabling output by external relay")
-                case "Agilent 2912":
-                    #sleep(1) #do wyrzucenia gdy opc() bedzie dzialac
-                    self.pulsegenerator_obj.disable_source()
-                    #sleep(1)
+            self.pulsegenerator_obj.disable_source()
 
         sleep(self.delay_measurement)
         #turn on sourcemeter inputs
@@ -319,7 +302,7 @@ class CIMSMode():
 
         #odlaczenie miernika
         if self.mode_cims_relays:
-            self.sourcemeter_obj.high_z_source()
+            self.sourcemeter_obj.disable_source()
             
         data = {
             'Voltage (V)':self.tmp_voltage, 

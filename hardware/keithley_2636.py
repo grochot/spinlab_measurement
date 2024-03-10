@@ -264,14 +264,14 @@ class Channel:
             self.current_range = current
        
     
-    def single_pulse_prepare(self, voltage, time, range,channel="a"):
+    def single_pulse_prepare(self,channel):
         log.info("generate pulse")
-        self.write('trigger.source.listv({%f})' %voltage )
+        #self.write('trigger.source.listv({%f})' %voltage )
         self.write('trigger.source.action = smu%s.ENABLE '%channel)
         self.write('trigger.measure.action = smu%s.DISABLE '%channel)
         self.write('trigger.source.limiti = 0.1')
-        self.write('source.rangev = %f' %range)
-        self.writeall('trigger.timer[1].delay = %f' %time)
+        #self.write('source.rangev = %f' %range)
+        #self.writeall('trigger.timer[1].delay = %f' %time)
         self.writeall('trigger.timer[1].count = 1 ')
         self.writeall('trigger.timer[1].passthrough = false ')
         self.writeall('trigger.timer[1].stimulus = smu%s.trigger.ARMED_EVENT_ID '%channel)
@@ -281,6 +281,39 @@ class Channel:
         self.write('trigger.count = 1')
         self.write('trigger.arm.count = 1 ')
         self.write('source.output = smu%s.OUTPUT_ON'%channel)
+
+
+    amplitude = Instrument.control(
+        "", "trigger.source.listv({%f})",
+        """ Set pulse amplitude in volts""",
+        #validator=strict_discrete_set,
+        #values={'CURR': 'CURR', 'VOLT': 'VOLT'},
+        map_values=True
+    )
+
+    
+    source_range= Instrument.control(
+        "", "trigger.source.listv({%f})",
+        """ Set pulse range in volts""",
+        #validator=strict_discrete_set,
+        #values={'CURR': 'CURR', 'VOLT': 'VOLT'},
+        map_values=True
+    )
+
+    duration= Instrument.control(
+        "", "trigger.timer[1].delay = %f",
+        """ Set pulse range in volts""",
+        #validator=strict_discrete_set,
+        #values={'CURR': 'CURR', 'VOLT': 'VOLT'},
+        map_values=True
+    )
+
+
+    def trigger(self):
+        self.single_pulse_run()
+
+    def init(self):
+        log.info("Using excessed function init() for Keithley2636")
         
     def single_pulse_run(self):
         self.write('trigger.initiate()')
@@ -409,7 +442,7 @@ class Channel:
     def enable_source(self):
         self.source_output="ON"
 
-    def high_z_source(self):
+    def disable_source(self):
         self.source_output="HIGH_Z"
 
     
