@@ -223,7 +223,7 @@ class SpinLabMeasurement(Procedure):
                 
                 self.parameters["field_constant"] = self.result[1]
                 self.save_parameter.WriteFile(self.parameters)
-
+                
 
     
     def shutdown(self):
@@ -253,8 +253,8 @@ class MainWindow(ManagedDockWindow):
             x_axis=['Field (Oe)', 'Field (Oe)'],
             y_axis=['X (V)', 'Y (V)'],
             directory_input=True,  
-            sequencer=True,                                  
-            sequencer_inputs=[],
+            sequencer=True,                               
+            sequencer_inputs=["generator_frequency"],
             inputs_in_scrollarea=True,
             
         )
