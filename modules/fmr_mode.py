@@ -300,7 +300,7 @@ class FMRMode():
                     sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
 
         self.generator_obj.set_lf_signal()
-        self.generator_obj.setOutput(True, False if (self.set_lfgen != "none" and self.set_lockin == "SR830") else True)  
+        self.generator_obj.setOutput(True, True if (self.set_lfgen == "none" and self.measdevice == "LockIn") else False)  
 
 
         #set lockin phase: 
