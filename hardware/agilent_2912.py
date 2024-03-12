@@ -73,7 +73,7 @@ class Channel:
             sleep(450/1000)
 
         cmd_new=cmd.replace('{ch}',str(self.channel))
-        print("CMD:",cmd_new)
+        print("AGILENT 2912:",cmd_new)
         return cmd_new
 
     def ask(self, cmd):

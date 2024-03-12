@@ -92,11 +92,10 @@ class Channel:
     
 
     def prepare_command(self,cmd):
-        while self.instrument.ask("*OPC?")==1:
-            sleep(350/1000)
-
+        while self.instrument.ask("*OPC?")=="1":
+            time.sleep(350/1000)
         cmd_new=cmd.replace('{ch}',str(self.channel))
-        print("CMD:",cmd_new)
+        print("KEITHLEY 2636:",cmd_new)
         return cmd_new
 
     def ask(self, cmd):
@@ -292,31 +291,32 @@ class Channel:
             self.current_range = current
        
     
-    def single_pulse_prepare(self,channel):
+    def single_pulse_prepare(self):
         log.info("generate pulse")
         #self.write('trigger.source.listv({%f})' %voltage )
-        self.write('smu{ch}.trigger.source.action = smu%s.ENABLE '%channel)
-        self.write('smu{ch}.trigger.measure.action = smu%s.DISABLE '%channel)
+        self.write('smu{ch}.trigger.source.action = smu%s.ENABLE '%self.channel)
+        self.write('smu{ch}.trigger.measure.action = smu%s.DISABLE '%self.channel)
         self.write('smu{ch}.trigger.source.limiti = 0.1') #!!!!!!!!! COMPILANCE !!!!!!!!!!!!!!!!!!!!!!
         #self.write('source.rangev = %f' %range)
         #self.writeall('trigger.timer[1].delay = %f' %time)
         self.write('trigger.timer[1].count = 1 ')
         self.write('trigger.timer[1].passthrough = false ')
-        self.write('trigger.timer[1].stimulus = smu%s.trigger.ARMED_EVENT_ID '%channel)
+        self.write('trigger.timer[1].stimulus = smu%s.trigger.ARMED_EVENT_ID '%self.channel)
         self.write('smu{ch}.trigger.source.stimulus = 0')
-        self.write('smu{ch}.trigger.endpulse.action = smu%s.SOURCE_IDLE '%channel)
+        self.write('smu{ch}.trigger.endpulse.action = smu%s.SOURCE_IDLE '%self.channel)
         self.write('smu{ch}.trigger.endpulse.stimulus = trigger.timer[1].EVENT_ID ')
         self.write('smu{ch}.trigger.count = 1')
         self.write('smu{ch}.trigger.arm.count = 1 ')
-        self.write('smu{ch}.source.output = smu%s.OUTPUT_ON'%channel)
+        self.write('smu{ch}.source.output = smu%s.OUTPUT_ON'%self.channel)
 
 
     amplitude = Instrument.control(
         "", "smu{ch}.trigger.source.list%s({%s})",
         """ Set pulse amplitude in volts""",
         #validator=strict_discrete_set,
-        values={'CURR': 'i', 'VOLT': 'v'},
-        #map_values=True
+        #values=[],
+        #map_values=True,
+        set_process=lambda v:(v[0].replace("VOLT",'v').replace("CURR",'i'),v[1])
     )
 
     
@@ -324,8 +324,9 @@ class Channel:
         "", "smu{ch}.trigger.source.list%s({%s})",
         """ Set pulse range in volts""",
         #validator=strict_discrete_set,
-        values={'CURR': 'i', 'VOLT': 'v'},
+        #values={'CURR': 'i', 'VOLT': 'v'},
         #map_values=True
+        set_process=lambda v:(v[0].replace("VOLT",'v').replace("CURR",'i'),v[1])
     )
 
     duration= Instrument.control(
@@ -464,8 +465,8 @@ class Channel:
         #     self.ramp_to_voltage(0.0)
         self.source_output = 'OFF'
 
-    def read_current(self): 
-        return self.ask('measure.i()')
+    #def read_current(self): 
+    #    return self.ask('measure.i()')
     
     def enable_source(self):
         self.source_output="ON"
@@ -479,11 +480,11 @@ if __name__ == "__main__":
 #from time import sleep
     k = Keithley2636('GPIB0::26::INSTR', timeout=50000)
     ch=k.ChB
-    ch.single_pulse_prepare("b")
-    ch.amplitude=0.5
+    ch.single_pulse_prepare()
+    ch.amplitude=("VOLT",0.5)
     ch.duration=0.001
-    ch.source_range=1
-    time.sleep(5)
+    ch.source_range=("VOLT",1)
+    time.sleep(1)
     ch.disable_source()
     #ch.trigger()
 

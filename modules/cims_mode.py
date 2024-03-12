@@ -119,7 +119,6 @@ class CIMSMode():
                 self.sourcemeter_obj = DummySourcemeter(self.address_sourcemeter)
                 log.warning('Used dummy Sourcemeter.')
 
-        print("PULSEGENERATOR-->",self.pulsegenerator)
         match self.pulsegenerator:
             case "Tektronix 10,070A":
                 self.pulsegenerator_obj=Tektronix10070a(self.address_pulsegenerator)
@@ -140,7 +139,7 @@ class CIMSMode():
                 else:
                     self.pulsegenerator_obj=Keithley2636(self.address_pulsegenerator).ChB
                 
-                self.pulsegenerator_obj.single_pulse_prepare(self.pulsegenerator_channel)
+                self.pulsegenerator_obj.single_pulse_prepare()
             case _:
                 pass
                 self.pulsegenerator_obj = DummyPulsegenerator(self.address_pulsegenerator)
