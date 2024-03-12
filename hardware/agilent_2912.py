@@ -70,7 +70,7 @@ class Channel:
 
     def prepare_command(self,cmd):
         while self.instrument.ask("*OPC?")==1:
-            sleep(450/1000)
+            sleep(350/1000)
 
         cmd_new=cmd.replace('{ch}',str(self.channel))
         print("AGILENT 2912:",cmd_new)
