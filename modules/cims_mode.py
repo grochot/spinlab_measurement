@@ -258,7 +258,7 @@ class CIMSMode():
 
         
 
-
+        sleep(self.delay_measurement/2)
         #----Give pulse-----------------------------------------------------
         self.pulsegenerator_obj.amplitude=(self.pulsegenerator_pulsetype,point)
         self.pulsegenerator_obj.enable_source()
@@ -272,7 +272,7 @@ class CIMSMode():
         if self.mode_cims_relays:
             self.pulsegenerator_obj.disable_source()
 
-        sleep(self.delay_measurement)
+        sleep(self.delay_measurement/2)
         #turn on sourcemeter inputs
         if self.mode_cims_relays:
             self.sourcemeter_obj.enable_source()
