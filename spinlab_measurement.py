@@ -22,6 +22,8 @@ from modules.calibration_mode import FieldCalibrationMode
 from logic.find_instrument import FindInstrument
 from logic.save_parameters import SaveParameters
 
+from numpy import linspace
+
 from datetime import datetime
 from datetime import timedelta
 
@@ -80,6 +82,7 @@ class SpinLabMeasurement(Procedure):
     delay_field = FloatParameter("Delay Field", default = parameters_from_file["delay_field"], units="s")
     delay_lockin = FloatParameter("Delay Measurement", default = parameters_from_file["delay_lockin"], units="s", group_by={"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "set_measdevice":lambda v: v=="LockIn"})
     delay_bias = FloatParameter("Delay Bias", default = parameters_from_file["delay_bias"], units="s", group_by={"mode": lambda v: v == "ResistanceMode"})
+    single_measurement_duration = FloatParameter("Single Measurement Duration", default = 0, units="s")
     
     #########  SETTINGS PARAMETERS ##############
     #SourcemeterParameters 
@@ -206,7 +209,11 @@ class SpinLabMeasurement(Procedure):
                 self.counter = 0
                 sleep(15)
                 for point in self.points:
+                    
+                   start = time()
                    self.result = self.fmrmode.operating(point)
+                   window.set_single_measurement_duration(time() - start)
+                   
                    self.emit('results', self.result) 
                    self.emit('progress', 100 * self.counter / len(self.points))
                    self.counter = self.counter + 1
@@ -229,17 +236,17 @@ class SpinLabMeasurement(Procedure):
     def shutdown(self):
         pass
     
-    # def get_estimates(self, sequence_length=None, sequence=None):
-    #                 self.iterations = self.points
-    #                 self.delay = self.delay_field + self.delay_lockin + self.delay_bias
-    #                 duration = self.iterations * self.delay
-    #                 estimates = [
-    #                     ("Duration", "%d s" % int(duration)),
-    #                     ("Number of lines", "%d" % int(self.iterations)),
-    #                     ("Sequence length", str(sequence_length)),
-    #                     ('Measurement finished at', str(datetime.now() + timedelta(seconds=duration))),
-    #                 ]
-    #                 return estimates
+    def get_estimates(self, sequence_length=None, sequence=None):
+                    start, number, stop =self.vector.split(',')
+                    iterations = len(linspace(float(start), float(stop), int(number)))
+                    self.delay = self.single_measurement_duration
+                    duration = iterations * self.delay
+                    total_duration = duration * (sequence_length if sequence_length else 1)
+                    estimates = [
+                        ("Total duration", str(timedelta(seconds=total_duration))),
+                        ('Measurement finished at', str((datetime.now() + timedelta(seconds=duration)).strftime("%Y-%m-%d %H:%M:%S"))),
+                    ]
+                    return estimates
         
 
 class MainWindow(ManagedDockWindow):
@@ -249,7 +256,7 @@ class MainWindow(ManagedDockWindow):
     def __init__(self):
         super().__init__(
             procedure_class= SpinLabMeasurement,
-            inputs = ['mode', 'mode_fmr', 'sample_name', 'vector', 'mode_resistance', 'mode_harmonic', 'set_measdevice','set_sourcemeter', 'set_multimeter', 'set_lockin', 'set_gaussmeter', 'set_field', 'set_generator', 'set_automaticstation', 'set_rotationstation','address_rotationstation','rotation_axis', 'rotation_polar_constant', 'rotation_azimuth_constant','set_switch', 'set_kriostat', 'set_lfgen', 'set_analyzer', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'constant_field_value', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp', 'set_field_value','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias' ],
+            inputs = ['mode', 'mode_fmr', 'sample_name', 'vector', 'mode_resistance', 'mode_harmonic', 'set_measdevice','set_sourcemeter', 'set_multimeter', 'set_lockin', 'set_gaussmeter', 'set_field', 'set_generator', 'set_automaticstation', 'set_rotationstation','address_rotationstation','rotation_axis', 'rotation_polar_constant', 'rotation_azimuth_constant','set_switch', 'set_kriostat', 'set_lfgen', 'set_analyzer', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'constant_field_value', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp', 'set_field_value','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias', 'single_measurement_duration' ],
             x_axis=['Field (Oe)', 'Field (Oe)'],
             y_axis=['X (V)', 'Y (V)'],
             directory_input=True,  
@@ -261,12 +268,17 @@ class MainWindow(ManagedDockWindow):
        
         self.setWindowTitle('SpinLab Measurement System v.0.55')
         #self.directory = self.procedure_class.path_file.ReadFile()
+        
+        self.inputs.single_measurement_duration.setEnabled(False)
     
     def set_calibration_constant(self, value):
         self.inputs.field_constant.setValue(value)
     
     def set_calibration_filename(self, value):
         self.inputs.sample_name.setValue(value)
+        
+    def set_single_measurement_duration(self, value):
+        self.inputs.single_measurement_duration.setValue(value)
         
 
     def queue(self, procedure=None):
