@@ -209,11 +209,9 @@ class SpinLabMeasurement(Procedure):
                 self.counter = 0
                 sleep(15)
                 for point in self.points:
-                    
                    start = time()
                    self.result = self.fmrmode.operating(point)
-                   window.set_single_measurement_duration(time() - start)
-                   
+                   window.set_single_measurement_duration(round(time() - start))
                    self.emit('results', self.result) 
                    self.emit('progress', 100 * self.counter / len(self.points))
                    self.counter = self.counter + 1
@@ -236,7 +234,7 @@ class SpinLabMeasurement(Procedure):
     def shutdown(self):
         pass
     
-    def get_estimates(self, sequence_length=None, sequence=None):
+    def get_estimates(self, sequence_length=None):
                     start, number, stop =self.vector.split(',')
                     iterations = len(linspace(float(start), float(stop), int(number)))
                     self.delay = self.single_measurement_duration
