@@ -240,8 +240,7 @@ class Channel:
         self.write(":OUTP{ch} OFF")
 
     
- 
-#examples they need an instance of class
+ #examples
 def give_one_pulse():
     dev=Agilent2912("GPIB0::23::INSTR")
 
@@ -277,5 +276,3 @@ if __name__ == "__main__":
     #print(ch.source_mode)
     #dev.ChA.source_mode="CURR"
     give_one_pulse()
-
-    pass

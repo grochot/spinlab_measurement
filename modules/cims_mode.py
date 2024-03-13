@@ -123,6 +123,7 @@ class CIMSMode():
         match self.pulsegenerator:
             case "Tektronix 10,070A":
                 self.pulsegenerator_obj=Tektronix10070a(self.address_pulsegenerator)
+                self.pulsegenerator_obj.trigger_source="GPIB"
             case "Agilent 2912":
                 if self.pulsegenerator_channel=="Channel A":
                     self.pulsegenerator_obj = Agilent2912(self.address_pulsegenerator).ChA
@@ -261,7 +262,7 @@ class CIMSMode():
 
         sleep(self.delay_measurement/2)
         #----Give pulse-----------------------------------------------------
-        self.pulsegenerator_obj.amplitude=(self.pulsegenerator_pulsetype,point)
+        self.pulsegenerator_obj.amplitude=[(self.pulsegenerator_pulsetype,point),point][self.pulsegenerator=="Tektronix 10,070A"]
         self.pulsegenerator_obj.enable_source()
         self.pulsegenerator_obj.init()
         self.pulsegenerator_obj.trigger()
