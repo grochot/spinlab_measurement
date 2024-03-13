@@ -296,7 +296,7 @@ class Channel:
         #self.write('trigger.source.listv({%f})' %voltage )
         self.write('smu{ch}.trigger.source.action = smu%s.ENABLE '%self.channel)
         self.write('smu{ch}.trigger.measure.action = smu%s.DISABLE '%self.channel)
-        self.write('smu{ch}.trigger.source.limiti = 0.5') #!!!!!!!!! COMPILANCE !!!!!!!!!!!!!!!!!!!!!!
+        self.write('smu{ch}.trigger.source.limiti = 0.0001') #!!!!!!!!! COMPILANCE !!!!!!!!!!!!!!!!!!!!!!
         #self.write('source.rangev = %f' %range)
         #self.writeall('trigger.timer[1].delay = %f' %time)
         self.write('trigger.timer[1].count = 1 ')
@@ -319,6 +319,16 @@ class Channel:
         set_process=lambda v:(v[0].replace("VOLT",'v').replace("CURR",'i'),v[1])
     )
 
+    compliance_current=Instrument.control(
+        "", "smu{ch}.trigger.source.limiti = %s",
+        """ Set pulse amplitude in volts""",
+    )
+
+    
+    compliance_voltage=Instrument.control(
+        "", "smu{ch}.trigger.source.limitv = %s",
+        """ Set pulse amplitude in volts""",
+    )
     
     source_range= Instrument.control(
         "", "smu{ch}.source.range%s = %f",
@@ -480,13 +490,16 @@ if __name__ == "__main__":
 #from time import sleep
     k = Keithley2636('GPIB0::26::INSTR', timeout=50000)
     ch=k.ChA
-    ch.amplitude=("VOLT",1)
+    ch.amplitude=("VOLT",2)
     ch.single_pulse_prepare()
     
     
-    ch.duration=5e-3
+    ch.duration=1e-3
     ch.source_range=("VOLT",5)
-    ch.trigger()
+    
+    while True:
+        ch.trigger()
+        time.sleep(1)
     #time.sleep(1)
     #ch.disable_source()
     #ch.trigger()
