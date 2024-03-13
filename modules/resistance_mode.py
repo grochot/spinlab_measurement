@@ -87,11 +87,16 @@ class ResistanceMode():
                 self.sourcemeter_obj = Keithley2400(self.address_sourcemeter)
                 self.sourcemeter_obj.config_average(self.sourcemeter_average)
             case "Keithley 2636": 
-                self.sourcemeter_obj = Keithley2636(self.address_sourcemeter)
-                self.sourcemeter_obj.set_channel(self.sourcemeter_channel)
+                if self.sourcemeter_channel=="Channel A":
+                    self.sourcemeter_obj = Keithley2636(self.address_sourcemeter).ChA
+                else:
+                    self.sourcemeter_obj = Keithley2636(self.address_sourcemeter).ChB
                
             case "Agilent 2912": 
-                self.sourcemeter_obj = Agilent2912(self.address_sourcemeter)
+                if self.sourcemeter_channel=="Channel A":
+                    self.sourcemeter_obj = Agilent2912(self.address_sourcemeter).ChA
+                else:
+                    self.sourcemeter_obj = Agilent2912(self.address_sourcemeter).ChB
             case _: 
                 self.sourcemeter_obj = DummySourcemeter(self.address_sourcemeter)
                 log.warning('Used dummy Sourcemeter.')
