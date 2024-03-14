@@ -20,7 +20,7 @@ class Agilent2912(Instrument):
 
         self.ChA=Channel(self,'1')
         self.ChB=Channel(self,'2')
-
+        #self.reset()
 
     #def reset(self):
     #    print("ogolny reset")
@@ -200,7 +200,7 @@ class Channel:
 
     #pulsegen
 
-    switch_mode = Instrument.control(
+    func_shape = Instrument.control(
         ":SOUR{ch}:FUNC:SHAP?", ":SOUR{ch}:FUNC:SHAP %s",
         """ Selects the source output shape of the specified channel. """
     )
@@ -259,7 +259,7 @@ def give_one_pulse():
 
 
     ch.source_mode="VOLT"
-    ch.switch_mode="PULSE"
+    ch.func_shape="PULSE"
     ch.trigger_source="BUS"
     ch.trigger_bypass="ONCE"
 

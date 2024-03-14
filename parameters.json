@@ -1,7 +1,7 @@
 {
     "mode": "CIMSMode",
     "sample_name": "test",
-    "vector": "0,10,2",
+    "vector": "0,10,-2",
     "mode_resistance": false,
     "mode_fmr": "V-FMR",
     "mode_harmonic": "Field harmonic",

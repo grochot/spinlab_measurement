@@ -116,6 +116,7 @@ class CIMSMode():
                     self.sourcemeter_obj = Agilent2912(self.address_sourcemeter).ChA
                 else:
                     self.sourcemeter_obj = Agilent2912(self.address_sourcemeter).ChB
+                self.sourcemeter_obj.func_shape="DC"
             case _: 
                 self.sourcemeter_obj = DummySourcemeter(self.address_sourcemeter)
                 log.warning('Used dummy Sourcemeter.')
@@ -131,8 +132,9 @@ class CIMSMode():
                     self.pulsegenerator_obj = Agilent2912(self.address_pulsegenerator).ChB
 
                 self.pulsegenerator_obj.source_mode=self.pulsegenerator_pulsetype
-                self.pulsegenerator_obj.switch_mode="PULSE"
+                self.pulsegenerator_obj.func_shape="PULSE"
                 self.pulsegenerator_obj.trigger_source="BUS"
+                self.pulsegenerator_obj.trigger_bypass="ONCE"
                 self.pulsegenerator_obj.offset=(self.pulsegenerator_pulsetype,self.pulsegenerator_offset)
 
             case "Keithley 2636":

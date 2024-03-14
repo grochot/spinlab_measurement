@@ -43,6 +43,7 @@ class Keithley2636(Instrument):
         )
         self.ChA=Channel(self, 'a')
         self.ChB = Channel(self, 'b')
+        #self.reset()
 
 
     @property
