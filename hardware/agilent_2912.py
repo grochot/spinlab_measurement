@@ -1,7 +1,6 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 from pymeasure.adapters import Adapter
-from time import sleep
 import time
 
 import logging
@@ -69,8 +68,9 @@ class Channel:
     
 
     def prepare_command(self,cmd):
+        #self.instrument.write("*WAI")
         while self.instrument.ask("*OPC?")==1:
-            sleep(350/1000)
+            time.sleep(450/1000)
 
         cmd_new=cmd.replace('{ch}',str(self.channel))
         print("AGILENT 2912:",cmd_new)
@@ -206,7 +206,7 @@ class Channel:
     )
 
     trigger_source = Instrument.control(
-        ":TRIG:SOUR?", ":TRIG:SOUR %s",
+        ":TRIG:SOUR?", ":TRIG{ch}:SOUR %s",
         """ Selects the trigger source for the specified device action. """
     )
 
@@ -230,7 +230,7 @@ class Channel:
         self.write(':INIT:TRAN (@{ch})')
 
     def trigger(self):
-        self.write("*TRG")
+        self.instrument.write("*TRG")
 
     def reset(self):
         self.write("*RST")
@@ -244,7 +244,7 @@ class Channel:
 def give_one_pulse():
     dev=Agilent2912("GPIB0::23::INSTR")
 
-    ch=dev.ChB
+    ch=dev.ChA
 
     ch.reset()
 
@@ -254,15 +254,16 @@ def give_one_pulse():
     ch.trigger_source="BUS"
 
     ch.offset=("VOLT",0)
-    ch.amplitude=("VOLT",0.2)
+    ch.amplitude=("VOLT",1)
     ch.duration="5e-3"
     
     
     #dev.enable_output()  #OLD
+    #ch.enable_source()
     ch.init()
     ch.trigger()
 
-    sleep(1)
+    time.sleep(1)
     ch.disable_source()
 
 
