@@ -70,7 +70,7 @@ class Channel:
     def prepare_command(self,cmd):
         #self.instrument.write("*WAI")
         while self.instrument.ask("*OPC?")==1:
-            time.sleep(450/1000)
+            time.sleep(350/1000)
 
         cmd_new=cmd.replace('{ch}',str(self.channel))
         print("AGILENT 2912:",cmd_new)
@@ -205,10 +205,19 @@ class Channel:
         """ Selects the source output shape of the specified channel. """
     )
 
+    trigger_bypass = Instrument.control(
+        ":TRIG{ch}:BYP?", ":TRIG{ch}:BYP %s",
+        """Enables or disables a bypass for the event detector in the trigger layer """,
+        validator=strict_discrete_set,
+        values=["OFF","ONCE"]
+    )
+
     trigger_source = Instrument.control(
         ":TRIG:SOUR?", ":TRIG{ch}:SOUR %s",
         """ Selects the trigger source for the specified device action. """
     )
+
+
 
     offset = Instrument.control(
         ":SOUR{ch}:%s:IMM?", ":SOUR{ch}:%s:IMM %s",
@@ -230,7 +239,7 @@ class Channel:
         self.write(':INIT:TRAN (@{ch})')
 
     def trigger(self):
-        self.instrument.write("*TRG")
+        self.write("*TRG")
 
     def reset(self):
         self.write("*RST")
@@ -244,7 +253,7 @@ class Channel:
 def give_one_pulse():
     dev=Agilent2912("GPIB0::23::INSTR")
 
-    ch=dev.ChA
+    ch=dev.ChB
 
     ch.reset()
 
@@ -252,6 +261,7 @@ def give_one_pulse():
     ch.source_mode="VOLT"
     ch.switch_mode="PULSE"
     ch.trigger_source="BUS"
+    ch.trigger_bypass="ONCE"
 
     ch.offset=("VOLT",0)
     ch.amplitude=("VOLT",1)
