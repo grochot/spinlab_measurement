@@ -135,7 +135,7 @@ class CIMSMode():
                 self.pulsegenerator_obj.func_shape="PULSE"
                 self.pulsegenerator_obj.trigger_source="BUS"
                 self.pulsegenerator_obj.trigger_bypass="ONCE"
-                self.pulsegenerator_obj.offset=(self.pulsegenerator_pulsetype,self.pulsegenerator_offset)
+                
 
             case "Keithley 2636":
                 if self.pulsegenerator_channel=="Channel A":
@@ -223,6 +223,7 @@ class CIMSMode():
         print("self.pulsegenerator_duration",self.pulsegenerator_duration)
         self.pulsegenerator_obj.duration=self.pulsegenerator_duration
         self.pulsegenerator_obj.source_range=(self.pulsegenerator_pulsetype,self.pulsegenerator_source_range)
+        self.pulsegenerator_obj.offset=(self.pulsegenerator_pulsetype,self.pulsegenerator_offset)
         if self.pulsegenerator_pulsetype == "VOLT":
             self.pulsegenerator_obj.compliance_current=self.pulsegenerator_compliance
         else:

@@ -154,7 +154,7 @@ class SpinLabMeasurement(Procedure):
     rotation_azimuth_constant =  FloatParameter("Azimuthal constant angle", default = parameters_from_file["rotation_azimuth_constant"], group_by={"set_rotationstation": lambda v: v == True, "rotation_axis": lambda v: v == "Polar"})
 
     #pulsegenerator parameters
-    pulsegenerator_offset=FloatParameter("pulsegenerator offset", default = parameters_from_file["pulsegenerator_offset"], group_by={"mode": lambda v: v == "CIMSMode", "set_pulsegenerator": lambda v: v == "Agilent 2912" or v=="Tektronix 10,070A"})
+    pulsegenerator_offset=FloatParameter("pulsegenerator offset", default = parameters_from_file["pulsegenerator_offset"], group_by={"mode": lambda v: v == "CIMSMode", "set_pulsegenerator": lambda v: v == "Agilent 2912" or v=="Tektronix 10,070A" or v=="Keithley 2636"})
     pulsegenerator_duration=FloatParameter("pulsegenerator duration", default = parameters_from_file["pulsegenerator_duration"], group_by={"mode": lambda v: v == "CIMSMode", "set_pulsegenerator": lambda v: v != "none"})
     pulsegenerator_pulsetype=ListParameter("pulsegenerator pulsetype", default = parameters_from_file["pulsegenerator_pulsetype"],choices=["VOLT", "CURR"], group_by={"mode": lambda v: v == "CIMSMode", "set_pulsegenerator": lambda v: v != "none" and v!="Tektronix 10,070A"})
     pulsegenerator_channel=ListParameter("pulsegenerator channel", default = parameters_from_file["pulsegenerator_channel"],choices=["Channel A","Channel B"], group_by={"mode": lambda v: v == "CIMSMode", "set_pulsegenerator": lambda v: v != "none" and v!="Tektronix 10,070A"})

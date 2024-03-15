@@ -220,6 +220,14 @@ class Channel:
         values=[-200, 200]
     )
 
+    offset=Instrument.control(
+        'smu{ch}.source.level%s', 'smu{ch}.source.level%s=%s',
+        """ Property controlling the applied source voltage """,
+        set_process=lambda v:(v[0].replace("VOLT",'v').replace("CURR",'i'),v[1])
+        #validator=truncated_range,
+        #values=[-200, 200]
+    )
+
     compliance_voltage = Instrument.control(
         'smu{ch}.source.limitv', 'smu{ch}.source.limitv=%f',
         """ Property controlling the source compliance voltage """,
