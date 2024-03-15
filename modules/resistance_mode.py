@@ -187,8 +187,9 @@ class ResistanceMode():
                    
 
         else:
-            self.actual_set_field = self.field_obj.set_field(point*self.field_constant)
-            sleep(self.delay_field)
+            pass
+        self.actual_set_field = self.field_obj.set_field(point*self.field_constant)
+        sleep(self.delay_field)
 
 
         #measure field
