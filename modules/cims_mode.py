@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler()) 
 
 class CIMSMode():
-    def __init__(self, vector:str, mode_cims_relays:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str,pulsegenerator:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool,return_the_rotationstation:bool, address_sourcemeter:str, address_multimeter:str,address_pulsegenerator:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_measurement:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float, rotation_axis:str, rotation_polar_constant:float, rotation_azimuth_constant:float,pulsegenerator_duration,pulsegenerator_offset,pulsegenerator_pulsetype,pulsegenerator_channel,set_relay,address_relay,pulsegenerator_compliance,pulsegenerator_source_range) -> None:
+    def __init__(self, vector:str, mode_cims_relays:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str,pulsegenerator:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool,return_the_rotationstation:bool, address_sourcemeter:str, address_multimeter:str,address_pulsegenerator:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_measurement:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float, rotation_axis:str, rotation_polar_constant:float, rotation_azimuth_constant:float,pulsegenerator_duration,pulsegenerator_offset,pulsegenerator_pulsetype,pulsegenerator_channel,set_relay,address_relay,pulsegenerator_compliance,pulsegenerator_source_range,field_bias_value) -> None:
     
         ## parameter initialization
         self.sourcemeter = sourcemeter
@@ -85,6 +85,8 @@ class CIMSMode():
 
         self.set_relay=set_relay
         self.address_relay=address_relay
+
+        self.field_bias_value=field_bias_value
 
     def generate_points(self):
         #Vector initialization
@@ -218,9 +220,9 @@ class CIMSMode():
         else:
             sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
 
+        self.actual_set_field = self.field_obj.set_field(self.field_bias_value*self.field_constant)
 
         #pulsegenerator initialization
-        print("self.pulsegenerator_duration",self.pulsegenerator_duration)
         self.pulsegenerator_obj.duration=self.pulsegenerator_duration
         self.pulsegenerator_obj.source_range=(self.pulsegenerator_pulsetype,self.pulsegenerator_source_range)
         self.pulsegenerator_obj.offset=(self.pulsegenerator_pulsetype,self.pulsegenerator_offset)
@@ -229,6 +231,7 @@ class CIMSMode():
         else:
             self.pulsegenerator_obj.compliance_voltage=self.pulsegenerator_compliance
         
+
             
         
 
@@ -320,7 +323,8 @@ class CIMSMode():
             'Y (V)': math.nan, 
             'Phase':math.nan,
             'Polar angle (deg)': self.polar_angle if self.rotationstation == True else math.nan,
-            'Azimuthal angle (deg)': self.azimuthal_angle if self.rotationstation == True else math.nan
+            'Azimuthal angle (deg)': self.azimuthal_angle if self.rotationstation == True else math.nan,
+            'Applied voltage (V)': point
             }
         
         return data 

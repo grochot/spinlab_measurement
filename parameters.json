@@ -1,7 +1,7 @@
 {
-    "mode": "ResistanceMode",
+    "mode": "CIMSMode",
     "sample_name": "test",
-    "vector": "-100,50,100",
+    "vector": "-1,10,1",
     "mode_resistance": false,
     "mode_fmr": "V-FMR",
     "mode_harmonic": "Field harmonic",
@@ -12,7 +12,7 @@
     "set_field": "DAQ",
     "set_lockin": "SR830",
     "set_automaticstation": false,
-    "set_rotationstation": true,
+    "set_rotationstation": false,
     "set_switch": false,
     "set_kriostat": false,
     "set_lfgen": "SR830",
@@ -41,7 +41,7 @@
     "multimeter_autorange": true,
     "multimeter_range": 10.0,
     "multimeter_average": 1,
-    "field_constant": -0.00121714,
+    "field_constant": -0.00378186,
     "gaussmeter_range": 4,
     "gaussmeter_resolution": "4 digits",
     "lockin_average": 20,
@@ -67,7 +67,7 @@
     "delay_field": 2.0,
     "delay_lockin": 0.1,
     "delay_bias": 1.0,
-    "rotation_axis": "Azimuthal",
+    "rotation_axis": "Polar",
     "rotation_polar_constant": 0.0,
     "rotation_azimuth_constant": 0.0,
     "constant_field_value": 0.0,
@@ -82,5 +82,6 @@
     "address_relay": "None",
     "pulsegenerator_compliance": 0.2,
     "pulsegenerator_source_range": 5.0,
-    "return_the_rotationstation": false
+    "return_the_rotationstation": true,
+    "field_bias_value": 100.0
 }
