@@ -324,7 +324,7 @@ class CIMSMode():
             'Phase':math.nan,
             'Polar angle (deg)': self.polar_angle if self.rotationstation == True else math.nan,
             'Azimuthal angle (deg)': self.azimuthal_angle if self.rotationstation == True else math.nan,
-            'Applied voltage (V)': point
+            'Applied Voltage (V)': point
             }
         
         return data 
