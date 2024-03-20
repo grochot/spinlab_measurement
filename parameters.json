@@ -83,5 +83,9 @@
     "pulsegenerator_compliance": 0.2,
     "pulsegenerator_source_range": 5.0,
     "return_the_rotationstation": true,
-    "field_bias_value": 100.0
+    "field_bias_value": 100.0,
+    "remagnetization":"False",
+    "remagnetization_value": 300,
+    "remagnetization_time": 2,
+    "hold_the_field_after_measurement":"False"
 }
