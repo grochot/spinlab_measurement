@@ -218,11 +218,17 @@ class CIMSMode():
         self.gaussmeter_obj.resolution(self.gaussmeter_resolution)
       
 
-        #Field initialization 
+        #Field initialization
+        
         if self.remagnetization:
             sweep_field_to_value(0, self.remagnetization_value, self.field_constant, self.field_step, self.field_obj)
             sleep(self.remagnetization_time)
+            print("to zero:")
             sweep_field_to_value(self.remagnetization_value, 0, self.field_constant, self.field_step, self.field_obj)
+            sleep(self.remagnetization_time)
+            
+        
+        sweep_field_to_value(0, self.field_bias_value, self.field_constant, self.field_step, self.field_obj)
 
         #pulsegenerator initialization
         self.pulsegenerator_obj.duration=self.pulsegenerator_duration

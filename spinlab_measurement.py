@@ -50,7 +50,7 @@ class SpinLabMeasurement(Procedure):
     remagnetization_value=FloatParameter("Remagnetization value", default = parameters_from_file["remagnetization_value"], units="Oe", group_by={"mode": lambda v: v == "CIMSMode"})
     remagnetization_time=FloatParameter("Remagnetization time", default = parameters_from_file["remagnetization_time"], units="s", group_by={"mode": lambda v: v == "CIMSMode"})
     hold_the_field_after_measurement=BooleanParameter("Hold the field after measurement", default = parameters_from_file["hold_the_field_after_measurement"], group_by = {"mode": lambda v: v == "CIMSMode"})
-
+    
     #remanency_correction = BooleanParameter("Return the rotationstation", default = parameters_from_file["remanency_correction"], group_by = {"mode": lambda v: v == "CIMSMode"})
 
     #Hardware

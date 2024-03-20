@@ -72,7 +72,7 @@
     "rotation_azimuth_constant": 0.0,
     "constant_field_value": 0.0,
     "address_rotationstation": "COM4",
-    "mode_cims_relays": true,
+    "mode_cims_relays": false,
     "pulsegenerator_offset": 0.0,
     "pulsegenerator_duration": 0.001,
     "pulsegenerator_pulsetype": "VOLT",
@@ -83,9 +83,9 @@
     "pulsegenerator_compliance": 0.2,
     "pulsegenerator_source_range": 5.0,
     "return_the_rotationstation": true,
-    "field_bias_value": 100.0,
-    "remagnetization":"False",
-    "remagnetization_value": 300,
-    "remagnetization_time": 2,
-    "hold_the_field_after_measurement":"False"
+    "field_bias_value": 500.0,
+    "remagnetization": false,
+    "remagnetization_value": 500.0,
+    "remagnetization_time": 2.0,
+    "hold_the_field_after_measurement": false
 }
