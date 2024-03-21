@@ -3,7 +3,7 @@
     "sample_name": "Py_15_LockIn",
     "vector": "-50,100,1500",
     "mode_resistance": true,
-    "mode_fmr": "V-FMR",
+    "mode_fmr": "const f",
     "mode_harmonic": "Field harmonic",
     "set_measdevice": "LockIn",
     "set_sourcemeter": "Keithley 2400",

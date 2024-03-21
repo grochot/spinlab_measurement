@@ -280,7 +280,7 @@ class FMRMode():
        
     def begin(self):
         match self.generator_measurement_mode:
-            case "V-FMR": 
+            case "const f": 
                  #Generator initialization
                 self.generator_obj.setFreq(self.set_frequency_constant_value)
                 self.generator_obj.setPower(self.generator_power)
@@ -289,7 +289,7 @@ class FMRMode():
                     sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
                 else:
                     sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
-            case "ST-FMR":
+            case "const H":
                 #Generator initialization
                 self.generator_obj.setFreq(self.point_list[0])
                 self.generator_obj.setPower(self.generator_power)
@@ -313,12 +313,11 @@ class FMRMode():
 
 
     def operating(self, point):
-        sleep(self.delay_field)
         #set temporary result list
         self.result_list = []
 
         match self.generator_measurement_mode:
-            case "V-FMR":
+            case "const f":
                 if self.rotationstation:
                     match self.rotation_axis:
                         case "Polar":
@@ -362,7 +361,7 @@ class FMRMode():
                     self.result2 = math.nan
 
             
-            case "ST-FMR":
+            case "const H":
                 if self.rotationstation:
                     match self.rotation_axis:
                         case "Polar":
@@ -390,21 +389,27 @@ class FMRMode():
         
                 sleep(self.delay_lockin)
 
-                #measure_lockin 
-                for i in range(self.lockin_average):
-                    self.result = self.lockin_obj.snap("{}".format(self.lockin_channel1), "{}".format(self.lockin_channel2))
-                    self.result_list.append(self.result)
-        
-                #calculate average:
-                self.result1 = np.average([i[0] for i in self.result_list])
-                self.result2 = np.average([i[1] for i in self.result_list])
+                if self.measdevice == "LockIn":
+                    #measure_lockin 
+                    for i in range(self.lockin_average):
+                        self.result = self.lockin_obj.snap("{}".format(self.lockin_channel1), "{}".format(self.lockin_channel2))
+                        self.result_list.append(self.result)
+            
+                    #calculate average:
+                    self.result1 = np.average([i[0] for i in self.result_list])
+                    self.result2 = np.average([i[1] for i in self.result_list])
+                else:
+                    #measure_multimeter
+                    self.result = np.average(self.multimeter_obj.reading)
+                    self.result1 = math.nan
+                    self.result2 = math.nan
 
         data = {
             'Voltage (V)': self.result if self.measdevice == "Multimeter" else math.nan,
             'Current (A)': math.nan,
             'Resistance (ohm)': self.result1 if self.lockin_channel1 == "R" else (self.result2 if self.lockin_channel2 == "R" else math.nan), 
             'Field (Oe)': self.tmp_field,
-            'Frequency (Hz)': self.set_frequency_constant_value if self.generator_measurement_mode == "V-FMR" else point, 
+            'Frequency (Hz)': self.set_frequency_constant_value if self.generator_measurement_mode == "const f" else point, 
             'X (V)':  self.result1 if self.lockin_channel1 == "X" else (self.result2 if self.lockin_channel2 == "X" else math.nan),   
             'Y (V)':  self.result1 if self.lockin_channel1 == "Y" else (self.result2 if self.lockin_channel2 == "Y" else math.nan), 
             'Phase': self.result1 if self.lockin_channel1 == "Phase" else (self.result2 if self.lockin_channel2 == "Phase" else math.nan),

@@ -43,7 +43,7 @@ class SpinLabMeasurement(Procedure):
 #################################################################### PARAMETERS #####################################################################
     mode = ListParameter("Mode", default = parameters_from_file["mode"] , choices=['ResistanceMode', 'FMRMode', 'VSMMode', 'HarmonicMode', 'CalibrationFieldMode', 'PulseMode'])
     mode_resistance = BooleanParameter("4-points", default = parameters_from_file["mode_resistance"], group_by="mode", group_condition=lambda v: v=="ResistanceMode")
-    mode_fmr = ListParameter("FMR Mode",default = parameters_from_file["mode_fmr"], choices = ["V-FMR", "ST-FMR"], group_by={"mode": lambda v: v == "FMRMode"})
+    mode_fmr = ListParameter("FMR Mode",default = parameters_from_file["mode_fmr"], choices = ["const f", "const H"], group_by={"mode": lambda v: v == "FMRMode"})
     mode_harmonic = ListParameter("Harmonic mode",default = parameters_from_file["mode_harmonic"],  choices = ["Field harmonic", "Angular harmonic"], group_by = {"mode": lambda v: v == "HarmonicMode"})
     
     #Hardware
@@ -120,15 +120,15 @@ class SpinLabMeasurement(Procedure):
     
     #FieldParameters 
     field_constant = FloatParameter("Field Calibration Constant", default = parameters_from_file["field_constant"])
-    set_field_value_fmr= FloatParameter("Set Constant Field Value", default = parameters_from_file["set_field_value_fmr"], units="Oe", group_by={"mode_fmr": lambda v: v == "ST-FMR", "mode": lambda v: v == "FMRMode" })
-    set_field_value= FloatParameter("Set Constant Field Value", default = parameters_from_file["set_field_value"], units="Oe", group_by={ "set_rotationstation": lambda v: v == True, "mode": lambda v: v != "CalibrationFieldMode" })
+    set_field_value_fmr= FloatParameter("Constant Field Value", default = parameters_from_file["set_field_value_fmr"], units="Oe", group_by={"mode_fmr": lambda v: v == "const H", "mode": lambda v: v == "FMRMode" })
+    set_field_value= FloatParameter("Constant Field Value", default = parameters_from_file["set_field_value"], units="Oe", group_by={ "set_rotationstation": lambda v: v == True, "mode": lambda v: v != "CalibrationFieldMode" })
     field_step = FloatParameter("Field sweep step", default = parameters_from_file["field_step"], units="Oe", group_by={"mode": lambda v: v != "CalibrationFieldMode"})
-    constant_field_value =  FloatParameter("Set Constant Field Value", default = parameters_from_file["constant_field_value"], units="Oe", group_by={"set_rotationstation": lambda v: v ==True })
+    constant_field_value =  FloatParameter("Constant Field Value", default = parameters_from_file["constant_field_value"], units="Oe", group_by={"set_rotationstation": lambda v: v ==True })
 
 
     
     #GeneratorParameters 
-    generator_frequency = FloatParameter("Generator Frequency", default = parameters_from_file["generator_frequency"], units="Hz", maximum=31.8e9, group_by={"mode": lambda v: v == "FMRMode", "set_generator": lambda v: v != "none"})
+    generator_frequency = FloatParameter("Generator Frequency", default = parameters_from_file["generator_frequency"], units="Hz", maximum=31.8e9, group_by={"mode": lambda v: v == "FMRMode", "set_generator": lambda v: v != "none", "mode_fmr": lambda v: v == "const f"})
     generator_power = FloatParameter("Generator Power", default = parameters_from_file["generator_power"], units="dBm", group_by={"mode": lambda v: v == "FMRMode", "set_generator": lambda v: v != "none"})
     
     #Analyzer Parameters 
@@ -259,7 +259,7 @@ class MainWindow(ManagedDockWindow):
             y_axis=['X (V)', 'Y (V)'],
             directory_input=True,  
             sequencer=True,                               
-            sequencer_inputs=["generator_frequency"],
+            sequencer_inputs=["generator_frequency", "set_field_value_fmr"],
             inputs_in_scrollarea=True,
         )
        
