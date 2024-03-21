@@ -334,7 +334,7 @@ class FMRMode():
                                 sleep(0.01)
 
                 else:
-                    self.actual_set_field = self.field_obj.set_field(point*self.field_constant)
+                    self.field_obj.set_field(point*self.field_constant)
                     sleep(self.delay_field)
 
                 #measure field
@@ -383,7 +383,7 @@ class FMRMode():
 
                 #measure field
                 if self.set_gaussmeter == "none":
-                    self.tmp_field = point
+                    self.tmp_field = self.set_field_constant_value
                 else: 
                     self.tmp_field = self.gaussmeter_obj.measure()
         
