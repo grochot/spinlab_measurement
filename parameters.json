@@ -88,5 +88,8 @@
     "remagnetization_value": 500.0,
     "remagnetization_time": 5.0,
     "hold_the_field_after_measurement": false,
-    "remanency_correction": true
+    "remanency_correction": true,
+    "set_polar_angle":0,
+    "set_azimuthal_angle":0,
+    "set_rotationstation_const_angle":false
 }
