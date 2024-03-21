@@ -425,7 +425,7 @@ class FMRMode():
 
     def idle(self):
         sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
-        self.generator_obj.setOutput(False, True)
+        self.generator_obj.setOutput(False, False)
         if self.rotationstation: 
             self.rotationstation_obj.goToZero()
 
