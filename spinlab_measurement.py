@@ -57,8 +57,8 @@ class SpinLabMeasurement(Procedure):
     #Hardware
     set_sourcemeter=ListParameter("Sourcemeter", choices=["Keithley 2400", "Keithley 2636", "Agilent 2912", "none"], default = parameters_from_file["set_sourcemeter"], group_by="mode", group_condition=lambda v: v == "ResistanceMode" or v=="CIMSMode")
     set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"],default = parameters_from_file["set_multimeter"], group_by={"mode": lambda v: v=="ResistanceMode" or v == "FMRMode", "mode_resistance": lambda v: v=="4-points"})
-    set_gaussmeter = ListParameter("Gaussmeter", default = parameters_from_file["set_gaussmeter"], choices=["Lakeshore", "none"], group_by={"mode":lambda v: v == "ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" })
-    set_field = ListParameter("Magnetic Field", default = parameters_from_file["set_field"], choices = ["DAQ", "Lockin", "none"], group_by = {"mode": lambda v: v == "ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" })
+    set_gaussmeter = ListParameter("Gaussmeter", default = parameters_from_file["set_gaussmeter"], choices=["Lakeshore", "none"], group_by={"mode":lambda v: v == "ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" or v=="CIMSMode" })
+    set_field = ListParameter("Magnetic Field", default = parameters_from_file["set_field"], choices = ["DAQ", "Lockin", "none"], group_by = {"mode": lambda v: v == "ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" or v=="CIMSMode" })
     set_lockin = ListParameter("Lockin", default = parameters_from_file["set_lockin"], choices = ["Zurich", "SR830", "none"], group_by = {"mode": lambda v: v == "HarmonicMode" or v == "FMRMode"})
     set_automaticstation = BooleanParameter("Automatic Station",  default = parameters_from_file["set_automaticstation"], group_by={"mode": lambda v: v != "CalibrationFieldMode"})
     set_rotationstation = BooleanParameter("Rotation Station", default = parameters_from_file["set_rotationstation"], group_by={"mode": lambda v: v != "CalibrationFieldMode"})
@@ -69,7 +69,7 @@ class SpinLabMeasurement(Procedure):
     set_analyzer = ListParameter("Vector Analyzer", default = parameters_from_file["set_analyzer"], choices = ['VectorAnalyzer', 'none'], group_by={'mode': lambda v: v=='VSMMode'})
     set_generator = ListParameter("RF Generator", default = parameters_from_file["set_generator"], choices = ["Agilent","WindFreak", "none"], group_by = {"mode": lambda v: v == "FMRMode"})
     set_pulsegenerator=ListParameter("Pulse Generator", choices=["Agilent 2912","Tektronix 10,070A","Keithley 2636", "none"], default = parameters_from_file["set_pulsegenerator"], group_by="mode", group_condition=lambda v: v=="CIMSMode")
-    set_relay=ListParameter("External relay", choices=["THIS_DEVICE", "none"], default = parameters_from_file["set_relay"],group_by={'mode':lambda v: v=="CIMSMode", "set_pulsegenerator": lambda v: v=="Tektronix 10,070A"})
+    set_relay=ListParameter("External relay", choices=["THIS_DEVICE", "none"], default = parameters_from_file["set_relay"],group_by={'mode':lambda v: v=="CIMSMode"})
 
 
     #Hardware address

@@ -361,7 +361,8 @@ class Channel:
         self.single_pulse_run()
 
     def init(self):
-        log.info("Using excessed function init() for Keithley2636")
+        pass
+        #log.info("Using excessed function init() for Keithley2636")
         
     def single_pulse_run(self):
         self.write('smu{ch}.trigger.initiate()')

@@ -120,9 +120,7 @@ class CIMSMode():
                 if self.sourcemeter_channel=="Channel A":
                     self.sourcemeter_obj = Keithley2636(self.address_sourcemeter).ChA
                 else:
-                    self.sourcemeter_obj = Keithley2636(self.address_sourcemeter).ChB
-                #self.sourcemeter_obj.set_channel(self.sourcemeter_channel)
-               
+                    self.sourcemeter_obj = Keithley2636(self.address_sourcemeter).ChB               
             case "Agilent 2912":
                 if self.sourcemeter_channel=="Channel A":
                     self.sourcemeter_obj = Agilent2912(self.address_sourcemeter).ChA
@@ -142,13 +140,10 @@ class CIMSMode():
                     self.pulsegenerator_obj = Agilent2912(self.address_pulsegenerator).ChA
                 else:
                     self.pulsegenerator_obj = Agilent2912(self.address_pulsegenerator).ChB
-
                 self.pulsegenerator_obj.source_mode=self.pulsegenerator_pulsetype
                 self.pulsegenerator_obj.func_shape="PULSE"
                 self.pulsegenerator_obj.trigger_source="BUS"
                 self.pulsegenerator_obj.trigger_bypass="ONCE"
-                
-
             case "Keithley 2636":
                 if self.pulsegenerator_channel=="Channel A":
                     self.pulsegenerator_obj=Keithley2636(self.address_pulsegenerator).ChA
@@ -157,11 +152,9 @@ class CIMSMode():
                 
                 self.pulsegenerator_obj.single_pulse_prepare()
             case _:
-                pass
                 self.pulsegenerator_obj = DummyPulsegenerator(self.address_pulsegenerator)
                 log.warning('Used dummy Pulsegemerator.')
                 
-        
         match self.gaussmeter: 
             case "Lakeshore": 
                 self.gaussmeter_obj = Lakeshore(self.address_gaussmeter)
@@ -176,27 +169,13 @@ class CIMSMode():
                 self.field_obj = DummyField(self.address_daq)
                 log.warning('Used dummy DAQ.')
 
-        
         match self.set_relay:
             case "THIS_DEVICE":
                 pass
                 log.warning("Used THIS_DEVICE")
             case _:
                 self.relay_obj = DummyRelay(self.address_daq)
-                log.warning('Used dummy relay.')              
-        
-        #Rotation_station object initialization
-        if self.rotationstation: 
-            try:
-                self.rotationstation_obj = RotationStage(self.rotationstation_port)
-                match self.rotation_axis:
-                    case "Polar": 
-                        self.rotationstation_obj.goToAzimuth(self.rotation_azimuth_constant)
-                    case "Azimuthal": 
-                        self.rotationstation_obj.goToPolar(self.rotation_polar_constant)
-            except:
-                log.error("Rotation station is not initialized")
-                self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
+                log.info('Used dummy relay. It\'s ok becouse the device is not implemented yet')              
 
         #Sourcemeter initialization
         self.sourcemeter_obj.source_mode = self.sourcemeter_source #Set source type 
@@ -220,8 +199,7 @@ class CIMSMode():
             self.sourcemeter_obj.measure_voltage(self.sourcemeter_nplc, self.sourcemeter_limit)
 
 
-        #angle initizalization
-        print("ROT",self.rotationstation)
+        #Rotation station for const angle initizalization
         if self.set_rotationstation_const_angle:
             try:
                 self.rotationstation_obj = RotationStage(self.rotationstation_port)
@@ -231,15 +209,9 @@ class CIMSMode():
                 log.error("Rotation station is not initialized")
                 self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
 
-        
-        
-
         #Lakeshore initalization 
         self.gaussmeter_obj.range(self.gaussmeter_range)
         self.gaussmeter_obj.resolution(self.gaussmeter_resolution)
-
-
-      
 
         #Field remagnetization
         if self.remagnetization:
@@ -275,14 +247,9 @@ class CIMSMode():
             self.pulsegenerator_obj.compliance_current=self.pulsegenerator_compliance
         else:
             self.pulsegenerator_obj.compliance_voltage=self.pulsegenerator_compliance
-        
-
-            
-
 
 
     def operating(self, point):
-
         #measure field
         if self.gaussmeter == "none":
             self.tmp_field = point
@@ -290,9 +257,6 @@ class CIMSMode():
             self.tmp_field = self.gaussmeter_obj.measure()
         sleep(self.delay_bias)
 
-
-
-        
 
         sleep(self.delay_measurement)
         #----Give pulse-----------------------------------------------------
@@ -304,7 +268,7 @@ class CIMSMode():
         
         #-------------------------------------------------------------------
 
-        #wyłączam output generatora
+        #turn off generator output
         if self.mode_cims_relays:
             self.pulsegenerator_obj.disable_source()
 
@@ -363,13 +327,13 @@ class CIMSMode():
 
         if self.hold_the_field_after_measurement:
             if self.field_bias_value-self.actual_remanency>100:
-                log.warning("Too much field to hold on setting to zero")
+                log.warning("Too much field to hold on. Setting field to zero")
                 sweep_field_to_zero(self.field_bias_value-self.actual_remanency, self.field_constant, self.field_step, self.field_obj)
 
         else:
             sweep_field_to_zero(self.field_bias_value-self.actual_remanency, self.field_constant, self.field_step, self.field_obj)
 
-        if (self.rotationstation or self.set_rotationstation_const_angle) and self.return_the_rotationstation: 
+        if self.set_rotationstation_const_angle and self.return_the_rotationstation: 
             self.rotationstation_obj.goToZero() 
 
     def end(self):
