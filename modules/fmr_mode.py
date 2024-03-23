@@ -24,6 +24,8 @@ from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity
 from logic.sweep_field_to_zero import sweep_field_to_zero 
 from logic.sweep_field_to_value import sweep_field_to_value
 
+import random
+
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
 
@@ -147,6 +149,10 @@ class FMRMode():
 
         self.measdevice = measdevice
         ## parameter initialization 
+        
+        # Normalization parameters
+        self.max = 0
+        self.min = 0
         
         
         
@@ -342,24 +348,6 @@ class FMRMode():
                     self.tmp_field = point
                 else: 
                     self.tmp_field = self.gaussmeter_obj.measure()
-        
-                sleep(self.delay_lockin)
-
-                if self.measdevice == "LockIn":
-                    #measure_lockin 
-                    for i in range(self.lockin_average):
-                        self.result = self.lockin_obj.snap("{}".format(self.lockin_channel1), "{}".format(self.lockin_channel2))
-                        self.result_list.append(self.result)
-            
-                    #calculate average:
-                    self.result1 = np.average([i[0] for i in self.result_list])
-                    self.result2 = np.average([i[1] for i in self.result_list])
-                else:
-                    #measure_multimeter
-                    self.result = np.average(self.multimeter_obj.reading)
-                    self.result1 = math.nan
-                    self.result2 = math.nan
-
             
             case "const H":
                 if self.rotationstation:
@@ -387,25 +375,40 @@ class FMRMode():
                 else: 
                     self.tmp_field = self.gaussmeter_obj.measure()
         
-                sleep(self.delay_lockin)
+        sleep(self.delay_lockin)
 
-                if self.measdevice == "LockIn":
-                    #measure_lockin 
-                    for i in range(self.lockin_average):
-                        self.result = self.lockin_obj.snap("{}".format(self.lockin_channel1), "{}".format(self.lockin_channel2))
-                        self.result_list.append(self.result)
+        if self.measdevice == "LockIn":
+            #measure_lockin 
+            for i in range(self.lockin_average):
+                self.result = self.lockin_obj.snap("{}".format(self.lockin_channel1), "{}".format(self.lockin_channel2))
+                self.result_list.append(self.result)
+    
+            #calculate average:
+            self.result1 = np.average([i[0] for i in self.result_list])
+            self.result2 = np.average([i[1] for i in self.result_list])
+        else:
+            #measure_multimeter
+            self.result = np.average(self.multimeter_obj.reading)
+            self.result1 = math.nan
+            self.result2 = math.nan
+        
+        self.result = 1e-6 * (random.randint(0, 10000) - 5000) * random.randint(1, 10)
+        
+        self.doNormalization = False
+        
+        if self.result > self.max:
+            self.max = self.result
+            self.doNormalization = True
             
-                    #calculate average:
-                    self.result1 = np.average([i[0] for i in self.result_list])
-                    self.result2 = np.average([i[1] for i in self.result_list])
-                else:
-                    #measure_multimeter
-                    self.result = np.average(self.multimeter_obj.reading)
-                    self.result1 = math.nan
-                    self.result2 = math.nan
+        if self.result< self.min:
+            self.min = self.result
+            self.doNormalization = True
+            
+        normalized = (self.result - self.min) / (self.max - self.min)
 
         data = {
             'Voltage (V)': self.result if self.measdevice == "Multimeter" else math.nan,
+            'Normalized voltage (a.u.)': normalized if self.measdevice == "Multimeter" else math.nan,
             'Current (A)': math.nan,
             'Resistance (ohm)': self.result1 if self.lockin_channel1 == "R" else (self.result2 if self.lockin_channel2 == "R" else math.nan), 
             'Field (Oe)': self.tmp_field,

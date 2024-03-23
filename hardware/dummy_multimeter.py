@@ -1,5 +1,6 @@
 import numpy as np
 class DummyMultimeter():
+    reading = np.nan
     def __init__(self, resource_name):
         pass
     def resolution(self, resolution):

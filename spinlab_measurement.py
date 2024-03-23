@@ -147,7 +147,7 @@ class SpinLabMeasurement(Procedure):
     rotation_azimuth_constant =  FloatParameter("Azimuthal constant angle", default = parameters_from_file["rotation_azimuth_constant"], group_by={"set_rotationstation": lambda v: v == True, "rotation_axis": lambda v: v == "Polar"})
 
     DEBUG = 1
-    DATA_COLUMNS = ['Voltage (V)', 'Current (A)', 'Resistance (ohm)', 'Field (Oe)', 'Frequency (Hz)', 'X (V)', 'Y (V)', 'Phase', 'Polar angle (deg)', 'Azimuthal angle (deg)' ]
+    DATA_COLUMNS = ['Voltage (V)', 'Normalized voltage (a.u.)', 'Current (A)', 'Resistance (ohm)', 'Field (Oe)', 'Frequency (Hz)', 'X (V)', 'Y (V)', 'Phase', 'Polar angle (deg)', 'Azimuthal angle (deg)' ]
     path_file = SaveFilePath() 
 
     
@@ -209,15 +209,23 @@ class SpinLabMeasurement(Procedure):
                 self.counter = 0
                 sleep(15)
                 for point in self.points:
-                   start = time()
-                   self.result = self.fmrmode.operating(point)
-                   window.set_single_measurement_duration(round(time() - start))
-                   self.emit('results', self.result) 
-                   self.emit('progress', 100 * self.counter / len(self.points))
-                   self.counter = self.counter + 1
-                   if self.should_stop():
-                    log.warning("Caught the stop flag in the procedure")
-                    break
+                    
+                    start = time()
+                    self.result = self.fmrmode.operating(point)
+                    window.set_single_measurement_duration(round(time() - start))   
+                   
+                    if self.fmrmode.doNormalization:
+                        data = window.manager.running_experiment().results.data
+                        for row in range(len(data)):
+                            data['Normalized voltage (a.u.)'][row] = (float(data['Voltage (V)'][row]) - self.fmrmode.min) / (self.fmrmode.max - self.fmrmode.min)
+                        
+                        
+                    self.emit('results', self.result) 
+                    self.emit('progress', 100 * self.counter / len(self.points))
+                    self.counter = self.counter + 1
+                    if self.should_stop():
+                        log.warning("Caught the stop flag in the procedure")
+                        break
                 self.fmrmode.end()
                 #    self.set_calibration_constant(self.result[1])
             case "CalibrationFieldMode": 
