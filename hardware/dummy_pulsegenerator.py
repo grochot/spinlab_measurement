@@ -41,5 +41,8 @@ class DummyPulsegenerator:
 
     def trigger(self):
         pass
+
+    def shutdown(self):
+        pass
 #*-------------------------------------------------------------------------------------
     
