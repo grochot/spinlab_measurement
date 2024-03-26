@@ -43,7 +43,9 @@ class Agilent2912(Instrument):
             message = err[1].replace('"', '')
         else:
             code = message = err[0]
-        log.info(f"ERROR {str(code)},{str(message)} - len {str(len(err))}")
+
+        if message!="No error":
+            log.info(f"ERROR {str(code)},{str(message)} - len {str(len(err))}")
         return (code, message)
 
     def check_errors(self):

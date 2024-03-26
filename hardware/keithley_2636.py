@@ -70,10 +70,10 @@ class Keithley2636(Instrument):
         code, message = self.error
         while code != 0:
             t = time.time()
-            log.info("Keithley 2600 reported error: %d, %s" % (code, message))
+            log.info("Keithley 2636 reported error: %d, %s" % (code, message))
             code, message = self.error
             if (time.time() - t) > 10:
-                log.warning("Timed out for Keithley 2600 error retrieval.")
+                log.warning("Timed out for Keithley 2636 error retrieval.")
 
     def opc(self): 
         kk= self.ask("*OPC?")
