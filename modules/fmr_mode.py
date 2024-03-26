@@ -151,8 +151,8 @@ class FMRMode():
         ## parameter initialization 
         
         # Normalization parameters
-        self.max = 0
-        self.min = 0
+        self.max_voltage = 0
+        self.min_voltage = 0
         
         
         
@@ -318,7 +318,7 @@ class FMRMode():
         sleep(1)
 
 
-    def operating(self, point):
+    def operating(self, point) -> dict:
         #set temporary result list
         self.result_list = []
 
@@ -392,23 +392,21 @@ class FMRMode():
             self.result1 = math.nan
             self.result2 = math.nan
         
-        self.result = 1e-6 * (random.randint(0, 10000) - 5000) * random.randint(1, 10)
+        self.do_recal_norm = False
         
-        self.doNormalization = False
-        
-        if self.result > self.max:
-            self.max = self.result
-            self.doNormalization = True
+        if self.result > self.max_voltage:
+            self.max_voltage = self.result
+            self.do_recal_norm = True
             
-        if self.result< self.min:
-            self.min = self.result
-            self.doNormalization = True
+        if self.result< self.min_voltage:
+            self.min_voltage = self.result
+            self.do_recal_norm = True
             
-        normalized = (self.result - self.min) / (self.max - self.min)
+        norm_voltage = (self.result - self.min_voltage) / (self.max_voltage - self.min_voltage)
 
         data = {
             'Voltage (V)': self.result if self.measdevice == "Multimeter" else math.nan,
-            'Normalized voltage (a.u.)': normalized if self.measdevice == "Multimeter" else math.nan,
+            'Normalized voltage (a.u.)': norm_voltage if self.measdevice == "Multimeter" else math.nan,
             'Current (A)': math.nan,
             'Resistance (ohm)': self.result1 if self.lockin_channel1 == "R" else (self.result2 if self.lockin_channel2 == "R" else math.nan), 
             'Field (Oe)': self.tmp_field,

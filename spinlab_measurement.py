@@ -178,8 +178,6 @@ class SpinLabMeasurement(Procedure):
                 self.calibrationmode = FieldCalibrationMode(self.set_field, self.set_gaussmeter, self.address_daq, self.address_gaussmeter, self.vector, self.delay_field)
                 self.calibrationmode.initializing()
 
-                
-
 #################################### PROCEDURE##############################################
     def execute(self):
         match self.mode:
@@ -207,20 +205,27 @@ class SpinLabMeasurement(Procedure):
                 self.harmonicmode.end()
             case "FMRMode":
                 self.counter = 0
-                sleep(15)
+                sleep(10)
+                
+                results_class: Results = window.manager.running_experiment().results
+                
                 for point in self.points:
                     
                     start = time()
                     self.result = self.fmrmode.operating(point)
-                    window.set_single_measurement_duration(round(time() - start))   
+                    window.set_single_measurement_duration(round(time() - start))
+                    
+                    self.emit('results', self.result)
                    
-                    if self.fmrmode.doNormalization:
-                        data = window.manager.running_experiment().results.data
-                        for row in range(len(data)):
-                            data['Normalized voltage (a.u.)'][row] = (float(data['Voltage (V)'][row]) - self.fmrmode.min) / (self.fmrmode.max - self.fmrmode.min)
-                        
-                        
-                    self.emit('results', self.result) 
+                    if self.fmrmode.do_recal_norm:
+                        data = results_class.data
+                        with open(results_class.data_filename, "w") as f:
+                            f.write(results_class.header())
+                            f.write(results_class.labels())
+                            for row in range(len(data)):
+                                data['Normalized voltage (a.u.)'][row] = (float(data['Voltage (V)'][row]) - self.fmrmode.min_voltage) / (self.fmrmode.max_voltage - self.fmrmode.min_voltage)
+                                f.write(results_class.format(data.iloc[row].to_dict()) + "\n")
+                    
                     self.emit('progress', 100 * self.counter / len(self.points))
                     self.counter = self.counter + 1
                     if self.should_stop():
