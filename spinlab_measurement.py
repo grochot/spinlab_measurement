@@ -173,7 +173,7 @@ class SpinLabMeasurement(Procedure):
                 self.fmrmode = FMRMode(self.set_automaticstation, self.set_lockin, self.set_field, self.set_gaussmeter, self.set_generator, self.set_rotationstation, self.address_lockin, self.address_gaussmeter, self.vector, self.delay_field, self.delay_lockin, self.delay_bias, self.lockin_average, self.lockin_input_coupling, self.lockin_reference_source,self.lockin_dynamic_reserve, self.lockin_input_connection, self.lockin_sensitivity, self.lockin_timeconstant, self.lockin_autophase, self.lockin_frequency, self.lockin_harmonic, self.lockin_sine_amplitude, self.lockin_channel1, self.lockin_channel2, self.set_field_value, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.address_generator, self.set_field_value_fmr, self.generator_frequency, self.generator_power,  self.mode_fmr, self.address_daq, self.set_lfgen, self.address_lfgen, self.lfgen_freq, self.lfgen_amp, self.field_step, self.set_rotationstation, self.address_rotationstation, None, self.rotation_axis, self. rotation_polar_constant, self.rotation_azimuth_constant, self.set_multimeter, self.address_multimeter, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.multimeter_nplc, self.set_measdevice)
                 self.points = self.fmrmode.generate_points()
                 self.fmrmode.initializing()
-                self.fmrmode.begin()
+                self.fmrmode.begin(self.points[0])
             case "CalibrationFieldMode": 
                 self.calibrationmode = FieldCalibrationMode(self.set_field, self.set_gaussmeter, self.address_daq, self.address_gaussmeter, self.vector, self.delay_field)
                 self.calibrationmode.initializing()
@@ -207,7 +207,7 @@ class SpinLabMeasurement(Procedure):
                 self.counter = 0
                 sleep(10)
                 
-                results_class: Results = window.manager.running_experiment().results
+                results_class: Results = window.manager.running_experiment().results                    
                 
                 for point in self.points:
                     
@@ -223,7 +223,7 @@ class SpinLabMeasurement(Procedure):
                             f.write(results_class.header())
                             f.write(results_class.labels())
                             for row in range(len(data)):
-                                data['Normalized voltage (a.u.)'][row] = (float(data['Voltage (V)'][row]) - self.fmrmode.min_voltage) / (self.fmrmode.max_voltage - self.fmrmode.min_voltage)
+                                data.loc[row, 'Normalized voltage (a.u.)'] = (float(data.loc[row, 'Voltage (V)']) - self.fmrmode.min_voltage) / (self.fmrmode.max_voltage - self.fmrmode.min_voltage)
                                 f.write(results_class.format(data.iloc[row].to_dict()) + "\n")
                     
                     self.emit('progress', 100 * self.counter / len(self.points))
