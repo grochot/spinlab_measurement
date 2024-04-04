@@ -6,10 +6,14 @@ def sweep_field_to_value(start_value, stop_value, field_constant, step, daq):
         vector = np.arange(start_value*field_constant, stop_value*field_constant, step*field_constant)
     else:
         vector = np.arange(start_value*field_constant, stop_value*field_constant, -1*step*field_constant)
-
+    
+    print("vector.shape[0]",vector.shape[0])
+    if vector[-1]==start_value:
+        vector=np.concatenate((vector,[stop_value*field_constant]))
 
     if vector[-1]<stop_value:
         vector=np.concatenate((vector,[stop_value*field_constant]))
+
 
     print("[sweep_field_to_value.py] - vector:",vector)
     for i in vector: 
