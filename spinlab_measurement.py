@@ -304,7 +304,7 @@ class MainWindow(ManagedDockWindow):
         )
        
         self.setWindowTitle('SpinLab Measurement System v.0.55')
-        #self.directory = self.procedure_class.path_file.ReadFile()
+        self.directory = self.procedure_class.path_file.ReadFile()
     
     def set_calibration_constant(self, value):
         self.inputs.field_constant.setValue(value)
@@ -314,15 +314,15 @@ class MainWindow(ManagedDockWindow):
         
 
     def queue(self, procedure=None):
-        directory = self.directory  # Change this to the desired directory
-        #self.procedure_class.path_file.WriteFile(directory)
+        directory = self.directory
+        self.procedure_class.path_file.WriteFile(directory)
         
         if procedure is None:
             procedure = self.make_procedure()
         if procedure.mode == "CalibrationFieldMode":
             procedure.sample_name = "calibration"
         name_of_file = procedure.sample_name
-        filename = unique_name(directory, prefix="{}_".format(name_of_file))
+        filename = unique_name(directory, prefix="{0}_{1}_".format(name_of_file,procedure.mode))
         results = Results(procedure, filename)
         experiment = self.new_experiment(results)
         self.manager.queue(experiment)
@@ -333,13 +333,3 @@ if __name__ == "__main__":
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
-
-
-
-'''
-To DO
--Queue full error 2636
-
-
-
-'''
