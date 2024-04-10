@@ -115,17 +115,20 @@ class CIMSMode():
         match self.sourcemeter:
             case "Keithley 2400":
                 self.sourcemeter_obj = Keithley2400(self.address_sourcemeter)
+                self.sourcemeter_obj.reset()
                 self.sourcemeter_obj.config_average(self.sourcemeter_average)
             case "Keithley 2636":
                 if self.sourcemeter_channel=="Channel A":
                     self.sourcemeter_obj = Keithley2636(self.address_sourcemeter).ChA
                 else:
-                    self.sourcemeter_obj = Keithley2636(self.address_sourcemeter).ChB               
+                    self.sourcemeter_obj = Keithley2636(self.address_sourcemeter).ChB
+                self.sourcemeter_obj.reset()        
             case "Agilent 2912":
                 if self.sourcemeter_channel=="Channel A":
                     self.sourcemeter_obj = Agilent2912(self.address_sourcemeter).ChA
                 else:
                     self.sourcemeter_obj = Agilent2912(self.address_sourcemeter).ChB
+                self.sourcemeter_obj.reset()
                 self.sourcemeter_obj.func_shape="DC"
             case _: 
                 self.sourcemeter_obj = DummySourcemeter(self.address_sourcemeter)
@@ -134,12 +137,14 @@ class CIMSMode():
         match self.pulsegenerator:
             case "Tektronix 10,070A":
                 self.pulsegenerator_obj=Tektronix10070a(self.address_pulsegenerator)
+                self.sourcemeter_obj.reset()
                 self.pulsegenerator_obj.trigger_source="GPIB"
             case "Agilent 2912":
                 if self.pulsegenerator_channel=="Channel A":
                     self.pulsegenerator_obj = Agilent2912(self.address_pulsegenerator).ChA
                 else:
                     self.pulsegenerator_obj = Agilent2912(self.address_pulsegenerator).ChB
+                self.sourcemeter_obj.reset()
                 self.pulsegenerator_obj.source_mode=self.pulsegenerator_pulsetype
                 self.pulsegenerator_obj.func_shape="PULSE"
                 self.pulsegenerator_obj.trigger_source="BUS"
@@ -149,7 +154,7 @@ class CIMSMode():
                     self.pulsegenerator_obj=Keithley2636(self.address_pulsegenerator).ChA
                 else:
                     self.pulsegenerator_obj=Keithley2636(self.address_pulsegenerator).ChB
-                
+                self.sourcemeter_obj.reset()
                 self.pulsegenerator_obj.single_pulse_prepare()
             case _:
                 self.pulsegenerator_obj = DummyPulsegenerator(self.address_pulsegenerator)
