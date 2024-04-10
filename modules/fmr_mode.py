@@ -151,8 +151,9 @@ class FMRMode():
         ## parameter initialization 
         
         # Normalization parameters
-        self.max_voltage = 0
-        self.min_voltage = 0
+        self.max_voltage = None
+        self.min_voltage = None
+        self.do_recal_norm = False
         
         
         
@@ -382,7 +383,7 @@ class FMRMode():
             #measure_lockin 
             for i in range(self.lockin_average):
                 result = self.lockin_obj.snap("{}".format(self.lockin_channel1), "{}".format(self.lockin_channel2))
-                result_list.append(self.result)
+                result_list.append(result)
     
             #calculate average:
             result1 = np.average([i[0] for i in result_list])
@@ -392,18 +393,22 @@ class FMRMode():
             result = np.average(self.multimeter_obj.reading)
             result1 = math.nan
             result2 = math.nan
-        
-        self.do_recal_norm = False
-        
-        if result > self.max_voltage:
-            self.max_voltage = result
-            self.do_recal_norm = True
+
+        if self.measdevice == "Multimeter":
             
-        if result< self.min_voltage:
-            self.min_voltage = result
-            self.do_recal_norm = True
+
+            self.max_voltage = result if not self.max_voltage else self.max_voltage
+            self.min_voltage = result if not self.min_voltage else self.min_voltage
             
-        norm_voltage = (result - self.min_voltage) / (self.max_voltage - self.min_voltage)
+            if result > self.max_voltage:
+                self.max_voltage = result
+                self.do_recal_norm = True
+                
+            if result< self.min_voltage:
+                self.min_voltage = result
+                self.do_recal_norm = True
+                
+            norm_voltage = (result - self.min_voltage) / (self.max_voltage - self.min_voltage)
 
         data = {
             'Voltage (V)': result if self.measdevice == "Multimeter" else math.nan,
