@@ -322,7 +322,7 @@ class MainWindow(ManagedDockWindow):
         if procedure.mode == "CalibrationFieldMode":
             procedure.sample_name = "calibration"
         name_of_file = procedure.sample_name
-        filename = unique_name(directory, prefix="{0}_{1}_".format(name_of_file,procedure.mode))
+        filename = unique_name(directory, prefix="{0}__{1}_".format(name_of_file,procedure.mode))
         results = Results(procedure, filename)
         experiment = self.new_experiment(results)
         self.manager.queue(experiment)
