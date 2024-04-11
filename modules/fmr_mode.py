@@ -153,6 +153,9 @@ class FMRMode():
         # Normalization parameters
         self.max_voltage = None
         self.min_voltage = None
+
+        self.min_x = None
+        self.max_x = None
         self.do_recal_norm = False
         
         
@@ -395,8 +398,6 @@ class FMRMode():
             result2 = math.nan
 
         if self.measdevice == "Multimeter":
-            
-
             self.max_voltage = result if not self.max_voltage else self.max_voltage
             self.min_voltage = result if not self.min_voltage else self.min_voltage
             
@@ -404,20 +405,41 @@ class FMRMode():
                 self.max_voltage = result
                 self.do_recal_norm = True
                 
-            if result< self.min_voltage:
+            if result < self.min_voltage:
                 self.min_voltage = result
                 self.do_recal_norm = True
-                
-            norm_voltage = (result - self.min_voltage) / (self.max_voltage - self.min_voltage)
+            
+            try:
+                norm_val = (result - self.min_voltage) / (self.max_voltage - self.min_voltage)
+            except ZeroDivisionError:
+                norm_val = 1
+        else:
+            self.max_x = result1 if not self.max_x else self.max_x
+            self.min_x = result1 if not self.min_x else self.min_x
+
+            if result1 > self.max_x:
+                self.max_x = result1
+                self.do_recal_norm = True
+            
+            if result1 < self.min_x:
+                self.min_x = result1
+                self.do_recal_norm = True
+            
+            try:
+                norm_val = (result1 - self.min_x) / (self.max_x - self.min_x)
+            except ZeroDivisionError:
+                norm_val = 1
+
 
         data = {
             'Voltage (V)': result if self.measdevice == "Multimeter" else math.nan,
-            'Normalized voltage (a.u.)': norm_voltage if self.measdevice == "Multimeter" else math.nan,
+            'Normalized voltage (a.u.)': norm_val if self.measdevice == "Multimeter" else math.nan,
             'Current (A)': math.nan,
             'Resistance (ohm)': result1 if self.lockin_channel1 == "R" else (result2 if self.lockin_channel2 == "R" else math.nan), 
             'Field (Oe)': self.tmp_field,
             'Frequency (Hz)': self.set_frequency_constant_value if self.generator_measurement_mode == "const f" else point, 
-            'X (V)':  result1 if self.lockin_channel1 == "X" else (result2 if self.lockin_channel2 == "X" else math.nan),   
+            'X (V)':  result1 if self.lockin_channel1 == "X" else (result2 if self.lockin_channel2 == "X" else math.nan),
+            'Normalized X (a.u.)': norm_val if self.lockin_channel1 == "X" and self.measdevice == 'LockIn' else math.nan,
             'Y (V)':  result1 if self.lockin_channel1 == "Y" else (result2 if self.lockin_channel2 == "Y" else math.nan), 
             'Phase': result1 if self.lockin_channel1 == "Phase" else (result2 if self.lockin_channel2 == "Phase" else math.nan),
             'Polar angle (deg)': self.polar_angle if self.rotationstation == True else math.nan,

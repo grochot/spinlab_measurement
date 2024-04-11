@@ -147,7 +147,7 @@ class SpinLabMeasurement(Procedure):
     rotation_azimuth_constant =  FloatParameter("Azimuthal constant angle", default = parameters_from_file["rotation_azimuth_constant"], group_by={"set_rotationstation": lambda v: v == True, "rotation_axis": lambda v: v == "Polar"})
 
     DEBUG = 1
-    DATA_COLUMNS = ['Voltage (V)', 'Normalized voltage (a.u.)', 'Current (A)', 'Resistance (ohm)', 'Field (Oe)', 'Frequency (Hz)', 'X (V)', 'Y (V)', 'Phase', 'Polar angle (deg)', 'Azimuthal angle (deg)' ]
+    DATA_COLUMNS = ['Voltage (V)', 'Normalized voltage (a.u.)', 'Current (A)', 'Resistance (ohm)', 'Field (Oe)', 'Frequency (Hz)', 'X (V)', 'Normalized X (a.u.)', 'Y (V)', 'Phase', 'Polar angle (deg)', 'Azimuthal angle (deg)' ]
     path_file = SaveFilePath() 
 
     
@@ -223,7 +223,10 @@ class SpinLabMeasurement(Procedure):
                             f.write(results_class.header())
                             f.write(results_class.labels())
                             for row in range(len(data)):
-                                data.loc[row, 'Normalized voltage (a.u.)'] = (float(data.loc[row, 'Voltage (V)']) - self.fmrmode.min_voltage) / (self.fmrmode.max_voltage - self.fmrmode.min_voltage)
+                                if self.set_measdevice == "LockIn":
+                                    data.loc[row, 'Normalized X (a.u.)'] = (float(data.loc[row, 'X (V)']) - self.fmrmode.min_x) / (self.fmrmode.max_x - self.fmrmode.min_x)
+                                else:
+                                    data.loc[row, 'Normalized voltage (a.u.)'] = (float(data.loc[row, 'Voltage (V)']) - self.fmrmode.min_voltage) / (self.fmrmode.max_voltage - self.fmrmode.min_voltage)
                                 f.write(results_class.format(data.iloc[row].to_dict()) + "\n")
                     
                     self.emit('progress', 100 * self.counter / len(self.points))
@@ -247,17 +250,17 @@ class SpinLabMeasurement(Procedure):
     def shutdown(self):
         pass
     
-    def get_estimates(self, sequence_length=None):
-                    start, number, stop =self.vector.split(',')
-                    iterations = len(linspace(float(start), float(stop), int(number)))
-                    self.delay = self.single_measurement_duration
-                    duration = iterations * self.delay
-                    total_duration = duration * (sequence_length if sequence_length else 1)
-                    estimates = [
-                        ("Total duration", str(timedelta(seconds=total_duration))),
-                        ('Measurement finished at', str((datetime.now() + timedelta(seconds=duration)).strftime("%Y-%m-%d %H:%M:%S"))),
-                    ]
-                    return estimates
+    # def get_estimates(self, sequence_length=None):
+    #                 start, number, stop =self.vector.split(',')
+    #                 iterations = len(linspace(float(start), float(stop), int(number)))
+    #                 self.delay = self.single_measurement_duration
+    #                 duration = iterations * self.delay
+    #                 total_duration = duration * (sequence_length if sequence_length else 1)
+    #                 estimates = [
+    #                     ("Total duration", str(timedelta(seconds=total_duration))),
+    #                     ('Measurement finished at', str((datetime.now() + timedelta(seconds=duration)).strftime("%Y-%m-%d %H:%M:%S"))),
+    #                 ]
+    #                 return estimates
         
 
 class MainWindow(ManagedDockWindow):
