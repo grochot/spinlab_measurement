@@ -36,6 +36,8 @@ class DummySourcemeter:
     def high_z_source(self):
         pass
        
+    def disable_source(self):
+        pass
    
 
 

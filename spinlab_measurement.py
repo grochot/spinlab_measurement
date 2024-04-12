@@ -45,7 +45,7 @@ class SpinLabMeasurement(Procedure):
     mode_fmr = ListParameter("FMR Mode",default = parameters_from_file["mode_fmr"], choices = ["V-FMR", "ST-FMR"], group_by={"mode": lambda v: v == "FMRMode"})
     mode_harmonic = ListParameter("Harmonic mode",default = parameters_from_file["mode_harmonic"],  choices = ["Field harmonic", "Angular harmonic"], group_by = {"mode": lambda v: v == "HarmonicMode"})
     mode_cims_relays = BooleanParameter("Use relays", default = parameters_from_file["mode_cims_relays"], group_by="mode", group_condition=lambda v: v=="CIMSMode")
-    return_the_rotationstation = BooleanParameter("Return the rotationstation", default = parameters_from_file["return_the_rotationstation"])
+    return_the_rotationstation = BooleanParameter("Return the rotationstation", default = parameters_from_file["return_the_rotationstation"], group_by="mode", group_condition=lambda v: v=="CIMSMode" or v=="ResistanceMode")
     remagnetization=BooleanParameter("Remagnetize sample", default = parameters_from_file["remagnetization"], group_by = {"mode": lambda v: v == "CIMSMode"})
     remagnetization_value=FloatParameter("Remagnetization value", default = parameters_from_file["remagnetization_value"], units="Oe", group_by={"mode": lambda v: v == "CIMSMode"})
     remagnetization_time=FloatParameter("Remagnetization time", default = parameters_from_file["remagnetization_time"], units="s", group_by={"mode": lambda v: v == "CIMSMode"})
