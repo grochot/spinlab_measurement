@@ -14,7 +14,7 @@ def sweep_field_to_value(start_value, stop_value, field_constant, step, daq):
     if vector.shape[0]==0:
         vector=np.array([stop_value*field_constant])
     else:
-        if vector[-1]<=stop_value:
+        if vector[-1]!=stop_value:
             vector=np.concatenate((vector,[stop_value*field_constant]))
 
 

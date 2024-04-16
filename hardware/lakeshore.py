@@ -13,11 +13,12 @@ class Lakeshore(Instrument):
         self.write("RANGE {}".format(range))
     
     def resolution(self, resolution):
-        self.write("RDGMODE 1,{},1,1,1".format(resolution))
+        resolution_dict = {"3 digits": 0,"4 digits": 1,"5 digits": 2}
+        self.write("RDGMODE 1,{},1,1,1".format(resolution_dict[resolution]))
    
     def measure(self):
         self.field = self.ask("RDGFIELD?")
         return float(self.field)
     
 # gg = Lakeshore("GPIB1::12::INSTR")
-# print(float(gg.measure()))
+# gg.resolution("3 digits")
