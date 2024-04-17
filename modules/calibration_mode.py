@@ -68,7 +68,7 @@ class FieldCalibrationMode():
         FieldCalibrationMode.idle(self)
 
     def idle(self):
-        sweep_field_to_zero(self.stop/self.calibration_constant, self.calibration_constant, int((self.stop/self.calibration_constant)/10), self.daq)
+        sweep_field_to_zero(self.stop/self.calibration_constant, self.calibration_constant, int((self.stop/self.calibration_constant)/10), self.daq)  #czy tutaj nie powinno byc mnozenia?
 
 
 

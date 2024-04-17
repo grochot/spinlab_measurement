@@ -31,9 +31,8 @@ class DAQ():
         """ Disable output, call parent function"""
         self.set_field(0)
 
-# d = DAQ('Dev4/ao0')
-# d.set_field(1)
 
-# print(d.read_field())
-
-
+#d = DAQ('Dev4/ao0')
+#d.set_field(1)
+#d.shutdown()
+#print(d.read_field())
