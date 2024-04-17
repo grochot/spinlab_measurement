@@ -1,0 +1,197 @@
+#Procedure: <__main__.SpinLabMeasurement>
+#Parameters:
+#	Analyzer address: None
+#	DAQ address: Dev4/ao0
+#	Gaussmeter address: GPIB1::12::INSTR
+#	Generator address: None
+#	LF Generator address: None
+#	Lockin address: None
+#	Multimeter address: None
+#	Pulse generator address: GPIB1::26::INSTR
+#	Relay address: None
+#	RotationStation address: COM4
+#	Sourcemeter address: GPIB1::23::INSTR
+#	Switch address: None
+#	Set Constant Field Value: 0 Oe
+#	Delay Bias: 1 s
+#	Delay Field: 0.5 s
+#	Delay Lockin: 0.1 s
+#	Delay sourcemeter measurement: 1 s
+#	Set Field Bias Value: -260 Oe
+#	Field Calibration Constant: -0.00272459
+#	Field sweep step: 50 Oe
+#	Gaussmeter Range: 5
+#	Gaussmeter Resolution: 3 digits
+#	Generator Frequency: 1e+09 Hz
+#	Generator Power: -20 dBm
+#	Hold the field after measurement: False
+#	LF Generator Amplitude: 2 V
+#	LF Generator Frequency: 330 Hz
+#	Lockin Autophase: False
+#	Lockin Average: 20
+#	Lockin Channel 1: X
+#	Lockin Channel 2: Y
+#	Lockin Dynamic Reserve: Normal
+#	Lockin Frequency: 384 Hz
+#	Lockin Harmonic: 1
+#	Lockin Input Connection: A
+#	Lockin Input Coupling: AC
+#	Lockin Reference Source: Internal
+#	Lockin Sensitivity: 50 uV/pA
+#	Lockin Sine Amplitude: 5 V
+#	Lockin Time Constant: 30 ms
+#	Mode: ResistanceMode
+#	Use relays: True
+#	FMR Mode: V-FMR
+#	Harmonic mode: Field harmonic
+#	4-points: False
+#	Multimeter autorange: True
+#	Multimeter average: 1
+#	Multimeter function: DCV
+#	Multimeter NPLC: 10
+#	Multimeter range: 10
+#	Multimeter resolution: 0.01
+#	pulsegenerator channel: Channel A
+#	Pulsegenerator compliance: 0.2
+#	pulsegenerator duration: 0.001
+#	pulsegenerator offset: 0
+#	pulsegenerator pulsetype: VOLT
+#	Pulsegenerator sourcerange: 5
+#	Remagnetize sample: False
+#	Remagnetization time: 10 s
+#	Remagnetization value: 500 Oe
+#	Remanency correction: True
+#	Return the rotationstation: False
+#	Rotation axis: Polar
+#	Azimuthal constant angle: 0
+#	Polar constant angle: 0
+#	Sample name: V2979b_j14
+#	Vector Analyzer: VectorAnalyzer
+#	Automatic Station: False
+#	Set azimuthal angle: 0 Deg
+#	Magnetic Field: DAQ
+#	Set Constant Field Value: 10 Oe
+#	Set Constant Field Value: 0 Oe
+#	Gaussmeter: Lakeshore
+#	RF Generator: Agilent
+#	Kriostat: False
+#	LF Generator: SR830
+#	Lockin: SR830
+#	Multimeter: none
+#	Set polar angle: 90 Deg
+#	Pulse Generator: Keithley 2636
+#	External relay: none
+#	Rotation Station: False
+#	Rotation Station for constant angle: True
+#	Sourcemeter: Agilent 2912
+#	Switch: False
+#	Sourcemeter average: 1
+#	Sourcemeter bias: 0.3
+#	Sourcemeter CH: Channel A
+#	Sourcemeter compliance: 0.1
+#	Sourcemeter limit: 2
+#	Sourcemeter NPLC: 0.1
+#	Sourcemeter Source: VOLT
+#	Vector: -200,50,400,50,-200
+#Data:
+Voltage (V),Current (A),Resistance (ohm),Field (Oe),Frequency (Hz),X (V),Y (V),Phase,Polar angle (deg),Azimuthal angle (deg),Applied Voltage (V)
+0.3,0.00244439,122.73000625923032,-79.1,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244365,122.76717205819163,-193.6,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244364,122.76767445286539,-218.7,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244332,122.78375325376945,-205.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244836,122.53100034308679,-192.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244372,122.7636554106035,-179.7,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244405,122.74707964239683,-167.4,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244837,122.53049988359602,-154.1,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244985,122.4564769271588,-140.8,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244911,122.4934772223379,-127.2,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244959,122.46947448348497,-113.5,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244949,122.47447427831916,-99.6,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244511,122.69386653361198,-86.0,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244848,122.5249950990002,-73.0,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244883,122.50748316543002,-59.1,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00245003,122.44748023493588,-45.4,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244967,122.46547494152273,-31.5,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00245097,122.40051897820047,-17.7,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00245116,122.39103118523474,-4.1,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00245166,122.36607033601722,9.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.0024635,121.77795818956768,22.7,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00247703,121.1127842617974,36.4,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00259314,115.68985862699276,50.2,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00259291,115.70012071379261,64.1,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00259396,115.65328686641273,77.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00267671,112.07788665936914,91.5,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00261012,114.9372442646315,105.4,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00264678,113.34527236868949,119.4,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00287927,104.19307671736237,132.4,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301586,99.47411351985835,146.1,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301768,99.41411945600593,160.1,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301663,99.44872258115844,174.3,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301678,99.44377780282286,188.2,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301627,99.46059205575096,201.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301869,99.3808572592747,215.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.0030179,99.4068723284403,228.7,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301874,99.37921119407436,242.7,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00302004,99.3364326300314,256.6,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301933,99.35979174187649,270.3,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301898,99.37131084008506,284.2,nan,nan,nan,nan,nan,nan,nan
+0.3,0.0030175,99.42004971002484,298.3,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301818,99.39765023954833,312.4,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301494,99.504467750602,326.4,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301648,99.45366785127034,339.3,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301606,99.46751722445839,353.0,nan,nan,nan,nan,nan,nan,nan
+0.3,0.0030155,99.4859890565412,366.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301673,99.44542600763077,381.0,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301512,99.49852742179415,395.0,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301701,99.43619676434615,408.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301658,99.45037094988363,422.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301755,99.41840234627429,434.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301583,99.47510303962756,431.7,nan,nan,nan,nan,nan,nan,nan
+0.3,0.0030153,99.49258780220873,419.3,nan,nan,nan,nan,nan,nan,nan
+0.3,0.0030177,99.41346058256288,406.7,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301537,99.49027814165426,393.5,nan,nan,nan,nan,nan,nan,nan
+0.3,0.0030162,99.46290033817385,380.4,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301734,99.42532164091551,368.4,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301593,99.47180471695297,355.3,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301624,99.46158130652734,342.2,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301604,99.4681768146311,329.2,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301555,99.48433950688928,316.1,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301455,99.51734089665123,302.7,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301479,99.50941856646732,289.3,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301313,99.56424050737937,275.8,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301545,99.48763866089638,263.5,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301624,99.46158130652734,250.3,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301605,99.46784701845128,236.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.0030139,99.53880354358141,224.0,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301493,99.50479778966675,210.6,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301573,99.4784015810434,197.0,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301493,99.50479778966675,183.6,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00301444,99.52097238624752,171.1,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00287698,104.27601165110637,157.8,nan,nan,nan,nan,nan,nan,nan
+0.3,0.0026828,111.82346801848814,144.3,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00260634,115.10393885678768,131.0,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00260631,115.1052637637119,117.6,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00260046,115.36420479453633,104.1,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00259076,115.7961370408683,91.5,nan,nan,nan,nan,nan,nan,nan
+0.3,0.0025894,115.85695527921526,77.1,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00259059,115.80373582851783,64.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00258877,115.88515009058356,51.3,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00257444,116.53019685834589,37.8,nan,nan,nan,nan,nan,nan,nan
+0.3,0.002551,117.60094080752646,24.3,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00255009,117.64290672093925,10.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00253508,118.33946068763116,-2.6,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00253747,118.22799875466508,-15.4,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00253702,118.24896926315125,-28.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00253382,118.39830769352203,-42.4,nan,nan,nan,nan,nan,nan,nan
+0.3,0.002485,120.72434607645876,-55.8,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00247007,121.45404786099179,-69.5,nan,nan,nan,nan,nan,nan,nan
+0.3,0.0024715,121.38377503540359,-83.3,nan,nan,nan,nan,nan,nan,nan
+0.3,0.0024697,121.47224359233914,-96.7,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00247041,121.4373322646848,-110.0,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00247032,121.4417565335665,-122.7,nan,nan,nan,nan,nan,nan,nan
+0.3,0.0024582,122.040517451794,-136.5,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244346,122.77671826017203,-149.9,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244019,122.94124637835577,-163.5,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00244064,122.91857873344696,-177.3,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00243906,122.9982042262183,-191.0,nan,nan,nan,nan,nan,nan,nan
+0.3,0.00243957,122.97249105375128,-204.9,nan,nan,nan,nan,nan,nan,nan

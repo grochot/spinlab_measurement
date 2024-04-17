@@ -10,8 +10,7 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            //"program": "C:\\Users\\IE\\git\\spinlab_measurement\\spinlab_measurement.py",
-            "program": "./spinlab_measurement.py",
+            "program": "${workspaceFolder}\\spinlab_measurement.py",
             "console": "integratedTerminal"
         }
     ]
