@@ -1,56 +1,291 @@
 from pymeasure.instruments import Instrument
-######## TO DO #########
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.adapters import Adapter
+import time
+
+import logging
+log = logging.getLogger(__name__) 
+log.addHandler(logging.NullHandler())
+
+
+
 class Agilent2912(Instrument):
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, name="Agilent 2912 SourceMeter", **kwargs):
         kwargs.setdefault('read_termination', '\n')
         super().__init__(
-            resourceName,
-            "Agilent 2912",
-            includeSCPI=True,
+            adapter,
+            name,
             **kwargs
         )
 
-    def select_channel(self, channel):
-       pass
+        self.ChA=Channel(self,'1')
+        self.ChB=Channel(self,'2')
+        #self.reset()
 
-    def source_mode(self, source_type):
-       pass
+    #def reset(self):
+    #    print("ogolny reset")
+    #    self.write("*RST")
 
-    def source_voltage_range(self, voltage):
-        pass
 
-    def compliance_current(self, current):
-        pass
-        
+
+    @property
+    def error(self):
+        """ Returns a tuple of an error code and message from a
+        single error. """
+        err = self.ask(':SYSTem:ERRor:ALL?')
+        err = err.split(',')
+        # Keithley Instruments Inc. sometimes on startup
+        # if tab delimitated message is greater than one, grab first two as code, message
+        # otherwise, assign code & message to returned error
+        if len(err) > 1:
+            err = (int(float(err[0])), err[1])
+            code = err[0]
+            message = err[1].replace('"', '')
+        else:
+            code = message = err[0]
+
+        if message!="No error":
+            log.info(f"ERROR {str(code)},{str(message)} - len {str(len(err))}")
+        return (code, message)
+
+    def check_errors(self):
+        """ Logs any system errors reported by the instrument.
+        """
+        code, message = self.error
+        while code != 0:
+            t = time.time()
+            log.info("Agilent 2912 reported error: %d, %s" % (code, message))
+            code, message = self.error
+            if (time.time() - t) > 10:
+                log.warning("Timed out for Keithley 2912 error retrieval.")
+
+class Channel:
+    def __init__(self, instrument, channel):
+        self.instrument = instrument
+        self.channel = channel
+
+
+    def check_errors(self):
+        return self.instrument.check_errors()
+    
+
+    def prepare_command(self,cmd):
+        #self.instrument.write("*WAI")
+        while self.instrument.ask("*OPC?")==1:
+            time.sleep(350/1000)
+
+        cmd_new=cmd.replace('{ch}',str(self.channel))
+        print("AGILENT 2912:",cmd_new)
+        return cmd_new
+
+    def ask(self, cmd):
+        return self.instrument.ask(self.prepare_command(cmd))
+
+    def write(self, cmd):
+        #print("to ten write")
+        self.instrument.write(self.prepare_command(cmd))
+
+
+    def values(self, cmd, **kwargs):
+        """ Reads a set of values from the instrument through the adapter,
+        passing on any key-word arguments.
+        """
+        return self.instrument.values(self.prepare_command(cmd))
+    
+    source_mode = Instrument.control(
+        ":SOUR{ch}:FUNC?", ":SOUR{ch}:FUNC:MODE %s",
+        """ A string property that controls the source mode, which can
+        take the values 'current' or 'voltage'. """,
+        validator=strict_discrete_set,
+        values={'CURR': 'CURR', 'VOLT': 'VOLT'},
+        map_values=True
+    )
+    voltage_range = Instrument.control(
+        ":SOUR{ch}:VOLT:RANG?", ":SOUR{ch}:VOLT:RANG:AUTO OFF;:SOUR{ch}:VOLT:RANG %g",
+        """ A floating point property that controls the measurement voltage
+        range in Volts, which can take values from -210 to 210 V.
+        Auto-range is disabled when this property is set. """,
+        validator=truncated_range,
+        values=[-210, 210]
+    )
+    compliance_current = Instrument.control(
+        ":SENS{ch}:CURR:PROT?", ":SENS{ch}:CURR:PROT %g",
+        """ A floating point property that controls the compliance current
+        in Amps. """,
+        validator=truncated_range,
+        values=[-3.03, 3.03]
+    )
+
     def enable_source(self):
-        pass
-   
-    def measure_current(self):
-       pass
+        self.write(":OUTP{ch} ON")
+    
+    def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
+        """ Configures the measurement of current.
+
+        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
+        :param current: Upper limit of current in Amps, from -3.03 A to 3.03 A
+        :param auto_range: Enables auto_range if True, else uses the set current
+        """
        
-    def source_current_range(self, range):
-        pass
-    def voltage_nplc(self, nplc):
-        pass
-    def compliance_voltage(self, voltage):
-        pass
-    
-    def current_nplc(self, nplc):
-        pass
+        self.write(":SENS{ch}:FUNC 'CURR';"
+                    ":SENS{ch}:CURR:NPLC %f;:FORM:ELEM:SENS{ch} CURR;" % nplc)
+        if auto_range:
+            self.write(":SOUR{ch}:CURR:RANG:AUTO ON;")
+        else:
+            self.current_range = current
+        self.check_errors()
 
-    def measure_voltage(self):
-        pass
-   
+    current_range = Instrument.control(
+        ":SOUR{ch}:CURR:RANG?", ":SOUR{ch}:CURR:RANG:AUTO OFF;:SOUR{ch}:CURR:RANG %g",
+        """ A floating point property that controls the measurement current
+        range in Amps, which can take values between -3.03 and +3.03 A.
+        Auto-range is disabled when this property is set. """,
+        validator=truncated_range,
+        values=[-3.03, 3.03]
+    )   
+    compliance_voltage = Instrument.control(
+        ":SENS{ch}:VOLT:PROT?", ":SENS{ch}:VOLT:PROT %g",
+        """ A floating point property that controls the compliance voltage
+        in Volts. """,
+        validator=truncated_range,
+        values=[-210, 210]
+    ) 
+    def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
+        """ Configures the measurement of voltage.
+
+        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
+        :param voltage: Upper limit of voltage in Volts, from -210 V to 210 V
+        :param auto_range: Enables auto_range if True, else uses the set voltage
+        """
+        self.write(":SENS{ch}:FUNC 'VOLT';"
+                    ":SENS{ch}:VOLT:NPLC %f;:FORM:ELEM:SENS{ch} VOLT;" % nplc)
+        if auto_range:
+            self.write(":SOUR{ch}:VOLT:RANG:AUTO ON;")
+        else:
+            self.voltage_range = voltage
+        self.check_errors()
+    
     def shutdown(self):
-        pass
+        self.write(":OUTP OFF")
 
-    def source_voltage(self, voltage):
-        pass
-    def source_current(self, current):
-        pass
-   
-    def current(self):
-        pass
+    def config_average(self, average):
+        # self.write(":SENS{ch}e:AVERage:TCONtrol REP")
+        # self.write(":SENS{ch}e:AVERage:COUNt {}".format(average))
+        self.write(":TRIG:COUN {}".format(average))
     
-    def voltage(self):
-        pass
+    source_voltage = Instrument.control(
+        ":SOUR{ch}:VOLT?", ":SOUR{ch}:VOLT %g",
+        """ A floating point property that controls the source voltage
+        in Volts. """
+    )
+    
+    source_current = Instrument.control(
+        ":SOUR{ch}:CURR?", ":SOUR{ch}:CURR %g",
+        """ A floating point property that controls the source current
+        in Amps. """,
+        validator=truncated_range,
+        values=[-1.05, 1.05]
+    )
+
+    current = Instrument.measurement(
+        ":MEAS? (@{ch})",
+        """ Reads the current in Amps, if configured for this reading.
+        """
+    )
+   
+    voltage = Instrument.measurement(
+        ":MEAS? (@{ch})",
+        """ Reads the voltage in Volt, if configured for this reading.
+        """
+    )
+
+
+    #pulsegen
+
+    func_shape = Instrument.control(
+        ":SOUR{ch}:FUNC:SHAP?", ":SOUR{ch}:FUNC:SHAP %s",
+        """ Selects the source output shape of the specified channel. """
+    )
+
+    trigger_bypass = Instrument.control(
+        ":TRIG{ch}:BYP?", ":TRIG{ch}:BYP %s",
+        """Enables or disables a bypass for the event detector in the trigger layer """,
+        validator=strict_discrete_set,
+        values=["OFF","ONCE"]
+    )
+
+    trigger_source = Instrument.control(
+        ":TRIG:SOUR?", ":TRIG{ch}:SOUR %s",
+        """ Selects the trigger source for the specified device action. """
+    )
+
+
+
+    offset = Instrument.control(
+        ":SOUR{ch}:%s:IMM?", ":SOUR{ch}:%s:IMM %s",
+        """ Changes the output level of the specified source channel immediately. """
+    )
+
+    amplitude = Instrument.control(
+        ":SOUR{ch}:%s:TRIG?", ":SOUR{ch}:%s:TRIG %s",
+        """ Changes the output level of the specified source channel immediately by receiving a trigger from the trigger source """
+    )
+
+    duration=Instrument.control(
+        ":SOUR{ch}:PULS:WIDT?", ":SOUR{ch}:PULS:WIDT %s",
+        """ Changes the output level of the specified source channel immediately by receiving a trigger from the trigger source """
+    )
+
+    def init(self):
+        #you can pass list like 2:1
+        self.write(':INIT:TRAN (@{ch})')
+
+    def trigger(self):
+        self.write("*TRG")
+
+    def reset(self):
+        self.write("*RST")
+
+
+    def disable_source(self):
+        self.write(":OUTP{ch} OFF")
+
+    
+ #examples
+def give_one_pulse():
+    dev=Agilent2912("GPIB0::23::INSTR")
+
+    ch=dev.ChB
+
+    ch.reset()
+
+
+    ch.source_mode="VOLT"
+    ch.func_shape="PULSE"
+    ch.trigger_source="BUS"
+    ch.trigger_bypass="ONCE"
+
+    ch.offset=("VOLT",0)
+    ch.amplitude=("VOLT",1)
+    ch.duration="5e-3"
+    
+    
+    #dev.enable_output()  #OLD
+    #ch.enable_source()
+    ch.init()
+    ch.trigger()
+
+    time.sleep(1)
+    ch.disable_source()
+
+
+
+
+
+if __name__ == "__main__":
+    dev=Agilent2912("GPIB0::23::INSTR")
+    #ch=dev.ChB
+    #dev.reset()
+    #print(ch.source_mode)
+    #dev.ChA.source_mode="CURR"
+    give_one_pulse()

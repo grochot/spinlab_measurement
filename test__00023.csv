@@ -1,0 +1,119 @@
+#Procedure: <__main__.SpinLabMeasurement>
+#Parameters:
+#	Analyzer address: None
+#	DAQ address: Dev4/ao0
+#	Gaussmeter address: GPIB1::12::INSTR
+#	Generator address: None
+#	LF Generator address: None
+#	Lockin address: None
+#	Multimeter address: None
+#	Pulse generator address: GPIB1::26::INSTR
+#	Relay address: None
+#	RotationStation address: COM4
+#	Sourcemeter address: GPIB1::23::INSTR
+#	Switch address: None
+#	Set Constant Field Value: 0 Oe
+#	Delay Bias: 1 s
+#	Delay Field: 2 s
+#	Delay Lockin: 0.1 s
+#	Delay Measurement: 1 s
+#	Field Calibration Constant: -0.00121714
+#	Field sweep step: 100 Oe
+#	Gaussmeter Range: 4
+#	Gaussmeter Resolution: 4 digits
+#	Generator Frequency: 1e+09 Hz
+#	Generator Power: -20 dBm
+#	LF Generator Amplitude: 2 V
+#	LF Generator Frequency: 330 Hz
+#	Lockin Autophase: False
+#	Lockin Average: 20
+#	Lockin Channel 1: X
+#	Lockin Channel 2: Y
+#	Lockin Dynamic Reserve: Normal
+#	Lockin Frequency: 384 Hz
+#	Lockin Harmonic: 1
+#	Lockin Input Connection: A
+#	Lockin Input Coupling: AC
+#	Lockin Reference Source: Internal
+#	Lockin Sensitivity: 50 uV/pA
+#	Lockin Sine Amplitude: 5 V
+#	Lockin Time Constant: 30 ms
+#	Mode: ResistanceMode
+#	Use relays: True
+#	FMR Mode: V-FMR
+#	Harmonic mode: Field harmonic
+#	4-points: False
+#	Multimeter autorange: True
+#	Multimeter average: 1
+#	Multimeter function: DCV
+#	Multimeter NPLC: 10
+#	Multimeter range: 10
+#	Multimeter resolution: 0.01
+#	pulsegenerator channel: Channel A
+#	Pulsegenerator compliance: 0.2
+#	pulsegenerator duration: 0.001
+#	pulsegenerator offset: 0
+#	pulsegenerator pulsetype: VOLT
+#	Pulsegenerator sourcerange: 5
+#	Return the rotationstation: True
+#	Rotation axis: Azimuthal
+#	Azimuthal constant angle: 0
+#	Polar constant angle: 0
+#	Sample name: test
+#	Vector Analyzer: VectorAnalyzer
+#	Automatic Station: False
+#	Magnetic Field: DAQ
+#	Set Constant Field Value: 10 Oe
+#	Set Constant Field Value: 0 Oe
+#	Gaussmeter: Lakeshore
+#	RF Generator: Agilent
+#	Kriostat: False
+#	LF Generator: SR830
+#	Lockin: SR830
+#	Multimeter: none
+#	Pulse Generator: Keithley 2636
+#	External relay: none
+#	Rotation Station: True
+#	Sourcemeter: Agilent 2912
+#	Switch: False
+#	Sourcemeter average: 1
+#	Sourcemeter bias: 0.3
+#	Sourcemeter CH: Channel A
+#	Sourcemeter compliance: 0.2
+#	Sourcemeter limit: 2
+#	Sourcemeter NPLC: 0.1
+#	Sourcemeter Source: VOLT
+#	Vector: -100,50,100
+#Data:
+Voltage (V),Current (A),Resistance (ohm),Field (Oe),Frequency (Hz),X (V),Y (V),Phase,Polar angle (deg),Azimuthal angle (deg)
+0.3,0.000418147,717.4510399452823,-34.11,nan,nan,nan,nan,0.0,-100.0
+0.3,0.00041806,717.6003444481653,-49.54,nan,nan,nan,nan,0.0,-95.91836734693878
+0.3,0.000417811,718.0280078791607,-47.74,nan,nan,nan,nan,0.0,-91.83673469387755
+0.3,0.000417918,717.8441703874923,-45.96,nan,nan,nan,nan,0.0,-87.75510204081633
+0.3,0.000418009,717.6878966720811,-44.35,nan,nan,nan,nan,0.0,-83.6734693877551
+0.3,0.000418131,717.4784935821548,-42.47,nan,nan,nan,nan,0.0,-79.59183673469389
+0.3,0.000417977,717.742842309505,-40.65,nan,nan,nan,nan,0.0,-75.51020408163265
+0.3,0.000417984,717.73082223243,-39.1,nan,nan,nan,nan,0.0,-71.42857142857143
+0.3,0.000418024,717.6621438003559,-37.26,nan,nan,nan,nan,0.0,-67.34693877551021
+0.3,0.000418219,717.3275245744454,-35.35,nan,nan,nan,nan,0.0,-63.265306122448976
+0.3,0.000418136,717.4699140949356,-33.64,nan,nan,nan,nan,0.0,-59.183673469387756
+0.3,0.000417991,717.7188025579499,-31.81,nan,nan,nan,nan,0.0,-55.10204081632653
+0.3,0.00041812,717.497369176313,-29.73,nan,nan,nan,nan,0.0,-51.0204081632653
+0.3,0.000417906,717.8647829894761,-27.86,nan,nan,nan,nan,0.0,-46.93877551020408
+0.3,0.000417947,717.7943614860258,-26.56,nan,nan,nan,nan,0.0,-42.857142857142854
+0.3,0.000417947,717.7943614860258,-24.84,nan,nan,nan,nan,0.0,-38.775510204081634
+0.3,0.000417918,717.8441703874923,-22.94,nan,nan,nan,nan,0.0,-34.69387755102041
+0.3,0.000417935,717.8149712275832,-21.11,nan,nan,nan,nan,0.0,-30.612244897959187
+0.3,0.000417998,717.7067832860445,-19.04,nan,nan,nan,nan,0.0,-26.530612244897952
+0.3,0.000417759,718.1173834675016,-17.54,nan,nan,nan,nan,0.0,-22.448979591836732
+0.3,0.00041788,717.9094476883316,-15.95,nan,nan,nan,nan,0.0,-18.367346938775512
+0.3,0.000417785,718.0726928922771,-13.77,nan,nan,nan,nan,0.0,-14.285714285714278
+0.3,0.000417827,718.0005121736987,-11.88,nan,nan,nan,nan,0.0,-10.204081632653057
+0.3,0.000417643,718.3168399805576,-9.88,nan,nan,nan,nan,0.0,-6.122448979591837
+0.3,0.000417352,718.8176886656827,-8.26,nan,nan,nan,nan,0.0,-2.040816326530603
+0.3,0.00041746,718.6317251952283,-6.4,nan,nan,nan,nan,0.0,2.040816326530617
+0.3,0.000417662,718.2841627919227,-4.66,nan,nan,nan,nan,0.0,6.122448979591837
+0.3,0.000417566,718.4492990329671,-2.87,nan,nan,nan,nan,0.0,10.204081632653057
+0.3,0.000417607,718.3787628080946,-1.05,nan,nan,nan,nan,0.0,14.285714285714292
+0.3,0.000417676,718.2600867658184,0.66,nan,nan,nan,nan,0.0,18.367346938775512
+0.3,0.000417531,718.5095238437385,2.37,nan,nan,nan,nan,0.0,22.448979591836732
