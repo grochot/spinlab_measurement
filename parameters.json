@@ -91,5 +91,6 @@
     "remanency_correction": true,
     "set_polar_angle": 0.0,
     "set_azimuthal_angle": 0.0,
-    "set_rotationstation_const_angle": true
+    "set_rotationstation_const_angle": true, 
+    "set_pulsegenerator": "none"
 }
