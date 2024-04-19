@@ -1,7 +1,7 @@
 {
     "mode": "CIMSMode",
     "sample_name": "12102f_3,1u_TEST",
-    "vector": "-3,30,3",
+    "vector": "1,5,3",
     "mode_resistance": false,
     "mode_fmr": "V-FMR",
     "mode_harmonic": "Field harmonic",
@@ -81,13 +81,14 @@
     "pulsegenerator_compliance": 0.5,
     "pulsegenerator_source_range": 5.0,
     "return_the_rotationstation": false,
-    "field_bias_value": -30.0,
+    "field_bias_value": 30.0,
     "remagnetization": true,
-    "remagnetization_value": 600.0,
+    "remagnetization_value": 1000.0,
     "remagnetization_time": 2.0,
     "hold_the_field_after_measurement": false,
     "remanency_correction": true,
     "set_polar_angle": 0.0,
     "set_azimuthal_angle": 0.0,
-    "set_rotationstation_const_angle": true
+    "set_rotationstation_const_angle": true,
+    "remanency_correction_time": 5.0
 }
