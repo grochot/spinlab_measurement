@@ -2,23 +2,30 @@ from time import sleep
 import math
 import numpy as np
 import logging
-from hardware.daq import DAQ
 
+from hardware.daq import DAQ
 from hardware.lakeshore import Lakeshore
 from hardware.windfreak import Windfreak
-
 from hardware.sr830 import SR830
 from hardware.generator_agilent import FGenDriver
 from hardware.hp_33120a import LFGenDriver
+from hardware.agilent_34410a import Agilent34410A
+from hardware.dummy_multimeter import DummyMultimeter
 from hardware.dummy_fgen import DummyFgenDriver
 from hardware.dummy_lfgen import DummyLFGenDriver
 from hardware.dummy_lockin import DummyLockin
 from hardware.dummy_gaussmeter import DummyGaussmeter
 from hardware.dummy_field import DummyField
+from hardware.rotation_stage import RotationStage
+from hardware.rotation_stage_dummy import RotationStageDummy
+
 from logic.vector import Vector
 from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity 
 from logic.sweep_field_to_zero import sweep_field_to_zero 
 from logic.sweep_field_to_value import sweep_field_to_value
+
+import random
+
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
 
@@ -36,23 +43,23 @@ class FMRMode():
         delay_field:float, 
         delay_lockin:float,
         delay_bias:float, 
-        lockin_average, 
-        lockin_input_coupling,
-        lockin_reference_source,
-        lockin_dynamic_reserve,
-        lockin_input_connection,
-        lockin_sensitivity,
-        lockin_timeconstant,
-        lockin_autophase,
-        lockin_frequency, 
-        lockin_harmonic, 
-        lockin_sine_amplitude, 
-        lockin_channel1, 
-        lockin_channel2,
-        set_field_value,
-        field_constant,
-        gaussmeter_range, 
-        gaussmeter_resolution, 
+        lockin_average:int, 
+        lockin_input_coupling:str,
+        lockin_reference_source:str,
+        lockin_dynamic_reserve:str,
+        lockin_input_connection:str,
+        lockin_sensitivity:str,
+        lockin_timeconstant:str,
+        lockin_autophase:bool,
+        lockin_frequency:float, 
+        lockin_harmonic:int, 
+        lockin_sine_amplitude:float, 
+        lockin_channel1:str, 
+        lockin_channel2:str,
+        set_field_value:float,
+        field_constant:float,
+        gaussmeter_range:int, 
+        gaussmeter_resolution:str, 
         address_generator:str, 
         set_field_constant_value:float, 
         set_frequency_constant_value:float, 
@@ -69,7 +76,16 @@ class FMRMode():
         constant_field_value:float, 
         rotation_axis:str, 
         rotation_polar_constant:float, 
-        rotation_azimuth_constant:float) -> None: 
+        rotation_azimuth_constant:float,
+        set_multimeter:str,
+        address_multimeter:str,
+        multimeter_function:str,
+        multimeter_resolution:float,
+        multimeter_autorange:bool,
+        multimeter_range:int,
+        multimeter_average:int,
+        multimeter_nplc:str,
+        measdevice:str) -> None: 
         
         
         self.set_automaticstation = set_automaticstation
@@ -121,31 +137,63 @@ class FMRMode():
         self.rotation_axis = rotation_axis
         self.rotation_polar_constant = rotation_polar_constant
         self.rotation_azimuth_constant = rotation_azimuth_constant
+
+        self.set_multimeter = set_multimeter
+        self.address_multimeter = address_multimeter
+        self.multimeter_function = multimeter_function
+        self.multimeter_resolution = multimeter_resolution
+        self.multimeter_autorange = multimeter_autorange
+        self.multimeter_range = multimeter_range
+        self.multimeter_average = multimeter_average
+        self.multimeter_nplc = multimeter_nplc
+
+        self.measdevice = measdevice
         ## parameter initialization 
+        
+        # Normalization parameters
+        self.max_voltage = None
+        self.min_voltage = None
+
+        self.min_x = None
+        self.max_x = None
+        self.do_recal_norm = False
         
         
         
     def generate_points(self):
         #Vector initialization
         if self.vector != "":
-            self.vector_obj = Vector()
-            self.point_list = self.vector_obj.generate_vector(self.vector)
+            vector_obj = Vector()
+            point_list = vector_obj.generate_vector(self.vector)
         else:
             log.error("Vector is not defined")
-            self.point_list = [1]
-        return self.point_list
+            point_list = [1]
+        return point_list
 
 
     def initializing(self):
         # Hardware objects initialization
-        match self.set_lockin:
-            case "SR830":
-                self.lockin_obj = SR830(self.address_lockin)
-            case "Zurich":
-                pass
-            case _: 
-                self.lockin_obj = DummyLockin()
-                log.warning('Used dummy Lockin.')
+        if self.measdevice == "LockIn":
+            match self.set_lockin:
+                case "SR830":
+                    self.lockin_obj = SR830(self.address_lockin)
+                case "Zurich":
+                    pass
+                case _: 
+                    self.lockin_obj = DummyLockin()
+                    log.warning('Used dummy Lockin.')
+
+            self.multimeter_obj = DummyMultimeter(self.address_multimeter)
+        else:
+            match self.set_multimeter:
+                case "Agilent 34400":
+                    self.multimeter_obj = Agilent34410A(self.address_multimeter)
+                case _:
+                    self.multimeter_obj = DummyMultimeter(self.address_multimeter)
+                    log.warning('Used dummy Multimeter.')
+
+            self.lockin_obj = DummyLockin()
+            self.set_lfgen = "none"
         
         match self.set_gaussmeter: 
             case "Lakeshore": 
@@ -178,15 +226,17 @@ class FMRMode():
 
         match self.set_lfgen:
             case "SR830":
-                if type(self.lockin_obj) is DummyLockin:
+                if type(self.lockin_obj) is DummyLockin: 
                     self.lockin_obj = SR830(self.address_lockin)
             case "HP33120A":
                 self.lfgen_obj = LFGenDriver(self.address_lfgen)
             case _:
                 self.lfgen_obj = DummyLFGenDriver()
                 log.warning('Used dummy Modulation Generator.')
-
+     
+        #Generator initialization
         self.generator_obj.initialization()
+
         #Lockin initialization
         self.lockin_obj.frequency = self.lockin_frequency
         if self.lockin_sensitivity == "Auto Gain":
@@ -201,6 +251,15 @@ class FMRMode():
         self.lockin_obj.input_config = self.lockin_input_connection
         self.lockin_obj.input_coupling = self.lockin_input_coupling
         self.lockin_obj.reference_source = self.lockin_reference_source
+
+        #Multimeter initialization 
+        self.multimeter_obj.resolution = self.multimeter_resolution
+        self.multimeter_obj.range_ = self.multimeter_range
+        self.multimeter_obj.autorange = self.multimeter_autorange
+        self.multimeter_obj.function_ = self.multimeter_function
+        self.multimeter_obj.trigger_delay = "MIN"
+        self.multimeter_obj.trigger_count = self.multimeter_average
+        self.multimeter_obj.nplc = self.multimeter_nplc
         
         #Modulation initalization
         if self.set_lfgen == "SR830":
@@ -229,10 +288,10 @@ class FMRMode():
                 self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
 
 
-
-    def begin(self):
+       
+    def begin(self, first_point:float) -> None:
         match self.generator_measurement_mode:
-            case "V-FMR": 
+            case "const f": 
                  #Generator initialization
                 self.generator_obj.setFreq(self.set_frequency_constant_value)
                 self.generator_obj.setPower(self.generator_power)
@@ -240,18 +299,19 @@ class FMRMode():
                 if self.rotationstation:
                     sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
                 else:
-                    sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
-            case "ST-FMR":
+                    sweep_field_to_value(0, first_point, self.field_constant, self.field_step, self.field_obj)
+            case "const H":
                 #Generator initialization
-                self.generator_obj.setFreq(self.point_list[0])
+                self.generator_obj.setFreq(first_point)
                 self.generator_obj.setPower(self.generator_power)
                 #Field initialization 
                 if self.rotationstation:
                     sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
                 else:
-                    sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
+                    sweep_field_to_value(0, self.set_field_constant_value, self.field_constant, self.field_step, self.field_obj)
+
         self.generator_obj.set_lf_signal()
-        self.generator_obj.setOutput(True, True)
+        self.generator_obj.setOutput(True, True if (self.set_lfgen == "none" and self.measdevice == "LockIn") else False)  
 
 
         #set lockin phase: 
@@ -263,13 +323,12 @@ class FMRMode():
         sleep(1)
 
 
-    def operating(self, point):
-        sleep(self.delay_field)
+    def operating(self, point) -> dict:
         #set temporary result list
-        self.result_list = []
+        result_list = []
 
         match self.generator_measurement_mode:
-            case "V-FMR":
+            case "const f":
                 if self.rotationstation:
                     match self.rotation_axis:
                         case "Polar":
@@ -286,30 +345,16 @@ class FMRMode():
                                 sleep(0.01)
 
                 else:
-                    self.actual_set_field = self.field_obj.set_field(point*self.field_constant)
+                    self.field_obj.set_field(point*self.field_constant)
                     sleep(self.delay_field)
-
-
-
 
                 #measure field
                 if self.set_gaussmeter == "none":
                     self.tmp_field = point
                 else: 
                     self.tmp_field = self.gaussmeter_obj.measure()
-        
-                sleep(self.delay_lockin)
-
-                #measure_lockin 
-                for i in range(self.lockin_average):
-                    self.result = self.lockin_obj.snap("{}".format(self.lockin_channel1), "{}".format(self.lockin_channel2))
-                    self.result_list.append(self.result)
-        
-                #calculate average:
-                self.result1 = np.average([i[0] for i in self.result_list])
-                self.result2 = np.average([i[1] for i in self.result_list])
             
-            case "ST-FMR":
+            case "const H":
                 if self.rotationstation:
                     match self.rotation_axis:
                         case "Polar":
@@ -331,30 +376,72 @@ class FMRMode():
 
                 #measure field
                 if self.set_gaussmeter == "none":
-                    self.tmp_field = point
+                    self.tmp_field = self.set_field_constant_value
                 else: 
                     self.tmp_field = self.gaussmeter_obj.measure()
         
-                sleep(self.delay_lockin)
+        sleep(self.delay_lockin)
 
-                #measure_lockin 
-                for i in range(self.lockin_average):
-                    self.result = self.lockin_obj.snap("{}".format(self.lockin_channel1), "{}".format(self.lockin_channel2))
-                    self.result_list.append(self.result)
-        
-                #calculate average:
-                self.result1 = np.average([i[0] for i in self.result_list])
-                self.result2 = np.average([i[1] for i in self.result_list])
+        if self.measdevice == "LockIn":
+            #measure_lockin 
+            for i in range(self.lockin_average):
+                result = self.lockin_obj.snap("{}".format(self.lockin_channel1), "{}".format(self.lockin_channel2))
+                result_list.append(result)
+    
+            #calculate average:
+            result1 = np.average([i[0] for i in result_list])
+            result2 = np.average([i[1] for i in result_list])
+        else:
+            #measure_multimeter
+            result = np.average(self.multimeter_obj.reading)
+            result1 = math.nan
+            result2 = math.nan
+
+        if self.measdevice == "Multimeter":
+            self.max_voltage = result if not self.max_voltage else self.max_voltage
+            self.min_voltage = result if not self.min_voltage else self.min_voltage
+            
+            if result > self.max_voltage:
+                self.max_voltage = result
+                self.do_recal_norm = True
+                
+            if result < self.min_voltage:
+                self.min_voltage = result
+                self.do_recal_norm = True
+            
+            try:
+                norm_val = (result - self.min_voltage) / (self.max_voltage - self.min_voltage)
+            except ZeroDivisionError:
+                norm_val = 1
+        else:
+            self.max_x = result1 if not self.max_x else self.max_x
+            self.min_x = result1 if not self.min_x else self.min_x
+
+            if result1 > self.max_x:
+                self.max_x = result1
+                self.do_recal_norm = True
+            
+            if result1 < self.min_x:
+                self.min_x = result1
+                self.do_recal_norm = True
+            
+            try:
+                norm_val = (result1 - self.min_x) / (self.max_x - self.min_x)
+            except ZeroDivisionError:
+                norm_val = 1
+
 
         data = {
-            'Voltage (V)': math.nan,
+            'Voltage (V)': result if self.measdevice == "Multimeter" else math.nan,
+            'Normalized voltage (a.u.)': norm_val if self.measdevice == "Multimeter" else math.nan,
             'Current (A)': math.nan,
-            'Resistance (ohm)': self.result1 if self.lockin_channel1 == "R" else (self.result2 if self.lockin_channel2 == "R" else math.nan), 
+            'Resistance (ohm)': result1 if self.lockin_channel1 == "R" else (result2 if self.lockin_channel2 == "R" else math.nan), 
             'Field (Oe)': self.tmp_field,
-            'Frequency (Hz)': self.set_frequency_constant_value if self.generator_measurement_mode == "V-FMR" else point, 
-            'X (V)':  self.result1 if self.lockin_channel1 == "X" else (self.result2 if self.lockin_channel2 == "X" else math.nan),   
-            'Y (V)':  self.result1 if self.lockin_channel1 == "Y" else (self.result2 if self.lockin_channel2 == "Y" else math.nan), 
-            'Phase': self.result1 if self.lockin_channel1 == "Phase" else (self.result2 if self.lockin_channel2 == "Phase" else math.nan),
+            'Frequency (Hz)': self.set_frequency_constant_value if self.generator_measurement_mode == "const f" else point, 
+            'X (V)':  result1 if self.lockin_channel1 == "X" else (result2 if self.lockin_channel2 == "X" else math.nan),
+            'Normalized X (a.u.)': norm_val if self.lockin_channel1 == "X" and self.measdevice == 'LockIn' else math.nan,
+            'Y (V)':  result1 if self.lockin_channel1 == "Y" else (result2 if self.lockin_channel2 == "Y" else math.nan), 
+            'Phase': result1 if self.lockin_channel1 == "Phase" else (result2 if self.lockin_channel2 == "Phase" else math.nan),
             'Polar angle (deg)': self.polar_angle if self.rotationstation == True else math.nan,
             'Azimuthal angle (deg)': self.azimuthal_angle if self.rotationstation == True else math.nan
             }
@@ -367,7 +454,7 @@ class FMRMode():
 
     def idle(self):
         sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
-        self.generator_obj.setOutput(False, True)
+        self.generator_obj.setOutput(False, False)
         if self.rotationstation: 
             self.rotationstation_obj.goToZero()
 
