@@ -1,10 +1,11 @@
 {
 
-    "mode": "FMRMode",
-    "sample_name": "7033_test",
-    "vector": "-50,100,1500",
-    "mode_resistance": true,
-    "mode_fmr": "const f",
+    "mode": "CIMSMode",
+    "sample_name": "12102f_3,1u_TEST",
+    "vector": "1,5,3",
+    "mode_resistance": false,
+    "mode_fmr": "V-FMR",
+
     "mode_harmonic": "Field harmonic",
     "set_measdevice": "LockIn",
     "set_sourcemeter": "Keithley 2400",
@@ -83,14 +84,17 @@
     "pulsegenerator_compliance": 0.5,
     "pulsegenerator_source_range": 5.0,
     "return_the_rotationstation": false,
-    "field_bias_value": -30.0,
+    "field_bias_value": 30.0,
     "remagnetization": true,
-    "remagnetization_value": 600.0,
+    "remagnetization_value": 1000.0,
     "remagnetization_time": 2.0,
     "hold_the_field_after_measurement": false,
     "remanency_correction": true,
     "set_polar_angle": 0.0,
     "set_azimuthal_angle": 0.0,
-    "set_rotationstation_const_angle": true, 
+
+    "set_rotationstation_const_angle": true,
+    "remanency_correction_time": 5.0
     "set_pulsegenerator": "none"
+
 }
