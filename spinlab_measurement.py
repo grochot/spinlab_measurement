@@ -296,7 +296,7 @@ class MainWindow(ManagedDockWindow):
             y_axis=['Field (Oe)', 'Resistance (ohm)'],
             directory_input=True,  
             sequencer=True,                                  
-            sequencer_inputs=[],
+            sequencer_inputs=["sourcemeter_bias","lockin_frequency","field_constant","set_field_value_fmr", "set_field_value", "field_step","constant_field_value","field_bias_value", "generator_frequency", "generator_power", "lfgen_freq", "lfgen_amp", "rotation_polar_constant", "rotation_azimuth_constant", "set_polar_angle", "set_azimuthal_angle", "pulsegenerator_offset", "pulsegenerator_duration"],
             inputs_in_scrollarea=True,
             
         )
