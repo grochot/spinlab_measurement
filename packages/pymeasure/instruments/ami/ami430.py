@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments import Instrument
 from time import sleep, time
 
 import logging
@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class AMI430(SCPIMixin, Instrument):
+class AMI430(Instrument):
     """ Represents the AMI 430 Power supply
     and provides a high-level for interacting with the instrument.
 
@@ -62,6 +62,7 @@ class AMI430(SCPIMixin, Instrument):
         super().__init__(
             adapter,
             name,
+            includeSCPI=True,
             **kwargs
         )
         # Read twice in order to remove welcome/connect message
@@ -73,51 +74,57 @@ class AMI430(SCPIMixin, Instrument):
 
     coilconst = Instrument.control(
         "COIL?", "CONF:COIL %g",
-        """Control the coil constant in kGauss/A. (float)"""
+        """ A floating point property that sets the coil contant
+        in kGauss/A. """
     )
 
     voltage_limit = Instrument.control(
         "VOLT:LIM?", "CONF:VOLT:LIM %g",
-        """Control the voltage limit for charging/discharging the magnet. (float)"""
+        """ A floating point property that sets the voltage limit
+        for charging/discharging the magnet. """
     )
 
     target_current = Instrument.control(
         "CURR:TARG?", "CONF:CURR:TARG %g",
-        """Control the target current in A for the magnet. (float)"""
+        """ A floating point property that sets the target current
+        in A for the magnet. """
     )
 
     target_field = Instrument.control(
         "FIELD:TARG?", "CONF:FIELD:TARG %g",
-        """Control the target field in kGauss for the magnet. (float)"""
+        """ A floating point property that sets the target field
+        in kGauss for the magnet. """
     )
 
     ramp_rate_current = Instrument.control(
         "RAMP:RATE:CURR:1?", "CONF:RAMP:RATE:CURR 1,%g",
-        """Control the current ramping rate in A/s. (float)"""
+        """ A floating point property that sets the current ramping
+        rate in A/s. """
     )
 
     ramp_rate_field = Instrument.control(
         "RAMP:RATE:FIELD:1?", "CONF:RAMP:RATE:FIELD 1,%g,1.00",
-        """Control the field ramping rate in kGauss/s. (float)"""
+        """ A floating point property that sets the field ramping
+        rate in kGauss/s. """
     )
 
     magnet_current = Instrument.measurement("CURR:MAG?",
-                                            """Get the current in Amps of the magnet.
+                                            """ Reads the current in Amps of the magnet.
         """
                                             )
 
     supply_current = Instrument.measurement("CURR:SUPP?",
-                                            """Get the current in Amps of the power supply.
+                                            """ Reads the current in Amps of the power supply.
         """
                                             )
 
     field = Instrument.measurement("FIELD:MAG?",
-                                   """Get the field in kGauss of the magnet.
+                                   """ Reads the field in kGauss of the magnet.
         """
                                    )
 
     state = Instrument.measurement("STATE?",
-                                   """Get the field in kGauss of the magnet.
+                                   """ Reads the field in kGauss of the magnet.
         """
                                    )
 
@@ -150,7 +157,6 @@ class AMI430(SCPIMixin, Instrument):
 
     @property
     def magnet_status(self):
-        """Get the magnet status."""
         STATES = {
             1: "RAMPING",
             2: "HOLDING",

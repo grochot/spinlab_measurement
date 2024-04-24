@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               truncated_discrete_set,
                                               strict_range)
@@ -42,7 +42,7 @@ log.addHandler(logging.NullHandler())
 ######
 
 
-class Agilent4156(SCPIUnknownMixin, Instrument):
+class Agilent4156(Instrument):
     """ Represents the Agilent 4155/4156 Semiconductor Parameter Analyzer
     and provides a high-level interface for taking current-voltage (I-V) measurements.
 
@@ -426,7 +426,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
 ##########
 
 
-class SMU(SCPIUnknownMixin, Instrument):
+class SMU(Instrument):
     def __init__(self, adapter, channel, **kwargs):
         super().__init__(
             adapter,
@@ -649,7 +649,7 @@ class SMU(SCPIUnknownMixin, Instrument):
         return values
 
 
-class VMU(SCPIUnknownMixin, Instrument):
+class VMU(Instrument):
     def __init__(self, adapter, channel, **kwargs):
         super().__init__(
             adapter,
@@ -707,7 +707,7 @@ class VMU(SCPIUnknownMixin, Instrument):
         self.check_errors()
 
 
-class VSU(SCPIUnknownMixin, Instrument):
+class VSU(Instrument):
     def __init__(self, adapter, channel, **kwargs):
         super().__init__(
             adapter,
@@ -803,7 +803,7 @@ class VSU(SCPIUnknownMixin, Instrument):
 #################
 
 
-class VARX(SCPIUnknownMixin, Instrument):
+class VARX(Instrument):
     """ Base class to define sweep variable settings """
 
     def __init__(self, adapter, var_name, **kwargs):
@@ -964,7 +964,7 @@ class VAR2(VARX):
     )
 
 
-class VARD(SCPIUnknownMixin, Instrument):
+class VARD(Instrument):
     """ Class to handle all the definitions needed for VARD.
     VARD is always defined in relation to VAR1.
     """

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range
 
 from pymeasure.adapters import VISAAdapter
@@ -34,7 +34,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class KeysightN5767A(SCPIUnknownMixin, Instrument):
+class KeysightN5767A(Instrument):
     """ Represents the Keysight N5767A Power supply
     interface for interacting with the instrument.
     """
@@ -43,15 +43,15 @@ class KeysightN5767A(SCPIUnknownMixin, Instrument):
     ###############
     current_range = Instrument.control(
         ":CURR?", ":CURR %g",
-        """Control the DC current range in
+        """ A floating point property that controls the DC current range in
         Amps, which can take values from 0 to 25 A.
-        Auto-range is disabled when this property is set. (float)""",
+        Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[0, 25],
     )
 
     current = Instrument.measurement(":MEAS:CURR?",
-                                     """ Get current in Amps. """
+                                     """ Reads a setting current in Amps. """
                                      )
 
     ###############
@@ -59,7 +59,7 @@ class KeysightN5767A(SCPIUnknownMixin, Instrument):
     ###############
     voltage_range = Instrument.control(
         ":VOLT?", ":VOLT %g V",
-        """ Control the DC voltage range in
+        """ A floating point property that controls the DC voltage range in
         Volts, which can take values from 0 to 60 V.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
@@ -67,14 +67,14 @@ class KeysightN5767A(SCPIUnknownMixin, Instrument):
     )
 
     voltage = Instrument.measurement("MEAS:VOLT?",
-                                     """ Get a DC voltage measurement in Volts. """
+                                     """ Reads a DC voltage measurement in Volts. """
                                      )
 
     #################
     # _status (0/1) #
     #################
     _status = Instrument.measurement(":OUTP?",
-                                     """ Get power supply current output status. """,
+                                     """ Read power supply current output status. """,
                                      )
 
     def enable(self):

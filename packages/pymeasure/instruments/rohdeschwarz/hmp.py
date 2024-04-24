@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               truncated_range)
 
@@ -54,14 +54,13 @@ def process_sequence(sequence):
     return sequence
 
 
-class HMP4040(SCPIMixin, Instrument):
+class HMP4040(Instrument):
     """Represents a Rohde&Schwarz HMP4040 power supply."""
 
     def __init__(self, adapter, **kwargs):
         kwargs.setdefault("name", "Rohde&Schwarz HMP4040")
         super().__init__(
-            adapter,
-            **kwargs
+            adapter, includeSCPI=True, **kwargs
         )
 
     # System Setting Commands -------------------------------------------------
@@ -73,8 +72,8 @@ class HMP4040(SCPIMixin, Instrument):
     control_method = Instrument.setting(
         "SYST:%s",
         """
-        Control manual front panel ('LOC'), remote ('REM') or manual/remote
-        control('MIX') control or locks the front panel control ('RWL').
+        Enables manual front panel ('LOC'), remote ('REM') or manual/remote
+        control('MIX') control or locks the the front panel control ('RWL').
         """,
         validator=strict_discrete_set,
         values=["LOC", "REM", "MIX", "RWL"],
@@ -82,7 +81,7 @@ class HMP4040(SCPIMixin, Instrument):
 
     version = Instrument.measurement(
         "SYST:VERS?",
-        "Get the SCPI version the instrument's command set complies with.",
+        "The SCPI version the instrument's command set complies with.",
     )
 
     # Channel Selection Commands ----------------------------------------------
@@ -90,7 +89,7 @@ class HMP4040(SCPIMixin, Instrument):
     selected_channel = Instrument.control(
         "INST:NSEL?",
         "INST:NSEL %s",
-        "Control the selected channel.",
+        "Selected channel.",
         validator=strict_discrete_set,
         values=[1, 2, 3, 4],
         cast=int
@@ -99,16 +98,15 @@ class HMP4040(SCPIMixin, Instrument):
     # Voltage Settings --------------------------------------------------------
 
     voltage = Instrument.control(
-        "VOLT?", "VOLT %s",
-        "Control output voltage in V. Increment 0.001 V."
+        "VOLT?", "VOLT %s", "Output voltage in V. Increment 0.001 V."
     )
 
     min_voltage = Instrument.measurement(
-        "VOLT? MIN", "Get minimum voltage in V."
+        "VOLT? MIN", "Minimum voltage in V."
     )
 
     max_voltage = Instrument.measurement(
-        "VOLT? MAX", "Get maximum voltage in V."
+        "VOLT? MAX", "Maximum voltage in V."
     )
 
     def voltage_to_min(self):
@@ -122,7 +120,7 @@ class HMP4040(SCPIMixin, Instrument):
     voltage_step = Instrument.control(
         "VOLT:STEP?",
         "VOLT:STEP %s",
-        "Control voltage step in V. Default 1 V.",
+        "Voltage step in V. Default 1 V.",
         validator=truncated_range,
         values=[0, 32.050],
     )
@@ -140,15 +138,15 @@ class HMP4040(SCPIMixin, Instrument):
     current = Instrument.control(
         "CURR?",
         "CURR %s",
-        "Control output current in A. Range depends on instrument type.",
+        "Output current in A. Range depends on instrument type.",
     )
 
     min_current = Instrument.measurement(
-        "CURR? MIN", "Get minimum current in A."
+        "CURR? MIN", "Minimum current in A."
     )
 
     max_current = Instrument.measurement(
-        "CURR? MAX", "Get maximum current in A."
+        "CURR? MAX", "Maximum current in A."
     )
 
     def current_to_min(self):
@@ -160,7 +158,7 @@ class HMP4040(SCPIMixin, Instrument):
         self.write("CURR MAX")
 
     current_step = Instrument.control(
-        "CURR:STEP?", "CURR:STEP %s", "Control current step in A."
+        "CURR:STEP?", "CURR:STEP %s", "Current step in A."
     )
 
     def step_current_up(self):
@@ -176,7 +174,7 @@ class HMP4040(SCPIMixin, Instrument):
     voltage_and_current = Instrument.control(
         "APPL?",
         "APPL %s, %s",
-        "Control output voltage (V) and current (A).",
+        "Output voltage (V) and current (A).",
     )
 
     # Output Settings ---------------------------------------------------------
@@ -184,7 +182,7 @@ class HMP4040(SCPIMixin, Instrument):
     selected_channel_active = Instrument.control(
         "OUTP:SEL?",
         "OUTPUT:SEL %s",
-        "Control the selected channel to active or inactive or check its status.",
+        "Set the selected channel to active or inactive or check its status.",
         values={True: 1, False: 0},
         map_values=True,
     )
@@ -192,7 +190,7 @@ class HMP4040(SCPIMixin, Instrument):
     output_enabled = Instrument.control(
         "OUTP:GEN?",
         "OUTP:GEN %s",
-        "Control the output on or off or check the output status.",
+        "Set the output on or off or check the output status.",
         values={True: 1, False: 0},
         map_values=True,
     )
@@ -220,11 +218,11 @@ class HMP4040(SCPIMixin, Instrument):
     # Measurement Commands ----------------------------------------------------
 
     measured_voltage = Instrument.measurement(
-        "MEAS:VOLT?", "Get voltage in V."
+        "MEAS:VOLT?", "Measured voltage in V."
     )
 
     measured_current = Instrument.measurement(
-        "MEAS:CURR?", "Get current in A."
+        "MEAS:CURR?", "Measured current in A."
     )
 
     # Arbitrary Sequence Commands ---------------------------------------------
@@ -236,7 +234,7 @@ class HMP4040(SCPIMixin, Instrument):
 
     sequence = Instrument.setting(
         "ARB:DATA %s",
-        "Set sequence of triplets of voltage (V), current (A) and dwell "
+        "Define sequence of triplets of voltage (V), current (A) and dwell "
         "time (s).",
         set_process=process_sequence,
     )
@@ -244,7 +242,7 @@ class HMP4040(SCPIMixin, Instrument):
     repetitions = Instrument.control(
         "ARB:REP?",
         "ARB:REP %s",
-        "Control umber of repetitions (0...255). If 0 is entered, the sequence is"
+        "Number of repetitions (0...255). If 0 is entered, the sequence is"
         "repeated indefinitely.",
         validator=strict_discrete_set,
         values=range(256),

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ import re
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     truncated_discrete_set, strict_discrete_set,
     truncated_range
@@ -37,7 +37,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Yokogawa7651(SCPIUnknownMixin, Instrument):
+class Yokogawa7651(Instrument):
     """ Represents the Yokogawa 7651 Programmable DC Source
     and provides a high-level for interacting with the instrument.
 
@@ -74,17 +74,19 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
 
     source_voltage = Instrument.control(
         "OD;E", "S%g;E",
-        """Control the source voltage in Volts, if that mode is active. (float)"""
+        """ A floating point property that controls the source voltage
+        in Volts, if that mode is active. """
     )
     source_current = Instrument.control(
         "OD;E", "S%g;E",
-        """Control the source current in Amps, if that mode is active. (float)"""
+        """ A floating point property that controls the source current
+        in Amps, if that mode is active. """
     )
     source_voltage_range = Instrument.control(
         "OS;E", "R%d;E",
-        """Control the source voltage range in Volts, which can take values:
-        10 mV, 100 mV, 1 V, 10 V, and 30 V.
-        Voltages are truncated to an appropriate value if needed. """,
+        """ A floating point property that sets the source voltage range
+        in Volts, which can take values: 10 mV, 100 mV, 1 V, 10 V, and 30 V.
+        Voltages are truncted to an appropriate value if needed. """,
         validator=truncated_discrete_set,
         values={10e-3: 2, 100e-3: 3, 1: 4, 10: 5, 30: 6},
         map_values=True,
@@ -92,9 +94,9 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
     )
     source_current_range = Instrument.control(
         "OS;E", "R%d;E",
-        """Control the current voltage range in Amps, which can take values:
-        1 mA, 10 mA, and 100 mA.
-        Currents are truncated to an appropriate value if needed. """,
+        """ A floating point property that sets the current voltage range
+        in Amps, which can take values: 1 mA, 10 mA, and 100 mA.
+        Currents are truncted to an appropriate value if needed. """,
         validator=truncated_discrete_set,
         values={1e-3: 4, 10e-3: 5, 100e-3: 6},
         map_values=True,
@@ -102,9 +104,10 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
     )
     source_mode = Instrument.control(
         "OS;E", "F%d;E",
-        """Control the source mode, which can take the values 'current' or 'voltage'.
-        The convenience methods :meth:`~.Yokogawa7651.apply_current` and
-        :meth:`~.Yokogawa7651.apply_voltage` can also be used. """,
+        """ A string property that controls the source mode, which can
+        take the values 'current' or 'voltage'. The convenience methods
+        :meth:`~.Yokogawa7651.apply_current` and :meth:`~.Yokogawa7651.apply_voltage`
+        can also be used. """,
         validator=strict_discrete_set,
         values={'current': 5, 'voltage': 1},
         map_values=True,
@@ -112,14 +115,16 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
     )
     compliance_voltage = Instrument.control(
         "OS;E", "LV%g;E",
-        """Control the compliance voltage in Volts, which can take values between 1 and 30 V.""",
+        """ A floating point property that sets the compliance voltage
+        in Volts, which can take values between 1 and 30 V. """,
         validator=truncated_range,
         values=[1, 30],
         get_process=lambda v: int(Yokogawa7651._find(v, 'LV'))
     )
     compliance_current = Instrument.control(
         "OS;E", "LA%g;E",
-        """Control the compliance current  in Amps,which can take values from 5 to 120 mA.""",
+        """ A floating point property that sets the compliance current
+        in Amps, which can take values from 5 to 120 mA. """,
         validator=truncated_range,
         values=[5e-3, 120e-3],
         get_process=lambda v: float(Yokogawa7651._find(v, 'LA')) * 1e-3,  # converts A to mA
@@ -135,12 +140,12 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
 
     @property
     def id(self):
-        """ Get the identification of the instrument """
+        """ Returns the identification of the instrument """
         return self.ask("OS;E").split('\r\n\n')[0]
 
     @property
     def source_enabled(self):
-        """ Get a boolean value that is True if the source is enabled,
+        """ Reads a boolean value that is True if the source is enabled,
         determined by checking if the 5th bit of the OC flag is a binary 1.
         """
         oc = int(self.ask("OC;E")[5:])

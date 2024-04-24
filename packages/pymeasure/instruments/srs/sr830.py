@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +26,9 @@ import re
 import time
 import numpy as np
 from enum import IntFlag
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, discreteTruncate
 from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_discrete_set, truncated_range, discreteTruncate
+    truncated_discrete_set, truncated_range
 
 
 class LIAStatus(IntFlag):
@@ -58,6 +58,7 @@ class ERRStatus(IntFlag):
 
 
 class SR830(Instrument):
+
     SAMPLE_FREQUENCIES = [
         62.5e-3, 125e-3, 250e-3, 500e-3, 1, 2, 4, 8, 16,
         32, 64, 128, 256, 512
@@ -87,27 +88,6 @@ class SR830(Instrument):
                         "frequency": 9, "ch1": 10, "ch2": 11}
     REFERENCE_SOURCE_TRIGGER = ['SINE', 'POS EDGE', 'NEG EDGE']
     INPUT_FILTER = ['Off', 'On']
-
-    status = Instrument.measurement(
-        "*STB?",
-        """Get the status byte and Master Summary Status bit.""",
-        cast=str,
-    )
-
-    id = Instrument.measurement(
-        "*IDN?",
-        """Get the identification of the instrument.""",
-        cast=str,
-        maxsplit=0,
-    )
-
-    def clear(self):
-        """Clear the instrument status byte."""
-        self.write("*CLS")
-
-    def reset(self):
-        """Reset the instrument."""
-        self.write("*RST")
 
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
@@ -391,7 +371,6 @@ class SR830(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             **kwargs
         )
 
@@ -412,7 +391,7 @@ class SR830(Instrument):
         self.write("AOFF %d" % channel)
 
     def get_scaling(self, channel):
-        """ Returns the offset percent and the expansion term
+        """ Returns the offset precent and the exapnsion term
         that are used to scale the channel in question
         """
         if channel not in self.CHANNELS:
@@ -423,7 +402,7 @@ class SR830(Instrument):
 
     def set_scaling(self, channel, precent, expand=0):
         """ Sets the offset of a channel (X=1, Y=2, R=3) to a
-        certain percent (-105% to 105%) of the signal, with
+        certain precent (-105% to 105%) of the signal, with
         an optional expansion term (0, 10=1, 100=2)
         """
         if channel not in self.CHANNELS:
@@ -503,64 +482,55 @@ class SR830(Instrument):
         else:
             return int(query)
 
-    def fill_buffer(self, count: int, has_aborted=lambda: False, delay=0.001):
-        """ Fill two numpy arrays with the content of the instrument buffer
-
-        Eventually waiting until the specified number of recording is done
-        """
+    def fill_buffer(self, count, has_aborted=lambda: False, delay=0.001):
         ch1 = np.empty(count, np.float32)
         ch2 = np.empty(count, np.float32)
         currentCount = self.buffer_count
         index = 0
         while currentCount < count:
             if currentCount > index:
-                ch1[index:currentCount] = self.get_buffer(1, index, currentCount)
-                ch2[index:currentCount] = self.get_buffer(2, index, currentCount)
+                ch1[index:currentCount] = self.buffer_data(1, index, currentCount)
+                ch2[index:currentCount] = self.buffer_data(2, index, currentCount)
                 index = currentCount
                 time.sleep(delay)
             currentCount = self.buffer_count
             if has_aborted():
                 self.pause_buffer()
                 return ch1, ch2
-        self.pause_buffer()
-        ch1[index: count + 1] = self.get_buffer(1, index, count)  # noqa: E203
-        ch2[index: count + 1] = self.get_buffer(2, index, count)  # noqa: E203
+        self.pauseBuffer()
+        ch1[index : count + 1] = self.buffer_data(1, index, count)  # noqa: E203
+        ch2[index : count + 1] = self.buffer_data(2, index, count)  # noqa: E203
         return ch1, ch2
 
     def buffer_measure(self, count, stopRequest=None, delay=1e-3):
-        """ Start a fast measurement mode and transfers data from buffer to extract mean
-        and std measurements
-
-        Return the mean and std from both channels
-        """
-        self.write("FAST2;STRD")
+        self.write("FAST0;STRD")
         ch1 = np.empty(count, np.float64)
         ch2 = np.empty(count, np.float64)
         currentCount = self.buffer_count
         index = 0
         while currentCount < count:
             if currentCount > index:
-                ch1[index:currentCount] = self.get_buffer(1, index, currentCount)
-                ch2[index:currentCount] = self.get_buffer(2, index, currentCount)
+                ch1[index:currentCount] = self.buffer_data(1, index, currentCount)
+                ch2[index:currentCount] = self.buffer_data(2, index, currentCount)
                 index = currentCount
                 time.sleep(delay)
             currentCount = self.buffer_count
             if stopRequest is not None and stopRequest.isSet():
-                self.pause_buffer()
+                self.pauseBuffer()
                 return (0, 0, 0, 0)
-        self.pause_buffer()
-        ch1[index:count] = self.get_buffer(1, index, count)
-        ch2[index:count] = self.get_buffer(2, index, count)
+        self.pauseBuffer()
+        ch1[index:count] = self.buffer_data(1, index, count)
+        ch2[index:count] = self.buffer_data(2, index, count)
         return (ch1.mean(), ch1.std(), ch2.mean(), ch2.std())
 
     def pause_buffer(self):
         self.write("PAUS")
 
-    def start_buffer(self, fast=True):
+    def start_buffer(self, fast=False):
         if fast:
             self.write("FAST2;STRD")
         else:
-            self.write("FAST0")
+            self.write("FAST0;STRD")
 
     def wait_for_buffer(self, count, has_aborted=lambda: False,
                         timeout=60, timestep=0.01):
@@ -572,10 +542,10 @@ class SR830(Instrument):
             i += 1
             if has_aborted():
                 return False
-        self.pause_buffer()
+        self.pauseBuffer()
 
     def get_buffer(self, channel=1, start=0, end=None):
-        """ Acquires the 32 bit floating point data through binary transfer
+        """ Aquires the 32 bit floating point data through binary transfer
         """
         if end is None:
             end = self.buffer_count
@@ -613,31 +583,3 @@ class SR830(Instrument):
 
         command = "SNAP? " + ",".join(vals_idx)
         return self.values(command)
-
-    def save_setup(self, setup_number: int):
-        """Save the current instrument configuration (all parameters) in a memory
-        referred to by an integer
-
-        :param setup_number: the integer referring to the memory (between 1 and 9 (included))
-        """
-        if 1 <= setup_number <= 9:
-            self.write(f'SSET{setup_number:d};')
-
-    def load_setup(self, setup_number: int):
-        """ Load a previously saved instrument configuration from the memory referred
-        to by an integer
-
-        :param setup_number: the integer referring to the memory (between 1 and 9 (included))
-        """
-        if 1 <= setup_number <= 9:
-            self.write(f'RSET{setup_number:d};')
-
-    def start_scan(self):
-        """ Start the data recording into the buffer
-        """
-        self.write('STRT')
-
-    def pause_scan(self):
-        """ Pause the data recording
-        """
-        self.write('PAUS')

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -40,17 +40,17 @@ class AH2700A(AH2500A):
         )
 
     id = Instrument.measurement(
-        "*IDN?", """Get the instrument identification """
+        "*IDN?", """ Reads the instrument identification """
     )
 
     config = Instrument.measurement(
         "SHOW ALL",
-        """Get the configuration """,
+        """ Read out configuration """,
     )
 
     frequency = Instrument.control(
         "SH FR", "FR %.1f",
-        """Control test frequency used for the measurements. Allowed are values between
+        """test frequency used for the measurements. Allowed are values between
         50 and 20000 Hz. The device selects the closest possible frequency to
         the given value.""",
         validator=strict_range,

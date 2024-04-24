@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
-from pymeasure.errors import RangeException
+from pymeasure.instruments import Instrument, RangeException
 
 from time import sleep
 import numpy as np
@@ -54,7 +53,7 @@ class Danfysik8500(Instrument):
     """
 
     id = Instrument.measurement(
-        "PRINT", """Get the idenfitication information. """
+        "PRINT", """ Reads the idenfitication information. """
     )
 
     def __init__(self, adapter, name="Danfysik 8500 Current Supply", **kwargs):
@@ -99,8 +98,8 @@ class Danfysik8500(Instrument):
 
     @property
     def polarity(self):
-        """Control the polarity of the current supply, being either
-        -1 or 1. This property can be set by supplying one of
+        """ The polarity of the current supply, being either
+        -1 or 1. This property can be set by suppling one of
         these values.
         """
         return 1 if self.ask("PO").strip() == '+' else -1
@@ -132,7 +131,7 @@ class Danfysik8500(Instrument):
 
     @property
     def status_hex(self):
-        """Get the status in hexadecimal. This value is parsed in
+        """ The status in hexadecimal. This value is parsed in
         :attr:`~.Danfysik8500.status` into a human-readable list.
         """
         status = self.ask("S1H")
@@ -145,7 +144,7 @@ class Danfysik8500(Instrument):
 
     @property
     def current(self):
-        """Control the actual current in Amps. This property can be set through
+        """ The actual current in Amps. This property can be set through
         :attr:`~.current_ppm`.
         """
         return int(self.ask("AD 8")) * 1e-2 * self.polarity
@@ -159,7 +158,7 @@ class Danfysik8500(Instrument):
 
     @property
     def current_ppm(self):
-        """Control the current in parts per million..
+        """ The current in parts per million. This property can be set.
         """
         return int(self.ask("DA 0")[2:])
 
@@ -172,14 +171,14 @@ class Danfysik8500(Instrument):
 
     @property
     def current_setpoint(self):
-        """Get the setpoint for the current, which can deviate from the actual current
+        """ The setpoint for the current, which can deviate from the actual current
         (:attr:`~.Danfysik8500.current`) while the supply is in the process of setting the value.
         """
         return self.current_ppm * (160 / 1e6)
 
     @property
     def slew_rate(self):
-        """Get the slew rate of the current sweep.
+        """ The slew rate of the current sweep.
         """
         return float(self.ask("R3"))
 
@@ -221,7 +220,7 @@ class Danfysik8500(Instrument):
 
     @property
     def status(self):
-        """Get a list of human-readable strings that contain
+        """ A list of human-readable strings that contain
         the instrument status information, based on :attr:`~.status_hex`.
         """
         status = []

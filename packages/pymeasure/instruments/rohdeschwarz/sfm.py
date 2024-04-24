@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 #
 
 import logging
-from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class Sound_Channel:
     """
     Class object for the two sound channels
 
-    refer also to chapter 3.6.6.7 of the user manual
+    refere also to chapter 3.6.6.7 of the user manual
     """
     modulation_degree = Instrument.control(
         "AUD:DEGR?",
@@ -189,7 +189,7 @@ class Sound_Channel:
         self.instrument.read()
 
 
-class SFM(SCPIMixin, Instrument):
+class SFM(Instrument):
     """ Represents the Rohde&Schwarz SFM TV test transmitter
     interface for interacting with the instrument.
 
@@ -198,7 +198,7 @@ class SFM(SCPIMixin, Instrument):
 
         Further source extension for system 2-6 would be required.
 
-        The intermodulation subsystem is also not yet implemented.
+        The intermodulation subsystem is also not yet implmented.
 
     """
 
@@ -206,6 +206,7 @@ class SFM(SCPIMixin, Instrument):
         super().__init__(
             adapter,
             name,
+            includeSCPI=True,
             **kwargs
         )
         self.sound1 = Sound_Channel(self, 1)
@@ -446,7 +447,7 @@ class SFM(SCPIMixin, Instrument):
         ======  =======
         Value   Meaning
         ======  =======
-        CW      Continuous wave mode
+        CW      Continous wave mode
         FIXED   fixed frequency mode
         CHSW    Channel sweep
         RFSW    Frequency sweep
@@ -566,7 +567,7 @@ class SFM(SCPIMixin, Instrument):
         ======  ====================  =================
         NORM    Normal mode           +6 dBm
         LOWN    low noise mode        +10 dBm
-        CONT    continuous mode        +10 dBm
+        CONT    continous mode        +10 dBm
         LOWD    low distortion mode   +0 dBm
         ======  ====================  =================
 
@@ -758,7 +759,7 @@ class SFM(SCPIMixin, Instrument):
     nicam_bit_error_rate = Instrument.control(
         "SOUR:TEL:MOD:NIC:BIT?",
         "SOUR:TEL:MOD:NIC:BIT %g",
-        """ A float property that controls the artificial bit error rate.
+        """ A float property that controls the artifical bit error rate.
 
         valid range: 1.2E-7 .. 2E-3
         """,
@@ -769,7 +770,7 @@ class SFM(SCPIMixin, Instrument):
     nicam_bit_error_enabled = Instrument.control(
         "SOUR:TEL:MOD:NIC:BIT:STAT?",
         "SOUR:TEL:MOD:NIC:BIT:STAT %d",
-        """ A bool property that controls the status of an artificial bit error rate to be applied
+        """ A bool property that controls the status of an artifical bit error rate to be applied
 
         """,
         validator=strict_discrete_set,
@@ -851,7 +852,7 @@ class SFM(SCPIMixin, Instrument):
         ======  =======
         INT     Internal audio generator(s)
         EXT     External audio source
-        CW      Continuous wave signal
+        CW      Continous wave signal
         RAND    Random data stream
         TEST    Test signal
         ======  =======
@@ -1224,7 +1225,7 @@ class SFM(SCPIMixin, Instrument):
     status_info_shown = Instrument.control(
         "SYST:DISP:UPDATE:STATE?",
         "SYST:DISP:UPDATE:STATE %s",
-        """ A bool property that controls if the display shows information during remote control
+        """ A bool property that controls if the display shows infomation during remote control
 
         """,
         validator=strict_discrete_set,
@@ -1356,14 +1357,14 @@ class SFM(SCPIMixin, Instrument):
     basic_info = Instrument.measurement(
         "SYST:INF:BAS?",
         """
-        A String property containing information about the hardware modules installed in the unit
+        A String property containing infomation about the hardware modules installed in the unit
         """,
     )
 
     subsystem_info = Instrument.measurement(
         "SYST:INF:SUBS?",
         """
-        A String property containing information about the system configuration
+        A String property containing infomation about the system configuration
         """,
     )
 

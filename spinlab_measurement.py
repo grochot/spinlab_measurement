@@ -42,7 +42,7 @@ class SpinLabMeasurement(Procedure):
 #################################################################### PARAMETERS #####################################################################
     mode = ListParameter("Mode", default = parameters_from_file["mode"] , choices=['ResistanceMode', 'FMRMode', 'VSMMode', 'HarmonicMode', 'CalibrationFieldMode', 'PulseMode','CIMSMode'])
     mode_resistance = BooleanParameter("4-points", default = parameters_from_file["mode_resistance"], group_by="mode", group_condition=lambda v: v=="ResistanceMode")
-    mode_fmr = ListParameter("FMR Mode",default = parameters_from_file["mode_fmr"], choices = ["V-FMR", "ST-FMR"], group_by={"mode": lambda v: v == "FMRMode"})
+    mode_fmr = ListParameter("FMR Mode",default = parameters_from_file["mode_fmr"], choices = ["const H", "const f"], group_by={"mode": lambda v: v == "FMRMode"})
     mode_harmonic = ListParameter("Harmonic mode",default = parameters_from_file["mode_harmonic"],  choices = ["Field harmonic", "Angular harmonic"], group_by = {"mode": lambda v: v == "HarmonicMode"})
     mode_cims_relays = BooleanParameter("Use relays", default = parameters_from_file["mode_cims_relays"], group_by="mode", group_condition=lambda v: v=="CIMSMode")
     return_the_rotationstation = BooleanParameter("Return the rotationstation", default = parameters_from_file["return_the_rotationstation"], group_by="mode", group_condition=lambda v: v=="CIMSMode" or v=="ResistanceMode")

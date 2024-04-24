@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,11 +25,10 @@
 import logging
 import time
 import re
-from warnings import warn
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range
 from .buffer import KeithleyBuffer
 
@@ -37,7 +36,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
+class Keithley6517B(KeithleyBuffer, Instrument):
     """ Represents the Keithley 6517B ElectroMeter and provides a
     high-level interface for interacting with the instrument.
 
@@ -60,12 +59,6 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
                                               # and disables output
 
     """
-
-    def __init__(self, adapter, name="Keithley 6517B Electrometer/High Resistance Meter", **kwargs):
-        super().__init__(
-            adapter, name,
-            **kwargs
-        )
 
     source_enabled = Instrument.measurement(
         "OUTPUT?",
@@ -199,6 +192,12 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
     # Methods        #
     ####################
 
+    def __init__(self, adapter, name="Keithley 6517B Electrometer/High Resistance Meter", **kwargs):
+        super().__init__(
+            adapter, name,
+            **kwargs
+        )
+
     def enable_source(self):
         """ Enables the source of current or voltage depending on the
         configuration of the instrument. """
@@ -216,7 +215,7 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
         :param resistance: Upper limit of resistance in Ohms,
                            from -210 POhms to 210 POhms
         :param auto_range: Enables auto_range if True, else uses the
-                           resistance_range attribute
+                           resistance_range attribut
         """
         log.info("%s is measuring resistance.", self.name)
         self.write(":SENS:FUNC 'RES';"
@@ -233,7 +232,7 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
         :param voltage: Upper limit of voltage in Volts, from -1000 V to 1000 V
         :param auto_range: Enables auto_range if True, else uses the
-                           voltage_range attribute
+                           voltage_range attribut
         """
         log.info("%s is measuring voltage.", self.name)
         self.write(":SENS:FUNC 'VOLT';"
@@ -250,7 +249,7 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
         :param current: Upper limit of current in Amps, from -21 mA to 21 mA
         :param auto_range: Enables auto_range if True, else uses the
-                           current_range attribute
+                           current_range attribut
         """
         log.info("%s is measuring current.", self.name)
         self.write(":SENS:FUNC 'CURR';"
@@ -282,8 +281,25 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
 
     @property
     def error(self):
-        warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
-        return self.next_error
+        """ Returns a tuple of an error code and message from a
+        single error. """
+        err = self.values(":system:error?")
+        if len(err) < 2:
+            err = self.read()  # Try reading again
+        code = err[0]
+        message = err[1].replace('"', '')
+        return (code, message)
+
+    def check_errors(self):
+        """ Logs any system errors reported by the instrument.
+        """
+        code, message = self.error
+        while code != 0:
+            t = time.time()
+            log.info("Keithley 6517B reported error: %d, %s", code, message)
+            code, message = self.error
+            if (time.time() - t) > 10:
+                log.warning("Timed out for Keithley 6517B error retrieval.")
 
     def reset(self):
         """ Resets the instrument and clears the queue.  """
