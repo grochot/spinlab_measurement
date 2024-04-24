@@ -301,7 +301,7 @@ class MainWindow(ManagedDockWindow):
             
         )
        
-        self.setWindowTitle('SpinLab Measurement System v.0.55')
+        self.setWindowTitle('SpinLab Measurement System v.0.95')
         self.directory = self.procedure_class.path_file.ReadFile()
     
     def set_calibration_constant(self, value):
@@ -331,6 +331,3 @@ if __name__ == "__main__":
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
-
-
-#Version control
