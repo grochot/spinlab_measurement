@@ -1,15 +1,13 @@
 {
-
     "mode": "CIMSMode",
     "sample_name": "12102f_3,1u_TEST",
     "vector": "1,5,3",
     "mode_resistance": false,
-    "mode_fmr": "V-FMR",
-
+    "mode_fmr": "const H",
     "mode_harmonic": "Field harmonic",
-    "set_measdevice": "LockIn",
     "set_sourcemeter": "Keithley 2400",
     "set_multimeter": "Agilent 34400",
+    "set_pulsegenerator": "Agilent 2912",
     "set_gaussmeter": "none",
     "set_field": "DAQ",
     "set_lockin": "SR830",
@@ -24,10 +22,10 @@
     "address_multimeter": "None",
     "address_daq": "Dev4/ao0",
     "address_gaussmeter": "GPIB1::12::INSTR",
-    "address_lockin": "GPIB1::8::INSTR",
+    "address_lockin": "None",
     "address_switch": "None",
     "address_analyzer": "None",
-    "address_generator": "GPIB1::19::INSTR",
+    "address_generator": "None",
     "address_lfgen": "None",
     "address_pulsegenerator": "GPIB1::23::INSTR",
     "sourcemter_source": "VOLT",
@@ -65,11 +63,10 @@
     "lfgen_amp": 2.0,
     "set_field_value": 10.0,
     "set_field_value_fmr": 0.0,
-    "field_step": 100.0,
-    "delay_field": 1.0,
+    "field_step": 50.0,
+    "delay_field": 0.2,
     "delay_lockin": 1.0,
     "delay_bias": 1.0,
-    "single_measurement_duration": 2.0,
     "rotation_axis": "Polar",
     "rotation_polar_constant": 0.0,
     "rotation_azimuth_constant": 90.0,
@@ -83,7 +80,7 @@
     "delay_measurement": 0.25,
     "pulsegenerator_compliance": 0.5,
     "pulsegenerator_source_range": 5.0,
-    "return_the_rotationstation": false,
+    "return_the_rotationstation": true,
     "field_bias_value": 30.0,
     "remagnetization": true,
     "remagnetization_value": 1000.0,
@@ -91,10 +88,7 @@
     "hold_the_field_after_measurement": false,
     "remanency_correction": true,
     "set_polar_angle": 0.0,
-    "set_azimuthal_angle": 0.0,
-
+    "set_azimuthal_angle": 90.0,
     "set_rotationstation_const_angle": true,
     "remanency_correction_time": 5.0
-    "set_pulsegenerator": "none"
-
 }
