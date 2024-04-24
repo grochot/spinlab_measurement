@@ -8,10 +8,10 @@ from time import sleep, time
 import traceback
 from logic.find_instrument import FindInstrument
 from logic.save_results_path import SaveFilePath
-from pymeasure.experiment import Procedure, Results
-from pymeasure.display.Qt import QtWidgets
-from pymeasure.display.windows.managed_dock_window import ManagedDockWindow
-from pymeasure.experiment import (
+from packages.pymeasure.experiment import Procedure, Results
+from packages.pymeasure.display.Qt import QtWidgets
+from packages.pymeasure.display.windows.managed_dock_window import ManagedDockWindow
+from packages.pymeasure.experiment import (
     Procedure, FloatParameter, BooleanParameter, IntegerParameter, Parameter,ListParameter, Results, VectorParameter
 )
 from logic.unique_name import unique_name
