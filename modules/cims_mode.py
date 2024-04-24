@@ -247,9 +247,9 @@ class CIMSMode():
         self.pulsegenerator_obj.source_range=(self.pulsegenerator_pulsetype,self.pulsegenerator_source_range)
         self.pulsegenerator_obj.offset=(self.pulsegenerator_pulsetype,self.pulsegenerator_offset)
         if self.pulsegenerator_pulsetype == "VOLT":
-            self.pulsegenerator_obj.compliance_current=self.pulsegenerator_compliance
+            self.pulsegenerator_obj.generator_compliance_current=self.pulsegenerator_compliance
         else:
-            self.pulsegenerator_obj.compliance_voltage=self.pulsegenerator_compliance
+            self.pulsegenerator_obj.generator_compliance_voltage=self.pulsegenerator_compliance
 
 
     def operating(self, point):

@@ -328,13 +328,13 @@ class Channel:
         set_process=lambda v:(v[0].replace("VOLT",'v').replace("CURR",'i'),v[1])
     )
 
-    compliance_current=Instrument.control(
+    generator_compliance_current=Instrument.control(
         "", "smu{ch}.trigger.source.limiti = %s",
         """ Set pulse amplitude in volts""",
     )
 
     
-    compliance_voltage=Instrument.control(
+    generator_compliance_voltage=Instrument.control(
         "", "smu{ch}.trigger.source.limitv = %s",
         """ Set pulse amplitude in volts""",
     )
