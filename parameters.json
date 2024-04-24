@@ -1,12 +1,14 @@
 {
-    "mode": "CIMSMode",
+    "mode": "FMRMode",
     "sample_name": "12102f_3,1u_TEST",
     "vector": "1,5,3",
     "mode_resistance": false,
     "mode_fmr": "const H",
     "mode_harmonic": "Field harmonic",
-    "set_sourcemeter": "Keithley 2400",
-    "set_multimeter": "Agilent 34400",
+
+    "set_sourcemeter": "Keithley 2636",
+    "set_multimeter": "none",
+
     "set_pulsegenerator": "Agilent 2912",
     "set_gaussmeter": "none",
     "set_field": "DAQ",
@@ -15,7 +17,7 @@
     "set_rotationstation": false,
     "set_switch": false,
     "set_kriostat": false,
-    "set_lfgen": "SR830",
+    "set_lfgen": "none",
     "set_analyzer": "VectorAnalyzer",
     "set_generator": "Agilent",
     "address_sourcemeter": "GPIB1::26::INSTR",
