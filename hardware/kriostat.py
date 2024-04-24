@@ -1,2 +1,0 @@
-class Kriostat():
-    pass

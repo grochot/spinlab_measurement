@@ -1,1 +1,0 @@
-,ASRL/dev/ttyS0::INSTR,ASRL/dev/ttyUSB1::INSTR,ASRL/dev/ttyUSB0::INSTR
