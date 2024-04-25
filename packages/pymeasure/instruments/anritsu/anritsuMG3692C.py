@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from packages.pymeasure.instruments import Instrument
 
 
 class AnritsuMG3692C(Instrument):

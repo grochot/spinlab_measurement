@@ -28,8 +28,8 @@ import re
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import truncated_range
 from .buffer import KeithleyBuffer
 
 log = logging.getLogger(__name__)

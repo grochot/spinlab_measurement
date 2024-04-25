@@ -36,7 +36,7 @@ import pandas as pd
 import pint
 
 from .procedure import Procedure, UnknownProcedure
-from pymeasure.units import ureg
+from packages.pymeasure.units import ureg
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

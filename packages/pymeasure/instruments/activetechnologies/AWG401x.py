@@ -31,8 +31,8 @@ from collections import abc, namedtuple
 
 import pprint
 
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import strict_discrete_set, \
+from packages.pymeasure.instruments import Instrument, Channel
+from packages.pymeasure.instruments.validators import strict_discrete_set, \
     strict_range
 
 

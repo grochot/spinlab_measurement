@@ -31,8 +31,8 @@ import numpy as np
 
 from .results import unique_filename
 from .config import get_config, set_mpl_rcparams
-from pymeasure.log import setup_logging, console_log
-from pymeasure.experiment import Results, Worker
+from packages.pymeasure.log import setup_logging, console_log
+from packages.pymeasure.experiment import Results, Worker
 
 log = logging.getLogger()
 log.addHandler(logging.NullHandler())

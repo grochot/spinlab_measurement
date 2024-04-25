@@ -24,8 +24,8 @@
 
 import re
 
-from pymeasure.instruments import Channel, Instrument
-from pymeasure.instruments.validators import strict_discrete_set
+from packages.pymeasure.instruments import Channel, Instrument
+from packages.pymeasure.instruments.validators import strict_discrete_set
 
 _ion_gauge_status = {"Wait": "W",
                      "Off": "O",

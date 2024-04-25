@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 from math import sqrt, log10
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
+from packages.pymeasure.instruments import Instrument, Channel
+from packages.pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 
 class AFG3152CChannel(Channel):

@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, discreteTruncate, RangeException
+from packages.pymeasure.instruments import Instrument, discreteTruncate, RangeException
 from pyvisa import VisaIOError
 
 import numpy as np

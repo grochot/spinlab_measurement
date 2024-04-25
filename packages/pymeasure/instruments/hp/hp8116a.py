@@ -26,8 +26,8 @@ import logging
 import time
 import numpy as np
 from enum import Enum, IntFlag
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import (
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import (
     strict_discrete_set, strict_range, truncated_discrete_set
 )
 

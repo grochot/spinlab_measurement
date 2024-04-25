@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class DCXS(Instrument):

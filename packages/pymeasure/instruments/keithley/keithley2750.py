@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from packages.pymeasure.instruments import Instrument
 
 
 def clean_closed_channels(output):

@@ -23,8 +23,8 @@
 #
 
 import logging
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.lakeshore.lakeshore_base import LakeShoreTemperatureChannel
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.lakeshore.lakeshore_base import LakeShoreTemperatureChannel
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

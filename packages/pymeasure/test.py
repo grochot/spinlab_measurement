@@ -24,7 +24,7 @@
 
 from contextlib import contextmanager
 
-from pymeasure.adapters.protocol import ProtocolAdapter
+from packages.pymeasure.adapters.protocol import ProtocolAdapter
 
 
 @contextmanager
@@ -42,8 +42,8 @@ def expected_protocol(instrument_cls, comm_pairs,
     typically a detail of the communication method (i.e. Adapter), and not the
     protocol itself.
 
-    :param pymeasure.Instrument instrument_cls:
-        :class:`~pymeasure.instruments.Instrument` subclass to instantiate.
+    :param packages.pymeasure.Instrument instrument_cls:
+        :class:`~packages.pymeasure.instruments.Instrument` subclass to instantiate.
     :param list[2-tuples[str]] comm_pairs:
         List of command-response pairs, i.e. 2-tuples like `('VOLT?', '3.14')`.
         'None' indicates that a pair member (command or response) does not

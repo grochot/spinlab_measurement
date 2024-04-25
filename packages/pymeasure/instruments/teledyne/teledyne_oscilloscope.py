@@ -29,8 +29,8 @@ import time
 from decimal import Decimal
 import numpy as np
 
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
+from packages.pymeasure.instruments import Instrument, Channel
+from packages.pymeasure.instruments.validators import strict_discrete_set, strict_range, \
     strict_discrete_range
 
 

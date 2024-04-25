@@ -25,8 +25,8 @@
 import io
 import logging
 
-from pymeasure.adapters import VISAAdapter
-from pymeasure.instruments import Channel
+from packages.pymeasure.adapters import VISAAdapter
+from packages.pymeasure.instruments import Channel
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -448,7 +448,7 @@ class Generator:
         :param instrument_class: Class of the instrument to test.
         :param adapter: Adapter (instance or str) for the instrument instantiation.
         :param manufacturer: Module from which to import the instrument, e.g. 'hcp' if
-            instrument_class is 'pymeasure.hcp.tc038'.
+            instrument_class is 'packages.pymeasure.hcp.tc038'.
         :param adapter_kwargs: Keyword arguments for the adapter instantiation (see note above).
         :param \\**kwargs: Keyword arguments for the instrument instantiation.
         :return: A man-in-the-middle instrument, which can be used like a normal instrument.
@@ -457,8 +457,8 @@ class Generator:
         log.info(f"Instantiate {self._class}.")
         self._header = (
             "import pytest\n\n"
-            "from pymeasure.test import expected_protocol\n"
-            f"from pymeasure.instruments.{manufacturer} import {self._class}\n")
+            "from packages.pymeasure.test import expected_protocol\n"
+            f"from packages.pymeasure.instruments.{manufacturer} import {self._class}\n")
         if isinstance(adapter, (int, str)):
             if adapter_kwargs is None:
                 adapter_kwargs = {}

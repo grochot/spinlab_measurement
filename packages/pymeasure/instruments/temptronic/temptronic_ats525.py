@@ -31,8 +31,8 @@ Revision E
 September, 2019
 """
 
-from pymeasure.instruments.temptronic.temptronic_base import ATSBase
-from pymeasure.instruments.instrument import Instrument
+from packages.pymeasure.instruments.temptronic.temptronic_base import ATSBase
+from packages.pymeasure.instruments.instrument import Instrument
 
 
 class ATS525(ATSBase):

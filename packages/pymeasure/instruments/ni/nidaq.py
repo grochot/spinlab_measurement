@@ -25,7 +25,7 @@
 # Requires 'instrumental' package: https://github.com/mabuchilab/Instrumental
 
 from instrumental.drivers.daq import ni
-from pymeasure.instruments import Instrument
+from packages.pymeasure.instruments import Instrument
 
 
 def get_dict_attr(obj, attr):

@@ -28,8 +28,8 @@ import json
 import numpy as np
 import pandas as pd
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import (strict_discrete_set,
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import (strict_discrete_set,
                                               truncated_discrete_set,
                                               strict_range)
 
@@ -48,7 +48,7 @@ class Agilent4156(Instrument):
 
     .. code-block:: python
 
-        from pymeasure.instruments.agilent import Agilent4156
+        from packages.pymeasure.instruments.agilent import Agilent4156
 
         # explicitly define r/w terminations; set sufficiently large timeout or None.
         smu = Agilent4156("GPIB0::25", read_termination = '\\n', write_termination = '\\n',

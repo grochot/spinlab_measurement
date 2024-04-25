@@ -27,9 +27,9 @@ from time import sleep, time
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range
-from pymeasure.adapters import PrologixAdapter
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import truncated_range
+from packages.pymeasure.adapters import PrologixAdapter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

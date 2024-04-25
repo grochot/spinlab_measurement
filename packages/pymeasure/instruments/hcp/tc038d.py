@@ -26,7 +26,7 @@ import logging
 
 from enum import IntEnum
 
-from pymeasure.instruments import Instrument
+from packages.pymeasure.instruments import Instrument
 
 
 log = logging.getLogger(__name__)

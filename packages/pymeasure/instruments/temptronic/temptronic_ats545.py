@@ -32,7 +32,7 @@ Revision B
 November, 2015
 """
 
-from pymeasure.instruments.temptronic.temptronic_base import ATSBase
+from packages.pymeasure.instruments.temptronic.temptronic_base import ATSBase
 
 
 class ATS545(ATSBase):

@@ -30,10 +30,10 @@ import numpy as np
 import pandas as pd
 from enum import IntEnum
 from collections import Counter, namedtuple, OrderedDict
-from pymeasure.instruments.validators import (strict_discrete_set,
+from packages.pymeasure.instruments.validators import (strict_discrete_set,
                                               strict_range,
                                               strict_discrete_range)
-from pymeasure.instruments import Instrument
+from packages.pymeasure.instruments import Instrument
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -134,7 +134,7 @@ class AgilentB1500(Instrument):
         :type channel: int
         :param smu_type: SMU type, e.g. ``'HRSMU'``
         :type smu_type: str
-        :param name: SMU name for pymeasure (data output etc.)
+        :param name: SMU name for packages.pymeasure (data output etc.)
         :type name: str
         :return: SMU instance
         :rtype: :class:`.SMU`

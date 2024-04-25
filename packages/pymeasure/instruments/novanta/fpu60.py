@@ -25,7 +25,7 @@
 import logging
 import re
 
-from pymeasure.instruments import Instrument
+from packages.pymeasure.instruments import Instrument
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

@@ -26,10 +26,10 @@
 # Libraries / modules
 # =============================================================================
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range
-from pymeasure.instruments.validators import strict_discrete_set
-from pymeasure.instruments.validators import strict_discrete_range
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import strict_range
+from packages.pymeasure.instruments.validators import strict_discrete_set
+from packages.pymeasure.instruments.validators import strict_discrete_range
 import logging
 from time import sleep
 import numpy as np

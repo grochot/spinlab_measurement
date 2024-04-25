@@ -23,7 +23,7 @@
 #
 
 
-from pymeasure.instruments import Instrument
+from packages.pymeasure.instruments import Instrument
 from pyvisa.errors import VisaIOError
 from pyvisa import constants as vconst
 import re
@@ -43,12 +43,12 @@ class OxfordInstrumentsBase(Instrument):
 
     Checks the replies from instruments for validity.
 
-    :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
+    :param adapter: A string, integer, or :py:class:`~packages.pymeasure.adapters.Adapter` subclass object
     :param string name: The name of the instrument. Often the model designation by default.
     :param max_attempts: Integer that sets how many attempts at getting a
         valid response to a query can be made
     :param \\**kwargs: In case ``adapter`` is a string or integer, additional arguments passed on
-        to :py:class:`~pymeasure.adapters.VISAAdapter` (check there for details).
+        to :py:class:`~packages.pymeasure.adapters.VISAAdapter` (check there for details).
         Discarded otherwise.
     """
 

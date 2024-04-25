@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range
 
 import logging
 log = logging.getLogger(__name__)
@@ -252,7 +252,7 @@ class Ametek7270(Instrument):
         """Send a command and read the response, stripping white spaces.
 
         Usually the properties use the
-        :meth:`~pymeasure.instruments.common_base.CommonBase.values`
+        :meth:`~packages.pymeasure.instruments.common_base.CommonBase.values`
         method that adds a strip call, however several methods use directly the result from ask to
         be cast into some other types. It should therefore also add the strip here, as all responses
         end with a newline character.

@@ -24,7 +24,7 @@
 import time
 from warnings import warn
 
-from pymeasure.adapters import VISAAdapter
+from packages.pymeasure.adapters import VISAAdapter
 
 
 class PrologixAdapter(VISAAdapter):

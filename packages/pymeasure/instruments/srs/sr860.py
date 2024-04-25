@@ -22,9 +22,9 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.validators import strict_discrete_set, \
+from packages.pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
-from pymeasure.instruments import Instrument
+from packages.pymeasure.instruments import Instrument
 
 
 class SR860(Instrument):

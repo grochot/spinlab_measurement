@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, RangeException
+from packages.pymeasure.instruments import Instrument, RangeException
 
 from time import sleep
 import numpy as np

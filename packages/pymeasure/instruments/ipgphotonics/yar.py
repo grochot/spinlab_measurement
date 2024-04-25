@@ -25,7 +25,7 @@
 import logging
 from enum import IntFlag
 
-from pymeasure.instruments import Instrument, validators
+from packages.pymeasure.instruments import Instrument, validators
 from pyvisa.constants import Parity, StopBits
 
 

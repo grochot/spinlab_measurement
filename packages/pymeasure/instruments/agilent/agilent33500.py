@@ -25,8 +25,8 @@
 # Parts of this code were copied and adapted from the Agilent33220A class.
 
 import logging
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from packages.pymeasure.instruments import Instrument, Channel
+from packages.pymeasure.instruments.validators import strict_discrete_set, strict_range
 from time import time
 from pyvisa.errors import VisaIOError
 

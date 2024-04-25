@@ -21,8 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from pymeasure.instruments.instrument import Instrument
-from pymeasure.instruments.siglenttechnologies.siglent_spdbase import (SPDSingleChannelBase,
+from packages.pymeasure.instruments.instrument import Instrument
+from packages.pymeasure.instruments.siglenttechnologies.siglent_spdbase import (SPDSingleChannelBase,
                                                                        SPDChannel)
 
 

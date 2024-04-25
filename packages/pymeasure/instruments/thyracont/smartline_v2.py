@@ -24,7 +24,7 @@
 
 from enum import IntEnum
 
-from pymeasure.instruments import Instrument, Channel, validators
+from packages.pymeasure.instruments import Instrument, Channel, validators
 from pyvisa.constants import Parity, StopBits
 
 from .smartline_v1 import calculate_checksum
@@ -199,8 +199,8 @@ class SmartlineV2(Instrument):
 
     .. doctest::
 
-        from pymeasure.instruments import Instrument
-        from pymeasure.instruments.thyractont import SmartlineV2
+        from packages.pymeasure.instruments import Instrument
+        from packages.pymeasure.instruments.thyractont import SmartlineV2
 
         PiezoAndPiraniInstrument(SmartlineV2):
             piezo = Instrument.ChannelCreator(Piezo)

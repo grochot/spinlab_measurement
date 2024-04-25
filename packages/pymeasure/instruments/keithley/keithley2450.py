@@ -27,8 +27,8 @@ import time
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import truncated_range, strict_discrete_set
 from .buffer import KeithleyBuffer
 
 # Setup logging

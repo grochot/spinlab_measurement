@@ -24,8 +24,8 @@
 
 from time import sleep
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import strict_discrete_set
 
 
 class AxisError(Exception):
@@ -238,7 +238,7 @@ class ESP300(Instrument):
     By default this instrument is constructed with x, y, and phi
     attributes that represent axes 1, 2, and 3. Custom implementations
     can overwrite this depending on the avalible axes. Axes are controlled
-    through an :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
+    through an :class:`Axis <packages.pymeasure.instruments.newport.esp300.Axis>`
     class.
     """
 
@@ -284,7 +284,7 @@ class ESP300(Instrument):
 
     @property
     def axes(self):
-        """ Get a list of the :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
+        """ Get a list of the :class:`Axis <packages.pymeasure.instruments.newport.esp300.Axis>`
         objects that are present. """
         axes = []
         directory = dir(self)

@@ -8,10 +8,11 @@ from time import sleep, time
 import traceback
 from logic.find_instrument import FindInstrument
 from logic.save_results_path import SaveFilePath
-from packages.pymeasure.experiment import Procedure, Results
-from packages.pymeasure.display.Qt import QtWidgets
-from packages.pymeasure.display.windows.managed_dock_window import ManagedDockWindow
-from packages.pymeasure.experiment import (
+from pymeasure.experiment.procedure import Procedure
+from pymeasure.experiment.results import Results
+from pymeasure.display.Qt import QtWidgets
+from pymeasure.display.windows.managed_dock_window import ManagedDockWindow
+from pymeasure.experiment import (
     Procedure, FloatParameter, BooleanParameter, IntegerParameter, Parameter,ListParameter, Results, VectorParameter
 )
 from logic.unique_name import unique_name
@@ -294,7 +295,7 @@ class MainWindow(ManagedDockWindow):
             inputs = ['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'mode_harmonic', 'set_sourcemeter','set_pulsegenerator', 'set_multimeter', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','set_rotationstation_const_angle','address_rotationstation','set_polar_angle','set_azimuthal_angle','rotation_axis', 'rotation_polar_constant', 'rotation_azimuth_constant','set_switch', 'set_kriostat', 'set_lfgen', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','address_pulsegenerator','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'constant_field_value', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp', 'set_field_value','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias','mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','pulsegenerator_compliance','pulsegenerator_source_range','delay_measurement','field_bias_value','remanency_correction','remanency_correction_time','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','return_the_rotationstation'],
             x_axis=['Field (Oe)', 'Voltage (V)'],
             y_axis=['Field (Oe)', 'Resistance (ohm)'],
-            directory_input=True,  
+            # directory_input=True,  
             sequencer=True,                                  
             sequencer_inputs=["sourcemeter_bias","lockin_frequency","field_constant","set_field_value_fmr", "set_field_value", "field_step","constant_field_value","field_bias_value", "generator_frequency", "generator_power", "lfgen_freq", "lfgen_amp", "rotation_polar_constant", "rotation_azimuth_constant", "set_polar_angle", "set_azimuthal_angle", "pulsegenerator_offset", "pulsegenerator_duration"],
             inputs_in_scrollarea=True,

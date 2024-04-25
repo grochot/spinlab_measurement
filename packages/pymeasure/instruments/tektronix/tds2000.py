@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from packages.pymeasure.instruments import Instrument
 
 
 class TDS2000(Instrument):

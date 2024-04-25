@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 import logging
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import (
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import (
     strict_discrete_set,
     truncated_range,
     strict_range,

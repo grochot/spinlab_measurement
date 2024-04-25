@@ -26,9 +26,9 @@ import re
 import time
 import numpy as np
 
-from pymeasure.adapters import FakeAdapter
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
+from packages.pymeasure.adapters import FakeAdapter
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import strict_discrete_set
 
 
 class FakeInstrument(Instrument):

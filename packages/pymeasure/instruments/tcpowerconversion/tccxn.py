@@ -25,8 +25,8 @@
 import enum
 import struct
 
-from pymeasure.instruments.validators import strict_discrete_set
-from pymeasure.instruments import Channel, Instrument
+from packages.pymeasure.instruments.validators import strict_discrete_set
+from packages.pymeasure.instruments import Channel, Instrument
 
 
 def values(self, command, cast=int, separator=',', preprocess_reply=None, **kwargs):

@@ -33,7 +33,7 @@ from datetime import datetime, timezone, timedelta
 import numpy as np
 import pandas as pd
 
-from pymeasure.instruments.validators import (
+from packages.pymeasure.instruments.validators import (
     strict_discrete_set, strict_discrete_range,
     truncated_discrete_set, strict_range
 )
@@ -91,8 +91,8 @@ class VirtualBench():
         - Function Generator (FGEN)
         - Power Supply (PS)
         - Serial Peripheral Interface (SPI) -> not implemented
-          for pymeasure yet
-        - Inter Integrated Circuit (I2C) -> not implemented for pymeasure yet
+          for packages.pymeasure yet
+        - Inter Integrated Circuit (I2C) -> not implemented for packages.pymeasure yet
 
     For every module exist methods to save/load the configuration to file.
     These methods are not wrapped so far, checkout the pyvirtualbench file.
@@ -103,7 +103,7 @@ class VirtualBench():
     Check the pyvirtualbench file, if you need the functionality.
 
     :param str device_name: Full unique device name
-    :param str name: Name for display in pymeasure
+    :param str name: Name for display in packages.pymeasure
     """
 
     def __init__(self, device_name='', name='VirtualBench'):
@@ -864,7 +864,7 @@ class VirtualBench():
         device. Allows to measure oscilloscope data from analog and digital
         channels.
 
-        Methods from pyvirtualbench not implemented in pymeasure yet:
+        Methods from pyvirtualbench not implemented in packages.pymeasure yet:
 
             - ``enable_digital_channels``
             - ``configure_digital_threshold``

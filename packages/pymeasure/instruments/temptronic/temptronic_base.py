@@ -39,8 +39,8 @@ No automatic safety measures are part of this driver implementation.
 """
 import logging
 import time
-from pymeasure.instruments.instrument import Instrument
-from pymeasure.instruments.validators import (strict_discrete_set,
+from packages.pymeasure.instruments.instrument import Instrument
+from packages.pymeasure.instruments.validators import (strict_discrete_set,
                                               truncated_range,
                                               strict_range
                                               )

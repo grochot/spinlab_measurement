@@ -28,8 +28,8 @@ from enum import Enum, IntFlag
 from numpy import arange
 from datetime import datetime
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set, \
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set, \
     joined_validators, strict_range
 
 log = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ try:
     from enum import StrEnum
 except ImportError:
     class StrEnum(str, Enum):
-        """Until StrEnum is broadly available / pymeasure relies on python <=
+        """Until StrEnum is broadly available / packages.pymeasure relies on python <=
         3.10.x."""
 
         def __str__(self):
@@ -2818,8 +2818,8 @@ class HP8560A(HP856Xx):
 
     .. code-block:: python
 
-        from pymeasure.instruments.hp import HP8560A
-        from pymeasure.instruments.hp.hp856Xx import AmplitudeUnits
+        from packages.pymeasure.instruments.hp import HP8560A
+        from packages.pymeasure.instruments.hp.hp856Xx import AmplitudeUnits
 
         sa = HP8560A("GPIB::1")
 
@@ -3001,8 +3001,8 @@ class HP8561B(HP856Xx):
 
     .. code-block:: python
 
-        from pymeasure.instruments.hp import 8561B
-        from pymeasure.instruments.hp.hp856Xx import AmplitudeUnits
+        from packages.pymeasure.instruments.hp import 8561B
+        from packages.pymeasure.instruments.hp.hp856Xx import AmplitudeUnits
 
         sa = HP8560A("GPIB::1")
 

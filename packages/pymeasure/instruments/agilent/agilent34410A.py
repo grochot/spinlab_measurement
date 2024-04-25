@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from packages.pymeasure.instruments import Instrument
 
 
 class Agilent34410A(Instrument):

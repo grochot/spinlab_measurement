@@ -21,8 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import strict_range
 from time import sleep
 from enum import IntFlag
 

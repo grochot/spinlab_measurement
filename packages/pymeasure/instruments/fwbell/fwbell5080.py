@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import strict_discrete_set
 from numpy import array, float64
 from time import sleep
 
@@ -106,7 +106,7 @@ class FWBell5080(Instrument):
     )
 
     def read(self):
-        """ Overwrites the :meth:`Instrument.read <pymeasure.instruments.Instrument.read>`
+        """ Overwrites the :meth:`Instrument.read <packages.pymeasure.instruments.Instrument.read>`
         method to remove semicolons and replace spaces with colons.
         """
         # To set the unit mode to DC Tesla you need to write(':UNIT:FLUX:DC:TESLA')

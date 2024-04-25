@@ -27,9 +27,9 @@ import re
 from math import inf, isfinite, isinf
 from warnings import warn
 
-from pymeasure.adapters import Adapter
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import (joined_validators,
+from packages.pymeasure.adapters import Adapter
+from packages.pymeasure.instruments import Instrument, Channel
+from packages.pymeasure.instruments.validators import (joined_validators,
                                               strict_discrete_set,
                                               strict_range)
 

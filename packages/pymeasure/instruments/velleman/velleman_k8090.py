@@ -26,8 +26,8 @@ from enum import IntFlag
 import logging
 
 from pyvisa import VisaIOError
-from pymeasure.adapters import SerialAdapter, VISAAdapter
-from pymeasure.instruments import Instrument
+from packages.pymeasure.adapters import SerialAdapter, VISAAdapter
+from packages.pymeasure.instruments import Instrument
 
 
 log = logging.getLogger(__name__)
@@ -94,7 +94,7 @@ class VellemanK8090(Instrument):
 
     .. code-block:: python
 
-       from pymeasure.instruments.velleman import VellemanK8090, VellemanK8090Switches as Switches
+       from packages.pymeasure.instruments.velleman import VellemanK8090, VellemanK8090Switches as Switches
 
        instrument = VellemanK8090("ASRL1::INSTR")
 

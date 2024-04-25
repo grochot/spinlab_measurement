@@ -26,8 +26,8 @@ import logging
 import numpy as np
 from time import sleep, time
 
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import strict_discrete_set
+from packages.pymeasure.instruments import Instrument, Channel
+from packages.pymeasure.instruments.validators import strict_discrete_set
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

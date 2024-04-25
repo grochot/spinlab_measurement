@@ -23,8 +23,8 @@
 #
 
 import logging
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from packages.pymeasure.instruments import Instrument, Channel
+from packages.pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

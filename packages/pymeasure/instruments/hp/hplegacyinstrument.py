@@ -23,7 +23,7 @@
 #
 import ctypes
 import logging
-from pymeasure.instruments import Instrument
+from packages.pymeasure.instruments import Instrument
 
 
 log = logging.getLogger(__name__)
@@ -102,7 +102,7 @@ class StatusBitsBase(ctypes.BigEndianStructure):
 
 class HPLegacyInstrument(Instrument):
     """
-    Class for legacy HP instruments from the era before SPCI, based on `pymeasure.Instrument`
+    Class for legacy HP instruments from the era before SPCI, based on `packages.pymeasure.Instrument`
 
     """
     status_desc = StatusBitsBase  # To be overriden by subclasses

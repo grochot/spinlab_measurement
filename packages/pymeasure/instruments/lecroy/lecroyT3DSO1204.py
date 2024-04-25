@@ -24,10 +24,10 @@
 import logging
 import re
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope,\
+from packages.pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope,\
     TeledyneOscilloscopeChannel, sanitize_source
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from packages.pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

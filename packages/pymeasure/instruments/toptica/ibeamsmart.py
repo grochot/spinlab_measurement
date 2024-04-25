@@ -29,8 +29,8 @@ from warnings import warn
 
 from pyvisa.errors import VisaIOError
 
-from pymeasure.instruments import Channel, Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from packages.pymeasure.instruments import Channel, Instrument
+from packages.pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

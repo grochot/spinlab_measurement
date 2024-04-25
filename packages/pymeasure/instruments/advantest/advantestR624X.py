@@ -23,8 +23,8 @@
 
 import logging
 from enum import IntEnum, IntFlag
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set, \
+from packages.pymeasure.instruments import Instrument, Channel
+from packages.pymeasure.instruments.validators import truncated_range, strict_discrete_set, \
     strict_range
 
 # Setup logging

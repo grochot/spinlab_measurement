@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.validators import strict_discrete_set
-from pymeasure.instruments import Instrument
+from packages.pymeasure.instruments.validators import strict_discrete_set
+from packages.pymeasure.instruments import Instrument
 
 
 def calculate_checksum(msg):
