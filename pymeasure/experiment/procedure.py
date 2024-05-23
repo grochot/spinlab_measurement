@@ -201,7 +201,7 @@ class Procedure:
             parameter.value = value
             setattr(self, name, parameter.value)
 
-    def set_parameters(self, parameters, except_missing=True):
+    def set_parameters(self, parameters, except_missing=False):
         """ Sets a dictionary of parameters and raises an exception if additional
         parameters are present if except_missing is True
         """

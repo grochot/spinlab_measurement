@@ -42,7 +42,7 @@ class SpinLabMeasurement(Procedure):
     parameters_from_file = save_parameter.ReadFile()
 #################################################################### PARAMETERS #####################################################################
     mode = ListParameter("Mode", default = parameters_from_file["mode"] , choices=['ResistanceMode', 'FMRMode', 'VSMMode', 'HarmonicMode', 'CalibrationFieldMode', 'PulseMode','CIMSMode'], group_by = {"layout_type":True})
-    mode_resistance = BooleanParameter("4-points", default = parameters_from_file["mode_resistance"], group_by={"mode": lambda v: v=="ResistanceMode", "layout_type": False})
+    mode_resistance = BooleanParameter("Use 4-points measurement", default = parameters_from_file["mode_resistance"], group_by={"mode": lambda v: v=="ResistanceMode", "layout_type": False})
     mode_fmr = ListParameter("FMR Mode",default = parameters_from_file["mode_fmr"], choices = ["const H", "const f"], group_by={"mode": lambda v: v == "FMRMode", "layout_type": False})
     mode_harmonic = ListParameter("Harmonic mode",default = parameters_from_file["mode_harmonic"],  choices = ["Field harmonic", "Angular harmonic"], group_by = {"mode": lambda v: v == "HarmonicMode", "layout_type": False})
     mode_cims_relays = BooleanParameter("Use relays", default = parameters_from_file["mode_cims_relays"], group_by={"mode": "CIMSMode", "layout_type": False})
@@ -96,7 +96,7 @@ class SpinLabMeasurement(Procedure):
     
    
     #MeasurementParameters
-    sample_name = Parameter("Sample name", default = parameters_from_file["sample_name"], group_by={"mode": lambda v: v != "CalibrationFieldMode", "layout_type": True}) 
+    sample_name = Parameter("Sample name", default = parameters_from_file["sample_name"], group_by={"mode": lambda v: v == 'default'}) 
     vector = Parameter("Vector", default = parameters_from_file["vector"], group_by={"layout_type": True})
     delay_field = FloatParameter("Delay Field", default = parameters_from_file["delay_field"], units="s", group_by= {"layout_type": True})
     delay_lockin = FloatParameter("Delay Lockin", default = parameters_from_file["delay_lockin"], units="s", group_by={"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "layout_type": False})
@@ -186,11 +186,16 @@ class SpinLabMeasurement(Procedure):
     
     ################ STARTUP ################## 
     def startup(self):
+        self.sample_name = window.filename_getter()
         for i in self.used_parameters_list:
             self.param = eval("self."+i)
             self.parameters[i] = self.param
         
+        
         self.save_parameter.WriteFile(self.parameters)
+
+        
+       
         
         match self.mode:
             case "ResistanceMode":
@@ -317,6 +322,10 @@ class MainWindow(ManagedDockWindow):
        
         self.setWindowTitle('SpinLab Measurement System v.0.95')
         self.directory = self.procedure_class.path_file.ReadFile()
+        self.filename = self.procedure_class.parameters_from_file["sample_name"]
+        self.store_measurement = False                              # Controls the 'Save data' toggle
+        self.file_input.extensions = ["csv", "txt", "data"]         # Sets recognized extensions, first entry is the default extension
+        self.file_input.filename_fixed = False    
     
     def set_calibration_constant(self, value):
         self.inputs.field_constant.setValue(value)
@@ -327,20 +336,25 @@ class MainWindow(ManagedDockWindow):
     def change_input_type(self, value): 
         self.inputs.layout_type.setCheckState(value)
     
+    def set_sample_name(self, value):
+        self.inputs.sample_name.setValue(value)
+    
+    def filename_getter(self):
+        return self.file_input.filename
 
-    def queue(self, procedure=None):
-        directory = self.directory
-        self.procedure_class.path_file.WriteFile(directory)
+    # def queue(self, procedure=None):
+    #     directory = self.directory
+    #     self.procedure_class.path_file.WriteFile(directory)
         
-        if procedure is None:
-            procedure = self.make_procedure()
-        if procedure.mode == "CalibrationFieldMode":
-            procedure.sample_name = "calibration"
-        name_of_file = procedure.sample_name
-        filename = unique_name(directory, prefix="{0}__{1}_".format(name_of_file,procedure.mode))
-        results = Results(procedure, filename)
-        experiment = self.new_experiment(results)
-        self.manager.queue(experiment)
+    #     if procedure is None:
+    #         procedure = self.make_procedure()
+    #     if procedure.mode == "CalibrationFieldMode":
+    #         procedure.sample_name = "calibration"
+    #     name_of_file = procedure.sample_name
+    #     filename = unique_name(directory, prefix="{0}__{1}_".format(name_of_file,procedure.mode))
+    #     results = Results(procedure, filename)
+    #     experiment = self.new_experiment(results)
+    #     self.manager.queue(experiment)
         
     
 if __name__ == "__main__":
