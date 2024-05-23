@@ -170,8 +170,14 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.queue_button.clicked.connect(self._queue)
 
         self.abort_button = QtWidgets.QPushButton('Abort', self)
+        self.settings_button = QtWidgets.QPushButton('Settings', self)
+        self.parameters_button = QtWidgets.QPushButton('Parameters', self)
         self.abort_button.setEnabled(False)
+        self.settings_button.setEnabled(False)
+        self.parameters_button.setEnabled(True)
         self.abort_button.clicked.connect(self.abort)
+        self.settings_button.clicked.connect(self.settings_function)
+        self.parameters_button.clicked.connect(self.parameters_function)
 
         self.browser_widget = BrowserWidget(
             self.procedure_class,
@@ -226,6 +232,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         inputs_dock = QtWidgets.QWidget(self)
         inputs_vbox = QtWidgets.QVBoxLayout(self.main)
+        parameters_buttons_layout = QtWidgets.QHBoxLayout(self)
 
         queue_abort_hbox = QtWidgets.QHBoxLayout()
         queue_abort_hbox.setSpacing(10)
@@ -233,7 +240,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         queue_abort_hbox.addWidget(self.queue_button)
         queue_abort_hbox.addWidget(self.abort_button)
         queue_abort_hbox.addStretch()
-
+        parameters_buttons_layout.addWidget(self.settings_button)
+        parameters_buttons_layout.addWidget(self.parameters_button)
+        inputs_vbox.addLayout(parameters_buttons_layout)
         inputs_vbox.addWidget(self.inputs)
         inputs_vbox.addSpacing(15)
         if self.enable_file_input:
@@ -580,6 +589,17 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.abort_button.setText("Abort")
             self.abort_button.clicked.disconnect()
             self.abort_button.clicked.connect(self.abort)
+
+    def settings_function(self): 
+        self.settings_button.setEnabled(False)
+        self.parameters_button.setEnabled(True)
+        self.procedure_class.change_input_type(self)
+
+    def parameters_function(self):
+        self.settings_button.setEnabled(True)
+        self.parameters_button.setEnabled(False)
+        self.procedure_class.change_input_type(self)
+
 
     def resume(self):
         self.abort_button.setText("Abort")

@@ -90,5 +90,6 @@
     "set_polar_angle": 0.0,
     "set_azimuthal_angle": 90.0,
     "set_rotationstation_const_angle": true,
-    "remanency_correction_time": 5.0
+    "remanency_correction_time": 5.0,
+    "layout_type": true
 }
