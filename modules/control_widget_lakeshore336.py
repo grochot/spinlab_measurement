@@ -14,70 +14,137 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.setMinimumWidth(550)
         self.setWindowTitle("Lakeshore 336 control")
 
-        self.setStyleSheet("QLabel {font-size: 10pt;} QSpinBox {font-size: 14pt;} QLineEdit {font-size: 14pt;} QPushButton {font-size: 14pt;} QDoubleSpinBox {font-size: 14pt;}")
+        self.setStyleSheet("QLabel {font-size: 10pt;} QSpinBox {font-size: 14pt;} QLineEdit {font-size: 14pt;} QPushButton {font-size: 14pt;} QDoubleSpinBox {font-size: 14pt;} QComboBox {font-size: 14pt;}")
 
         locale = QtCore.QLocale(QtCore.QLocale.C)
 
         # Temperature control
 
-        setTemp_l = QtWidgets.QLabel("Temp. setpoint [K]")
-        setTemp_l.setAlignment(QtCore.Qt.AlignCenter)
-        main_layout.addWidget(setTemp_l, 1, 1)  
+        set_temp_l = QtWidgets.QLabel("Temp. setpoint [K]")
+        set_temp_l.setAlignment(QtCore.Qt.AlignCenter)
+        main_layout.addWidget(set_temp_l, 1, 1)  
 
-        setTemp_layout = QtWidgets.QHBoxLayout()
-        self.setTemp_sb = QtWidgets.QDoubleSpinBox()
-        self.setTemp_sb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        self.setTemp_sb.setRange(0.0, 600.0)
-        self.setTemp_sb.setDecimals(3)
-        self.setTemp_sb.setSingleStep(0.001)
-        self.setTemp_sb.setLocale(locale)
-        self.setTemp_sb.valueChanged.connect(self.setpoint_changed)
-        setTemp_layout.addWidget(self.setTemp_sb)
+        self.set_temp_sb = QtWidgets.QDoubleSpinBox()
+        self.set_temp_sb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        self.set_temp_sb.setRange(0.0, 600.0)
+        self.set_temp_sb.setDecimals(3)
+        self.set_temp_sb.setSingleStep(0.001)
+        self.set_temp_sb.setLocale(locale)
+        self.set_temp_sb.valueChanged.connect(self.setpoint_changed)
+        main_layout.addWidget(self.set_temp_sb, 2, 1)
 
-        self.setTemp_btn = QtWidgets.QPushButton("\u2713")
-        self.setTemp_btn.setFixedWidth(40)
-        self.setTemp_btn.setFixedHeight(33)
-        self.setTemp_btn.clicked.connect(self.set_setpoint)
-        self.setTemp_btn.setStyleSheet("background-color: red;")
+        curr_temp_l = QtWidgets.QLabel("Temp. current [K]")
+        curr_temp_l.setAlignment(QtCore.Qt.AlignCenter)
+        main_layout.addWidget(curr_temp_l, 1, 2)
 
-        setTemp_layout.addWidget(self.setTemp_btn)
-
-        main_layout.addLayout(setTemp_layout, 2, 1)
-
-        currTemp_l = QtWidgets.QLabel("Temp. current [K]")
-        currTemp_l.setAlignment(QtCore.Qt.AlignCenter)
-        main_layout.addWidget(currTemp_l, 1, 2)
-
-        self.currTemp_le = QtWidgets.QLineEdit("0")
-        self.currTemp_le.setReadOnly(True)
-        self.currTemp_le.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        main_layout.addWidget(self.currTemp_le, 2, 2)
+        self.curr_temp_le = QtWidgets.QLineEdit("0")
+        self.curr_temp_le.setReadOnly(True)
+        self.curr_temp_le.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        main_layout.addWidget(self.curr_temp_le, 2, 2)
 
         # Time control
 
-        setDelay_l = QtWidgets.QLabel("Delay [min]")
-        setDelay_l.setAlignment(QtCore.Qt.AlignCenter)
-        main_layout.addWidget(setDelay_l, 3, 1)
+        set_delay_l = QtWidgets.QLabel("Delay [min]")
+        set_delay_l.setAlignment(QtCore.Qt.AlignCenter)
+        main_layout.addWidget(set_delay_l, 3, 1)
         
-        self.setDelay_sb = QtWidgets.QSpinBox()
-        self.setDelay_sb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        main_layout.addWidget(self.setDelay_sb, 4, 1)
+        self.set_delay_sb = QtWidgets.QSpinBox()
+        self.set_delay_sb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        main_layout.addWidget(self.set_delay_sb, 4, 1)
 
-        setTimeout_l = QtWidgets.QLabel("Timeout [min]")
-        setTimeout_l.setAlignment(QtCore.Qt.AlignCenter)
-        main_layout.addWidget(setTimeout_l, 3, 2)
+        set_timeout_l = QtWidgets.QLabel("Timeout [min]")
+        set_timeout_l.setAlignment(QtCore.Qt.AlignCenter)
+        main_layout.addWidget(set_timeout_l, 3, 2)
 
-        self.setTimeout_sb = QtWidgets.QSpinBox()
-        self.setTimeout_sb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        main_layout.addWidget(self.setTimeout_sb, 4, 2)
+        self.set_timeout_sb = QtWidgets.QSpinBox()
+        self.set_timeout_sb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        main_layout.addWidget(self.set_timeout_sb, 4, 2)
+
+        # Heater control
+
+        output_layout = QtWidgets.QVBoxLayout()
+        main_layout.addLayout(output_layout, 5, 1)
+
+        output1_layout = QtWidgets.QHBoxLayout()
+        output_layout.addLayout(output1_layout)
+
+        output1_l = QtWidgets.QLabel("OUT1")
+        output1_l.setAlignment(QtCore.Qt.AlignCenter)
+        output1_l.setFixedWidth(45)
+        output1_layout.addWidget(output1_l)
+
+        self.out1_cb = QtWidgets.QComboBox()
+        self.out1_cb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        self.out1_cb.addItem("OFF")
+        self.out1_cb.addItem("LOW")
+        self.out1_cb.addItem("MID")
+        self.out1_cb.addItem("HIGH")
+        self.out1_cb.setFixedWidth(120)
+        output1_layout.addWidget(self.out1_cb)
+
+        self.set_out1_btn = QtWidgets.QPushButton("\u2713")
+        self.set_out1_btn.setFixedWidth(40)
+        self.set_out1_btn.setFixedHeight(33)
+        self.set_out1_btn.clicked.connect(self.set_out1)
+        output1_layout.addWidget(self.set_out1_btn)
+
+        output2_layout = QtWidgets.QHBoxLayout()
+        output_layout.addLayout(output2_layout)
+
+        output2_l = QtWidgets.QLabel("OUT2")
+        output2_l.setAlignment(QtCore.Qt.AlignCenter)
+        output2_l.setFixedWidth(45)
+        output2_layout.addWidget(output2_l)
+
+        self.out2_cb = QtWidgets.QComboBox()
+        self.out2_cb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        self.out2_cb.addItem("OFF")
+        self.out2_cb.addItem("LOW")
+        self.out2_cb.addItem("MID")
+        self.out2_cb.addItem("HIGH")
+        self.out2_cb.setFixedWidth(120)
+        output2_layout.addWidget(self.out2_cb)
+
+        self.set_out2_btn = QtWidgets.QPushButton("\u2713")
+        self.set_out2_btn.setFixedWidth(40)
+        self.set_out2_btn.setFixedHeight(33)
+        self.set_out2_btn.clicked.connect(self.set_out2)
+        output2_layout.addWidget(self.set_out2_btn)
+
+        heater_layout = QtWidgets.QHBoxLayout()
+        main_layout.addLayout(heater_layout, 5, 2)
+
+        heater_indicator_layout = QtWidgets.QVBoxLayout()
+        heater_layout.addLayout(heater_indicator_layout)
+
+        self.out1_indicator = QtWidgets.QPushButton()
+        self.out1_indicator.setFixedWidth(40)
+        self.out1_indicator.setFixedHeight(33)
+        self.out1_indicator.setStyleSheet("border: 3px solid gray;")
+        self.out1_indicator.setEnabled(False)
+        heater_indicator_layout.addWidget(self.out1_indicator)
+
+        self.out2_indicator = QtWidgets.QPushButton()
+        self.out2_indicator.setFixedWidth(40)
+        self.out2_indicator.setFixedHeight(33)
+        self.out2_indicator.setEnabled(False)
+        self.out2_indicator.setStyleSheet("border: 3px solid gray;")
+        heater_indicator_layout.addWidget(self.out2_indicator)
+
+        all_off_btn = QtWidgets.QPushButton("ALL\nOFF")
+        all_off_btn.setFixedWidth(75)
+        heater_layout.addWidget(all_off_btn)
+        all_off_btn.clicked.connect(self.all_off)
 
         # Initialize attributes
+
         self.setpoint_value: float = 0.0
         self.ready_to_meas: bool = False
         self.delay_timer_started: bool = False
         self.timout_timer_started: bool = False
         self.timeout_flag: bool = False
-        self.setpoint_set: bool = False
+        self.out1_on: bool = False
+        self.out2_on: bool = False
         self.kelvin_readings: List[float] = []
         self.prev_temp_diff: float = 0.0
 
@@ -102,26 +169,24 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.update_temperature()
 
     def setpoint_changed(self):
-        value = float(self.setTemp_sb.value())
-        if value != self.setpoint_value:
-            self.setTemp_btn.setStyleSheet("background-color: red;")
-            self.setpoint_set = False
-        else:
-            self.setTemp_btn.setStyleSheet("background-color: green;")
-            
+        value = float(self.set_temp_sb.value())
+        self.setpoint_value = value
+        self.lakeshore.set_control_setpoint(1, value)
+   
 
     def update_temperature(self):
         self.kelvin_readings = self.lakeshore.get_all_kelvin_reading()
-        self.currTemp_le.setText(f"{self.kelvin_readings[0]}")
+        self.curr_temp_le.setText(f"{self.kelvin_readings[0]:.3f}")
 
-        self.setpoint_reached()
+        if abs(self.kelvin_readings[0] - self.setpoint_value) < 0.01 and not(self.delay_timer_started) and (self.out1_on or self.out2_on):
+            self.setpoint_reached()
 
-        if self.setpoint_set:
+        if self.out1_on or self.out2_on:
             temp_diff = abs(self.kelvin_readings[0] - self.setpoint_value)
             if abs(temp_diff - self.prev_temp_diff) < 1:
                 if not self.timout_timer_started:
                     print("Starting timeout timer")
-                    self.timout_timer.start(1000 * 60 * int(self.setTimeout_sb.value()))
+                    self.timout_timer.start(1000 * 60 * int(self.set_timeout_sb.value()))
                     self.timout_timer_started = True
             else:
                 print("Stopping timeout timer")
@@ -130,19 +195,9 @@ class LakeshoreControl(QtWidgets.QWidget):
 
             self.prev_temp_diff = temp_diff
 
-    def set_setpoint(self):
-        value = float(self.setTemp_sb.value())
-        self.setpoint_value = value
-        self.temp_diff = abs(self.kelvin_readings[0] - self.setpoint_value)
-        self.lakeshore.set_control_setpoint(1, self.setpoint_value)
-        self.setpoint_set = True
-        self.timout_timer.start(1000 * 60 * int(self.setTimeout_sb.value()))
-        self.setTemp_btn.setStyleSheet("background-color: green;")
-
     def setpoint_reached(self):
-        if abs(self.kelvin_readings[0] - self.setpoint_value) < 0.01 and not(self.delay_timer_started):
             self.delay_timer_started = True
-            delay = 60 * 1000 * int(self.setDelay_sb.value())
+            delay = 60 * 1000 * int(self.set_delay_sb.value())
             self.delay_timer.start(delay)
 
     def set_ready_to_meas(self):
@@ -152,7 +207,73 @@ class LakeshoreControl(QtWidgets.QWidget):
 
     def timeout_reached(self):
         print("Timeout reached!!!")
+        self.all_off()
         self.ready_to_meas = False
+
+    def all_off(self):
+        self.lakeshore.all_heaters_off()
+        self.any_heater_on = False
+        self.out1_indicator.setStyleSheet("border: 3px solid gray;")
+        self.out2_indicator.setStyleSheet("border: 3px solid gray;")
+        self.out1_cb.setCurrentIndex(0)
+        self.out2_cb.setCurrentIndex(0)
+        self.out1_on = False
+        self.out2_on = False
+        self.timout_timer.stop()
+
+    def set_out1(self):
+        val = self.out1_cb.currentText()
+        if val == "OFF":
+            self.lakeshore.set_heater_range(1, 0)
+            self.out1_indicator.setStyleSheet("border: 3px solid gray;")
+            self.out1_on = False
+
+            if not self.out2_on:
+                self.timout_timer.stop()
+
+            return
+        
+        self.out1_on = True
+        self.out1_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")
+
+        # start timera
+        if val == "LOW":
+            self.lakeshore.set_heater_range(1, 1)
+            return
+        if val == "MID":
+            self.lakeshore.set_heater_range(1, 2)
+            return
+        if val == "HIGH":
+            self.lakeshore.set_heater_range(1, 3)
+            return
+
+    def set_out2(self):
+        val = self.out2_cb.currentText()
+        if val == "OFF":
+            self.lakeshore.set_heater_range(2, 0)
+            self.out2_indicator.setStyleSheet("border: 3px solid gray;")
+            self.out2_on = False
+
+            if not self.out1_on:
+                self.timout_timer.stop()
+
+            return
+        
+        self.out2_on = True
+        self.out2_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")        
+        #start timera
+
+
+        if val == "LOW":
+            self.lakeshore.set_heater_range(2, 1)
+            return
+        if val == "MID":
+            self.lakeshore.set_heater_range(2, 2)
+            return
+        if val == "HIGH":
+            self.lakeshore.set_heater_range(2, 3)
+            return
+        
         
             
 if __name__ == "__main__":
