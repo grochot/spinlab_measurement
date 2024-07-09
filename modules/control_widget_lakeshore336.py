@@ -183,7 +183,7 @@ class LakeshoreControl(QtWidgets.QWidget):
         # Timers
 
         self.refresh_timer = QtCore.QTimer(self)
-        self.refresh_timer.timeout.connect(self.update_temperature)
+        self.refresh_timer.timeout.connect(self.refresh_tick)
         self.refresh_timer.start(1000)
 
         self.delay_timer = QtCore.QTimer(self)
@@ -195,7 +195,7 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.timout_timer.setSingleShot(True)
 
         self.update_gui()
-        self.update_temperature()
+        self.refresh_tick()
 
     def connect_to_lakeshore(self):
         while True:
@@ -237,7 +237,7 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.setpoint_value = value
         self.lakeshore.set_control_setpoint(1, value) 
 
-    def update_temperature(self):
+    def refresh_tick(self):
 
         self.update_gui()
 
