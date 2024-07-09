@@ -14,7 +14,7 @@ class NotConnectedDialog(QtWidgets.QDialog):
         self.buttonBox.addButton(retry_button, QtWidgets.QDialogButtonBox.ActionRole)
         self.buttonBox.addButton(cancel_button, QtWidgets.QDialogButtonBox.RejectRole)
 
-        retry_button.clicked.connect(self.on_retry)
+        retry_button.clicked.connect(self.accept)
         cancel_button.clicked.connect(self.reject)
 
         self.layout = QtWidgets.QVBoxLayout()
@@ -22,15 +22,6 @@ class NotConnectedDialog(QtWidgets.QDialog):
         self.layout.addWidget(message)
         self.layout.addWidget(self.buttonBox)
         self.setLayout(self.layout)
-
-    def on_retry(self):
-        # Handle the retry logic here
-        print("Retry button clicked")
-        self.accept()
-
-    def on_cancel(self):
-        print("Cancel button clicked")
-        self.reject()
 
 
 class LakeshoreControl(QtWidgets.QWidget):
@@ -184,24 +175,13 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.prev_temp_diff: float = 0.0
 
         # Connect to Lakeshore 336
-
-        try:
-            self.lakeshore = Model336(ip_address="192.168.0.12")
-            self.status_bar.showMessage("Connected!")
-        except:
-            not_connected_dialog = NotConnectedDialog()
-            not_connected_dialog.exec()
-            if not_connected_dialog.result() == QtWidgets.QDialog.Rejected:
-                sys.exit()
-            else:
-                # ToDo: Add retry logic here
-
+        self.connect_to_lakeshore()
 
         # Timers
 
-        refresh_timer = QtCore.QTimer(self)
-        refresh_timer.timeout.connect(self.update_temperature)
-        refresh_timer.start(1000)
+        self.refresh_timer = QtCore.QTimer(self)
+        self.refresh_timer.timeout.connect(self.update_temperature)
+        self.refresh_timer.start(1000)
 
         self.delay_timer = QtCore.QTimer(self)
         self.delay_timer.timeout.connect(self.set_ready_to_meas)
@@ -212,6 +192,20 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.timout_timer.setSingleShot(True)
 
         self.update_temperature()
+
+    def connect_to_lakeshore(self):
+        while True:
+            try:
+                self.lakeshore = Model336(ip_address="192.168.0.12")
+                self.status_bar.showMessage("Connected!")
+                break
+            except:
+                not_connected_dialog = NotConnectedDialog()
+                not_connected_dialog.exec()
+                if not_connected_dialog.result() == QtWidgets.QDialog.Rejected:
+                    sys.exit()
+                else:
+                    print("Retrying connection...")
 
     def setpoint_changed(self):
         value = float(self.set_temp_sb.value())
@@ -281,7 +275,6 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.out1_on = True
         self.out1_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")
 
-        # start timera
         if val == "LOW":
             self.lakeshore.set_heater_range(1, 1)
             return
@@ -306,8 +299,6 @@ class LakeshoreControl(QtWidgets.QWidget):
         
         self.out2_on = True
         self.out2_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")        
-        #start timera
-
 
         if val == "LOW":
             self.lakeshore.set_heater_range(2, 1)
@@ -319,8 +310,6 @@ class LakeshoreControl(QtWidgets.QWidget):
             self.lakeshore.set_heater_range(2, 3)
             return
         
-        
-            
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     w = LakeshoreControl()
