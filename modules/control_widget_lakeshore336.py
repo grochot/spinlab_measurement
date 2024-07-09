@@ -106,6 +106,7 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.out1_cb.addItem("MID")
         self.out1_cb.addItem("HIGH")
         self.out1_cb.setFixedWidth(120)
+        self.out1_cb.currentTextChanged.connect(self.out_changed)
         output1_layout.addWidget(self.out1_cb)
 
         self.set_out1_btn = QtWidgets.QPushButton("\u2713")
@@ -129,6 +130,7 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.out2_cb.addItem("MID")
         self.out2_cb.addItem("HIGH")
         self.out2_cb.setFixedWidth(120)
+        self.out2_cb.currentTextChanged.connect(self.out_changed)
         output2_layout.addWidget(self.out2_cb)
 
         self.set_out2_btn = QtWidgets.QPushButton("\u2713")
@@ -171,6 +173,7 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.timeout_flag: bool = False
         self.out1_on: bool = False
         self.out2_on: bool = False
+        self.delay_update: bool = False
         self.kelvin_readings: List[float] = []
         self.prev_temp_diff: float = 0.0
 
@@ -191,6 +194,7 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.timout_timer.timeout.connect(self.timeout_reached)
         self.timout_timer.setSingleShot(True)
 
+        self.update_gui()
         self.update_temperature()
 
     def connect_to_lakeshore(self):
@@ -207,13 +211,36 @@ class LakeshoreControl(QtWidgets.QWidget):
                 else:
                     print("Retrying connection...")
 
+    def out_changed(self):
+        self.delay_update = True
+
+    def update_gui(self):
+        if self.delay_update:
+            return
+
+        setpoint = self.lakeshore.get_control_setpoint(1)
+        self.set_temp_sb.setValue(setpoint)
+        self.setpoint_value = setpoint
+
+        out1_range = self.lakeshore.get_heater_range(1)
+        self.out1_cb.setCurrentIndex(out1_range)
+        if out1_range > 0:
+            self.out1_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")
+
+        out2_range = self.lakeshore.get_heater_range(2)
+        self.out2_cb.setCurrentIndex(out2_range)
+        if out2_range > 0:
+            self.out2_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")
+
     def setpoint_changed(self):
         value = float(self.set_temp_sb.value())
         self.setpoint_value = value
-        self.lakeshore.set_control_setpoint(1, value)
-   
+        self.lakeshore.set_control_setpoint(1, value) 
 
     def update_temperature(self):
+
+        self.update_gui()
+
         self.kelvin_readings = self.lakeshore.get_all_kelvin_reading()
         self.curr_temp_le.setText(f"{self.kelvin_readings[0]:.3f}")
 
@@ -261,6 +288,7 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.timout_timer.stop()
 
     def set_out1(self):
+        self.delay_update = False
         val = self.out1_cb.currentText()
         if val == "OFF":
             self.lakeshore.set_heater_range(1, 0)
@@ -286,6 +314,7 @@ class LakeshoreControl(QtWidgets.QWidget):
             return
 
     def set_out2(self):
+        self.delay_update = False
         val = self.out2_cb.currentText()
         if val == "OFF":
             self.lakeshore.set_heater_range(2, 0)
