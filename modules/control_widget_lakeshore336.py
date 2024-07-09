@@ -3,14 +3,46 @@ import sys
 from lakeshore import Model336
 from typing import List
 
+class NotConnectedDialog(QtWidgets.QDialog):
+    def __init__(self):
+        super().__init__()
+
+        retry_button = QtWidgets.QPushButton("Retry")
+        cancel_button = QtWidgets.QPushButton("Cancel")
+
+        self.buttonBox = QtWidgets.QDialogButtonBox()
+        self.buttonBox.addButton(retry_button, QtWidgets.QDialogButtonBox.ActionRole)
+        self.buttonBox.addButton(cancel_button, QtWidgets.QDialogButtonBox.RejectRole)
+
+        retry_button.clicked.connect(self.on_retry)
+        cancel_button.clicked.connect(self.reject)
+
+        self.layout = QtWidgets.QVBoxLayout()
+        message = QtWidgets.QLabel("Could not connect to Lakeshore 336. Please check the connection and try again.")
+        self.layout.addWidget(message)
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+    def on_retry(self):
+        # Handle the retry logic here
+        print("Retry button clicked")
+        self.accept()
+
+    def on_cancel(self):
+        print("Cancel button clicked")
+        self.reject()
+
+
 class LakeshoreControl(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
 
         # GUI setup
+        main_layout = QtWidgets.QVBoxLayout()
 
-        main_layout = QtWidgets.QGridLayout()
+        grid_layout = QtWidgets.QGridLayout()
         self.setLayout(main_layout)
+        main_layout.addLayout(grid_layout)
         self.setMinimumWidth(550)
         self.setWindowTitle("Lakeshore 336 control")
 
@@ -18,11 +50,14 @@ class LakeshoreControl(QtWidgets.QWidget):
 
         locale = QtCore.QLocale(QtCore.QLocale.C)
 
+        self.status_bar = QtWidgets.QStatusBar()
+        main_layout.addWidget(self.status_bar)
+
         # Temperature control
 
         set_temp_l = QtWidgets.QLabel("Temp. setpoint [K]")
         set_temp_l.setAlignment(QtCore.Qt.AlignCenter)
-        main_layout.addWidget(set_temp_l, 1, 1)  
+        grid_layout.addWidget(set_temp_l, 1, 1)  
 
         self.set_temp_sb = QtWidgets.QDoubleSpinBox()
         self.set_temp_sb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
@@ -31,39 +66,39 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.set_temp_sb.setSingleStep(0.001)
         self.set_temp_sb.setLocale(locale)
         self.set_temp_sb.valueChanged.connect(self.setpoint_changed)
-        main_layout.addWidget(self.set_temp_sb, 2, 1)
+        grid_layout.addWidget(self.set_temp_sb, 2, 1)
 
         curr_temp_l = QtWidgets.QLabel("Temp. current [K]")
         curr_temp_l.setAlignment(QtCore.Qt.AlignCenter)
-        main_layout.addWidget(curr_temp_l, 1, 2)
+        grid_layout.addWidget(curr_temp_l, 1, 2)
 
         self.curr_temp_le = QtWidgets.QLineEdit("0")
         self.curr_temp_le.setReadOnly(True)
         self.curr_temp_le.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        main_layout.addWidget(self.curr_temp_le, 2, 2)
+        grid_layout.addWidget(self.curr_temp_le, 2, 2)
 
         # Time control
 
         set_delay_l = QtWidgets.QLabel("Delay [min]")
         set_delay_l.setAlignment(QtCore.Qt.AlignCenter)
-        main_layout.addWidget(set_delay_l, 3, 1)
+        grid_layout.addWidget(set_delay_l, 3, 1)
         
         self.set_delay_sb = QtWidgets.QSpinBox()
         self.set_delay_sb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        main_layout.addWidget(self.set_delay_sb, 4, 1)
+        grid_layout.addWidget(self.set_delay_sb, 4, 1)
 
         set_timeout_l = QtWidgets.QLabel("Timeout [min]")
         set_timeout_l.setAlignment(QtCore.Qt.AlignCenter)
-        main_layout.addWidget(set_timeout_l, 3, 2)
+        grid_layout.addWidget(set_timeout_l, 3, 2)
 
         self.set_timeout_sb = QtWidgets.QSpinBox()
         self.set_timeout_sb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        main_layout.addWidget(self.set_timeout_sb, 4, 2)
+        grid_layout.addWidget(self.set_timeout_sb, 4, 2)
 
         # Heater control
 
         output_layout = QtWidgets.QVBoxLayout()
-        main_layout.addLayout(output_layout, 5, 1)
+        grid_layout.addLayout(output_layout, 5, 1)
 
         output1_layout = QtWidgets.QHBoxLayout()
         output_layout.addLayout(output1_layout)
@@ -112,7 +147,7 @@ class LakeshoreControl(QtWidgets.QWidget):
         output2_layout.addWidget(self.set_out2_btn)
 
         heater_layout = QtWidgets.QHBoxLayout()
-        main_layout.addLayout(heater_layout, 5, 2)
+        grid_layout.addLayout(heater_layout, 5, 2)
 
         heater_indicator_layout = QtWidgets.QVBoxLayout()
         heater_layout.addLayout(heater_indicator_layout)
@@ -150,7 +185,17 @@ class LakeshoreControl(QtWidgets.QWidget):
 
         # Connect to Lakeshore 336
 
-        self.lakeshore = Model336(ip_address="192.168.0.12")
+        try:
+            self.lakeshore = Model336(ip_address="192.168.0.12")
+            self.status_bar.showMessage("Connected!")
+        except:
+            not_connected_dialog = NotConnectedDialog()
+            not_connected_dialog.exec()
+            if not_connected_dialog.result() == QtWidgets.QDialog.Rejected:
+                sys.exit()
+            else:
+                # ToDo: Add retry logic here
+
 
         # Timers
 
