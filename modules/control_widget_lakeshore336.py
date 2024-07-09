@@ -275,6 +275,8 @@ class LakeshoreControl(QtWidgets.QWidget):
         print("Timeout reached!!!")
         self.all_off()
         self.ready_to_meas = False
+        self.timout_timer.stop()
+        self.timout_timer_started = False
 
     def all_off(self):
         self.lakeshore.all_heaters_off()

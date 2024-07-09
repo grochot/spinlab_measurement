@@ -16,3 +16,4 @@ windfreak
 scipy
 pyvisa
 pint
+lakeshore
