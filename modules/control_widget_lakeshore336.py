@@ -25,6 +25,9 @@ class NotConnectedDialog(QtWidgets.QDialog):
 
 
 class LakeshoreControl(QtWidgets.QWidget):
+
+    ready_to_meas_signal = QtCore.pyqtSignal()
+
     def __init__(self):
         super().__init__()
 
@@ -226,11 +229,31 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.out1_cb.setCurrentIndex(out1_range)
         if out1_range > 0:
             self.out1_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")
+            self.out1_on = True
+        else:
+            self.out1_on = False
+            self.out1_indicator.setStyleSheet("border: 3px solid gray;")
 
         out2_range = self.lakeshore.get_heater_range(2)
         self.out2_cb.setCurrentIndex(out2_range)
         if out2_range > 0:
             self.out2_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")
+            self.out2_on = True
+        else:
+            self.out2_indicator.setStyleSheet("border: 3px solid gray;")
+            self.out2_on = False
+
+        if self.out1_on or self.out2_on:
+            self.any_heater_on = True
+        else:
+            self.any_heater_on = False
+
+        if not self.any_heater_on:
+            self.timout_timer.stop()
+            self.timout_timer_started = False
+            self.delay_timer.stop()
+            self.delay_timer_started = False
+            self.ready_to_meas = False
 
     def setpoint_changed(self):
         value = float(self.set_temp_sb.value())
@@ -244,10 +267,10 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.kelvin_readings = self.lakeshore.get_all_kelvin_reading()
         self.curr_temp_le.setText(f"{self.kelvin_readings[0]:.3f}")
 
-        if abs(self.kelvin_readings[0] - self.setpoint_value) < 0.01 and not(self.delay_timer_started) and (self.out1_on or self.out2_on):
+        if abs(self.kelvin_readings[0] - self.setpoint_value) < 0.01 and not(self.delay_timer_started) and (self.out1_on or self.out2_on) and not(self.ready_to_meas):
             self.setpoint_reached()
 
-        if self.out1_on or self.out2_on:
+        if (self.out1_on or self.out2_on) and not(self.delay_timer_started) and not(self.ready_to_meas):
             temp_diff = abs(self.kelvin_readings[0] - self.setpoint_value)
             if abs(temp_diff - self.prev_temp_diff) < 1:
                 if not self.timout_timer_started:
@@ -262,12 +285,17 @@ class LakeshoreControl(QtWidgets.QWidget):
             self.prev_temp_diff = temp_diff
 
     def setpoint_reached(self):
+            print("Setpoint reached")
+            print("Starting delay timer")
+            self.timout_timer.stop()
+            self.timout_timer_started = False
             self.delay_timer_started = True
             delay = 60 * 1000 * int(self.set_delay_sb.value())
             self.delay_timer.start(delay)
 
     def set_ready_to_meas(self):
         print("Ready to measure")
+        self.ready_to_meas_signal.emit()
         self.ready_to_meas = True
         self.delay_timer_started = False
 
@@ -287,7 +315,13 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.out2_cb.setCurrentIndex(0)
         self.out1_on = False
         self.out2_on = False
+
+        self.delay_timer.stop()
+        self.delay_timer_started = False
         self.timout_timer.stop()
+        self.timout_timer_started = False
+
+        self.ready_to_meas = False
 
     def set_out1(self):
         self.delay_update = False
@@ -299,6 +333,7 @@ class LakeshoreControl(QtWidgets.QWidget):
 
             if not self.out2_on:
                 self.timout_timer.stop()
+                self.timout_timer_started = False
 
             return
         
@@ -325,6 +360,7 @@ class LakeshoreControl(QtWidgets.QWidget):
 
             if not self.out1_on:
                 self.timout_timer.stop()
+                self.timout_timer_started = False
 
             return
         
