@@ -6,6 +6,7 @@ from typing import List
 class NotConnectedDialog(QtWidgets.QDialog):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("Connection error")
 
         retry_button = QtWidgets.QPushButton("Retry")
         cancel_button = QtWidgets.QPushButton("Cancel")
@@ -24,7 +25,7 @@ class NotConnectedDialog(QtWidgets.QDialog):
         self.setLayout(self.layout)
 
 
-class LakeshoreControl(QtWidgets.QWidget):
+class Lakeshore336Control(QtWidgets.QWidget):
 
     ready_to_meas_signal = QtCore.pyqtSignal()
 
@@ -391,6 +392,6 @@ class LakeshoreControl(QtWidgets.QWidget):
         
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    w = LakeshoreControl()
+    w = Lakeshore336Control()
     w.show()
     app.exec()
