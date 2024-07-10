@@ -53,14 +53,23 @@ class LakeshoreControl(QtWidgets.QWidget):
         set_temp_l.setAlignment(QtCore.Qt.AlignCenter)
         grid_layout.addWidget(set_temp_l, 1, 1)  
 
+        set_temp_layout = QtWidgets.QHBoxLayout()
+        grid_layout.addLayout(set_temp_layout, 2, 1)
+
         self.set_temp_sb = QtWidgets.QDoubleSpinBox()
         self.set_temp_sb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         self.set_temp_sb.setRange(0.0, 600.0)
         self.set_temp_sb.setDecimals(3)
         self.set_temp_sb.setSingleStep(0.001)
         self.set_temp_sb.setLocale(locale)
-        self.set_temp_sb.valueChanged.connect(self.setpoint_changed)
-        grid_layout.addWidget(self.set_temp_sb, 2, 1)
+        self.set_temp_sb.valueChanged.connect(self.remote_change)
+        set_temp_layout.addWidget(self.set_temp_sb)
+
+        self.set_out1_btn = QtWidgets.QPushButton("\u2713")
+        self.set_out1_btn.setFixedWidth(40)
+        self.set_out1_btn.setFixedHeight(33)
+        self.set_out1_btn.clicked.connect(self.setpoint_changed)
+        set_temp_layout.addWidget(self.set_out1_btn)
 
         curr_temp_l = QtWidgets.QLabel("Temp. current [K]")
         curr_temp_l.setAlignment(QtCore.Qt.AlignCenter)
@@ -79,6 +88,7 @@ class LakeshoreControl(QtWidgets.QWidget):
         
         self.set_delay_sb = QtWidgets.QSpinBox()
         self.set_delay_sb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        self.set_delay_sb.setValue(10)
         grid_layout.addWidget(self.set_delay_sb, 4, 1)
 
         set_timeout_l = QtWidgets.QLabel("Timeout [min]")
@@ -87,6 +97,7 @@ class LakeshoreControl(QtWidgets.QWidget):
 
         self.set_timeout_sb = QtWidgets.QSpinBox()
         self.set_timeout_sb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        self.set_timeout_sb.setValue(30)
         grid_layout.addWidget(self.set_timeout_sb, 4, 2)
 
         # Heater control
@@ -109,7 +120,7 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.out1_cb.addItem("MID")
         self.out1_cb.addItem("HIGH")
         self.out1_cb.setFixedWidth(120)
-        self.out1_cb.currentTextChanged.connect(self.out_changed)
+        self.out1_cb.currentTextChanged.connect(self.remote_change)
         output1_layout.addWidget(self.out1_cb)
 
         self.set_out1_btn = QtWidgets.QPushButton("\u2713")
@@ -133,7 +144,7 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.out2_cb.addItem("MID")
         self.out2_cb.addItem("HIGH")
         self.out2_cb.setFixedWidth(120)
-        self.out2_cb.currentTextChanged.connect(self.out_changed)
+        self.out2_cb.currentTextChanged.connect(self.remote_change)
         output2_layout.addWidget(self.out2_cb)
 
         self.set_out2_btn = QtWidgets.QPushButton("\u2713")
@@ -176,7 +187,7 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.timeout_flag: bool = False
         self.out1_on: bool = False
         self.out2_on: bool = False
-        self.delay_update: bool = False
+        self.do_update: bool = True
         self.kelvin_readings: List[float] = []
         self.prev_temp_diff: float = 0.0
 
@@ -214,11 +225,11 @@ class LakeshoreControl(QtWidgets.QWidget):
                 else:
                     print("Retrying connection...")
 
-    def out_changed(self):
-        self.delay_update = True
+    def remote_change(self):
+        self.do_update = False
 
     def update_gui(self):
-        if self.delay_update:
+        if not self.do_update:
             return
 
         setpoint = self.lakeshore.get_control_setpoint(1)
@@ -256,9 +267,10 @@ class LakeshoreControl(QtWidgets.QWidget):
             self.ready_to_meas = False
 
     def setpoint_changed(self):
+        self.do_update = True
         value = float(self.set_temp_sb.value())
         self.setpoint_value = value
-        self.lakeshore.set_control_setpoint(1, value) 
+        self.lakeshore.set_control_setpoint(1, value)
 
     def refresh_tick(self):
 
@@ -324,7 +336,7 @@ class LakeshoreControl(QtWidgets.QWidget):
         self.ready_to_meas = False
 
     def set_out1(self):
-        self.delay_update = False
+        self.do_update = False
         val = self.out1_cb.currentText()
         if val == "OFF":
             self.lakeshore.set_heater_range(1, 0)
@@ -351,7 +363,7 @@ class LakeshoreControl(QtWidgets.QWidget):
             return
 
     def set_out2(self):
-        self.delay_update = False
+        self.do_update = False
         val = self.out2_cb.currentText()
         if val == "OFF":
             self.lakeshore.set_heater_range(2, 0)
