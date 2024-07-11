@@ -173,6 +173,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.abort_button.setEnabled(False)
         self.abort_button.clicked.connect(self.abort)
 
+        self.refresh_button = QtWidgets.QPushButton('Refresh', self)
+        self.refresh_button.clicked.connect(self.refresh)
+
         self.browser_widget = BrowserWidget(
             self.procedure_class,
             self.displays,
@@ -232,6 +235,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         queue_abort_hbox.setContentsMargins(-1, 6, -1, 6)
         queue_abort_hbox.addWidget(self.queue_button)
         queue_abort_hbox.addWidget(self.abort_button)
+        queue_abort_hbox.addWidget(self.refresh_button)
         queue_abort_hbox.addStretch()
 
         inputs_vbox.addWidget(self.inputs)
@@ -496,6 +500,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             raise Exception("ManagedWindow can not set parameters"
                             " without a InputsWidget")
         self.inputs.set_parameters(parameters)
+
+    def refresh(self):
+        raise NotImplementedError("Refresh method must be overwritten by the child class.")
 
     def _queue(self, checked):
         """ This method is a wrapper for the `self.queue` method to be connected

@@ -91,9 +91,7 @@ class SpinLabMeasurement(Procedure):
   
     address_pulsegenerator=ListParameter("Pulse generator address", default = parameters_from_file["address_pulsegenerator"] if parameters_from_file["address_pulsegenerator"] in finded_instruments else 'None', choices=finded_instruments, group_by = {"mode": lambda v: v=="CIMSMode", "set_pulsegenerator": lambda v: v != "none"})
 
-    
-    
-    
+    address_list = ["address_sourcemeter", "address_multimeter", "address_gaussmeter", "address_lockin", "address_switch", "address_analyzer", "address_generator", "address_daq", "address_lfgen", "address_pulsegenerator"]
    
     #MeasurementParameters
     sample_name = Parameter("Sample name", default = parameters_from_file["sample_name"], group_by={"mode": lambda v: v != "CalibrationFieldMode"}) 
@@ -325,6 +323,16 @@ class MainWindow(ManagedDockWindow):
         results = Results(procedure, filename)
         experiment = self.new_experiment(results)
         self.manager.queue(experiment)
+
+    def refresh(self):
+        find_instruments = FindInstrument()
+        choices = find_instruments.show_instrument()
+
+        for address in self.procedure_class.address_list:
+            exec("self.procedure_class."+address+"._choices = dict(zip(choices, choices))")
+            exec("self.inputs."+address+"._parameter._choices = dict(zip(choices, choices))")
+            exec("self.inputs."+address+".clear()")
+            exec("self.inputs."+address+".addItems(choices)")
         
     
 if __name__ == "__main__":
