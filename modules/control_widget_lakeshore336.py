@@ -37,6 +37,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.IP_ADDRESS = ip_address
 
         # Initialize attributes
+        self.lakeshore = None
         self.setpoint_value: float = 0.0
         self.ready_to_meas: bool = False
         self.out1_on: bool = False
@@ -214,7 +215,8 @@ class Lakeshore336Control(QtWidgets.QWidget):
             try:
                 self.lakeshore = Model336(ip_address=self.IP_ADDRESS)
                 break
-            except (TimeoutError, ConnectionAbortedError, ConnectionResetError):
+            except (TimeoutError, ConnectionAbortedError, ConnectionResetError) as e:
+                print(e)
                 self.not_connected_dialog.exec()
                 if self.not_connected_dialog.result() == QtWidgets.QDialog.Rejected:
                     sys.exit()
