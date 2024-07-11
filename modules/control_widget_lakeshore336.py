@@ -29,23 +29,41 @@ class Lakeshore336Control(QtWidgets.QWidget):
 
     ready_to_meas_signal = QtCore.pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, ip_address: str = "192.168.0.12"):
         super().__init__()
 
-        # GUI setup
-        main_layout = QtWidgets.QVBoxLayout()
+        # Constants
+        self.HEATER_STATES = ["OFF", "LOW", "MID", "HIGH"]
+        self.IP_ADDRESS = ip_address
 
-        grid_layout = QtWidgets.QGridLayout()
-        self.setLayout(main_layout)
-        main_layout.addLayout(grid_layout)
+        # Initialize attributes
+        self.setpoint_value: float = 0.0
+        self.ready_to_meas: bool = False
+        self.out1_on: bool = False
+        self.out2_on: bool = False
+        self.do_update: bool = True
+        self.kelvin_readings: List[float] = []
+        self.prev_temp_diff: float = 0.0
+
+        self.not_connected_dialog = NotConnectedDialog()
+
+        # Connect to Lakeshore 336
+        self.connect_to_lakeshore()
+
+        # GUI setup
         self.setMinimumWidth(550)
         self.setWindowTitle("Lakeshore 336 control")
 
         self.setStyleSheet("QLabel {font-size: 10pt;} QSpinBox {font-size: 14pt;} QLineEdit {font-size: 14pt;} QPushButton {font-size: 14pt;} QDoubleSpinBox {font-size: 14pt;} QComboBox {font-size: 14pt;}")
 
-        locale = QtCore.QLocale(QtCore.QLocale.C)
+        main_layout = QtWidgets.QVBoxLayout()
+        self.setLayout(main_layout)
+
+        grid_layout = QtWidgets.QGridLayout()
+        main_layout.addLayout(grid_layout)
 
         self.status_bar = QtWidgets.QStatusBar()
+        self.status_bar.showMessage("Connected!")
         main_layout.addWidget(self.status_bar)
 
         # Temperature control
@@ -62,7 +80,6 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.set_temp_sb.setRange(0.0, 600.0)
         self.set_temp_sb.setDecimals(3)
         self.set_temp_sb.setSingleStep(0.001)
-        self.set_temp_sb.setLocale(locale)
         self.set_temp_sb.valueChanged.connect(self.remote_change)
         set_temp_layout.addWidget(self.set_temp_sb)
 
@@ -116,10 +133,8 @@ class Lakeshore336Control(QtWidgets.QWidget):
 
         self.out1_cb = QtWidgets.QComboBox()
         self.out1_cb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        self.out1_cb.addItem("OFF")
-        self.out1_cb.addItem("LOW")
-        self.out1_cb.addItem("MID")
-        self.out1_cb.addItem("HIGH")
+        for state in self.HEATER_STATES:
+            self.out1_cb.addItem(state)
         self.out1_cb.setFixedWidth(120)
         self.out1_cb.currentTextChanged.connect(self.remote_change)
         output1_layout.addWidget(self.out1_cb)
@@ -140,10 +155,8 @@ class Lakeshore336Control(QtWidgets.QWidget):
 
         self.out2_cb = QtWidgets.QComboBox()
         self.out2_cb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        self.out2_cb.addItem("OFF")
-        self.out2_cb.addItem("LOW")
-        self.out2_cb.addItem("MID")
-        self.out2_cb.addItem("HIGH")
+        for state in self.HEATER_STATES:
+            self.out2_cb.addItem(state)
         self.out2_cb.setFixedWidth(120)
         self.out2_cb.currentTextChanged.connect(self.remote_change)
         output2_layout.addWidget(self.out2_cb)
@@ -177,23 +190,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
         all_off_btn = QtWidgets.QPushButton("ALL\nOFF")
         all_off_btn.setFixedWidth(75)
         heater_layout.addWidget(all_off_btn)
-        all_off_btn.clicked.connect(self.all_off)
-
-        # Initialize attributes
-
-        self.setpoint_value: float = 0.0
-        self.ready_to_meas: bool = False
-        self.delay_timer_started: bool = False
-        self.timout_timer_started: bool = False
-        self.timeout_flag: bool = False
-        self.out1_on: bool = False
-        self.out2_on: bool = False
-        self.do_update: bool = True
-        self.kelvin_readings: List[float] = []
-        self.prev_temp_diff: float = 0.0
-
-        # Connect to Lakeshore 336
-        self.connect_to_lakeshore()
+        all_off_btn.clicked.connect(self.all_off)        
 
         # Timers
 
@@ -205,9 +202,9 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.delay_timer.timeout.connect(self.set_ready_to_meas)
         self.delay_timer.setSingleShot(True)
 
-        self.timout_timer = QtCore.QTimer(self)
-        self.timout_timer.timeout.connect(self.timeout_reached)
-        self.timout_timer.setSingleShot(True)
+        self.timeout_timer = QtCore.QTimer(self)
+        self.timeout_timer.timeout.connect(self.timeout_reached)
+        self.timeout_timer.setSingleShot(True)
 
         self.update_gui()
         self.refresh_tick()
@@ -215,13 +212,11 @@ class Lakeshore336Control(QtWidgets.QWidget):
     def connect_to_lakeshore(self):
         while True:
             try:
-                self.lakeshore = Model336(ip_address="192.168.0.12")
-                self.status_bar.showMessage("Connected!")
+                self.lakeshore = Model336(ip_address=self.IP_ADDRESS)
                 break
-            except:
-                not_connected_dialog = NotConnectedDialog()
-                not_connected_dialog.exec()
-                if not_connected_dialog.result() == QtWidgets.QDialog.Rejected:
+            except (TimeoutError, ConnectionAbortedError, ConnectionResetError):
+                self.not_connected_dialog.exec()
+                if self.not_connected_dialog.result() == QtWidgets.QDialog.Rejected:
                     sys.exit()
                 else:
                     print("Retrying connection...")
@@ -233,11 +228,17 @@ class Lakeshore336Control(QtWidgets.QWidget):
         if not self.do_update:
             return
 
-        setpoint = self.lakeshore.get_control_setpoint(1)
+        try:
+            setpoint = self.lakeshore.get_control_setpoint(1)
+            out1_range = self.lakeshore.get_heater_range(1)
+            out2_range = self.lakeshore.get_heater_range(2)
+        except (ConnectionResetError, ConnectionAbortedError):
+            self.connect_to_lakeshore()
+
         self.set_temp_sb.setValue(setpoint)
         self.setpoint_value = setpoint
 
-        out1_range = self.lakeshore.get_heater_range(1)
+        
         self.out1_cb.setCurrentIndex(out1_range)
         if out1_range > 0:
             self.out1_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")
@@ -246,7 +247,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
             self.out1_on = False
             self.out1_indicator.setStyleSheet("border: 3px solid gray;")
 
-        out2_range = self.lakeshore.get_heater_range(2)
+        
         self.out2_cb.setCurrentIndex(out2_range)
         if out2_range > 0:
             self.out2_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")
@@ -255,54 +256,50 @@ class Lakeshore336Control(QtWidgets.QWidget):
             self.out2_indicator.setStyleSheet("border: 3px solid gray;")
             self.out2_on = False
 
-        if self.out1_on or self.out2_on:
-            self.any_heater_on = True
-        else:
-            self.any_heater_on = False
-
-        if not self.any_heater_on:
-            self.timout_timer.stop()
-            self.timout_timer_started = False
+        if not (self.out1_on or self.out2_on):
+            self.timeout_timer.stop()
             self.delay_timer.stop()
-            self.delay_timer_started = False
             self.ready_to_meas = False
 
     def setpoint_changed(self):
         self.do_update = True
         value = float(self.set_temp_sb.value())
         self.setpoint_value = value
-        self.lakeshore.set_control_setpoint(1, value)
+        try:
+            self.lakeshore.set_control_setpoint(1, value)
+        except (ConnectionResetError, ConnectionAbortedError):
+            self.connect_to_lakeshore()
 
     def refresh_tick(self):
 
         self.update_gui()
 
-        self.kelvin_readings = self.lakeshore.get_all_kelvin_reading()
+        try:
+            self.kelvin_readings = self.lakeshore.get_all_kelvin_reading()
+        except (ConnectionResetError, ConnectionAbortedError):
+            self.connect_to_lakeshore()
         self.curr_temp_le.setText(f"{self.kelvin_readings[0]:.3f}")
 
-        if abs(self.kelvin_readings[0] - self.setpoint_value) < 0.01 and not(self.delay_timer_started) and (self.out1_on or self.out2_on) and not(self.ready_to_meas):
+        if abs(self.kelvin_readings[0] - self.setpoint_value) < 0.01 and not(self.delay_timer.isActive()) and (self.out1_on or self.out2_on) and not(self.ready_to_meas):
             self.setpoint_reached()
 
-        if (self.out1_on or self.out2_on) and not(self.delay_timer_started) and not(self.ready_to_meas):
+        if (self.out1_on or self.out2_on) and not(self.delay_timer.isActive()) and not(self.ready_to_meas):
             temp_diff = abs(self.kelvin_readings[0] - self.setpoint_value)
             if abs(temp_diff - self.prev_temp_diff) < 1:
-                if not self.timout_timer_started:
+                if not self.timeout_timer.isActive():
                     print("Starting timeout timer")
-                    self.timout_timer.start(1000 * 60 * int(self.set_timeout_sb.value()))
-                    self.timout_timer_started = True
+                    self.timeout_timer.start(1000 * 60 * int(self.set_timeout_sb.value()))
             else:
                 print("Stopping timeout timer")
-                self.timout_timer.stop()
-                self.timout_timer_started = False
+                self.timeout_timer.stop()
 
             self.prev_temp_diff = temp_diff
 
     def setpoint_reached(self):
             print("Setpoint reached")
-            print("Starting delay timer")
-            self.timout_timer.stop()
-            self.timout_timer_started = False
-            self.delay_timer_started = True
+            print("\tStarting delay timer")
+            print("\tStopping timeout timer")
+            self.timeout_timer.stop()
             delay = 60 * 1000 * int(self.set_delay_sb.value())
             self.delay_timer.start(delay)
 
@@ -310,85 +307,76 @@ class Lakeshore336Control(QtWidgets.QWidget):
         print("Ready to measure")
         self.ready_to_meas_signal.emit()
         self.ready_to_meas = True
-        self.delay_timer_started = False
 
     def timeout_reached(self):
         print("Timeout reached!!!")
         self.all_off()
         self.ready_to_meas = False
-        self.timout_timer.stop()
-        self.timout_timer_started = False
 
     def all_off(self):
-        self.lakeshore.all_heaters_off()
-        self.any_heater_on = False
-        self.out1_indicator.setStyleSheet("border: 3px solid gray;")
-        self.out2_indicator.setStyleSheet("border: 3px solid gray;")
-        self.out1_cb.setCurrentIndex(0)
-        self.out2_cb.setCurrentIndex(0)
+        try:
+            self.lakeshore.all_heaters_off()
+        except (ConnectionResetError, ConnectionAbortedError):
+            self.connect_to_lakeshore()
         self.out1_on = False
         self.out2_on = False
 
         self.delay_timer.stop()
-        self.delay_timer_started = False
-        self.timout_timer.stop()
-        self.timout_timer_started = False
+        self.timeout_timer.stop()
 
         self.ready_to_meas = False
+
+        self.out1_indicator.setStyleSheet("border: 3px solid gray;")
+        self.out2_indicator.setStyleSheet("border: 3px solid gray;")
+        self.out1_cb.setCurrentIndex(0)
+        self.out2_cb.setCurrentIndex(0)
+
 
     def set_out1(self):
         self.do_update = False
         val = self.out1_cb.currentText()
         if val == "OFF":
-            self.lakeshore.set_heater_range(1, 0)
+            try:
+                self.lakeshore.set_heater_range(1, 0)
+            except (ConnectionResetError, ConnectionAbortedError):
+                self.connect_to_lakeshore()
             self.out1_indicator.setStyleSheet("border: 3px solid gray;")
             self.out1_on = False
 
             if not self.out2_on:
-                self.timout_timer.stop()
-                self.timout_timer_started = False
+                self.timeout_timer.stop()
 
             return
         
         self.out1_on = True
         self.out1_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")
-
-        if val == "LOW":
-            self.lakeshore.set_heater_range(1, 1)
-            return
-        if val == "MID":
-            self.lakeshore.set_heater_range(1, 2)
-            return
-        if val == "HIGH":
-            self.lakeshore.set_heater_range(1, 3)
-            return
+        try:
+            self.lakeshore.set_heater_range(1, self.HEATER_STATES.index(val))
+        except (ConnectionResetError, ConnectionAbortedError):
+            self.connect_to_lakeshore()
 
     def set_out2(self):
         self.do_update = False
         val = self.out2_cb.currentText()
         if val == "OFF":
-            self.lakeshore.set_heater_range(2, 0)
+            try:
+                self.lakeshore.set_heater_range(2, 0)
+            except (ConnectionResetError, ConnectionAbortedError):
+                self.connect_to_lakeshore()
             self.out2_indicator.setStyleSheet("border: 3px solid gray;")
             self.out2_on = False
 
             if not self.out1_on:
-                self.timout_timer.stop()
-                self.timout_timer_started = False
+                self.timeout_timer.stop()
 
             return
         
         self.out2_on = True
-        self.out2_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")        
-
-        if val == "LOW":
-            self.lakeshore.set_heater_range(2, 1)
-            return
-        if val == "MID":
-            self.lakeshore.set_heater_range(2, 2)
-            return
-        if val == "HIGH":
-            self.lakeshore.set_heater_range(2, 3)
-            return
+        self.out2_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")
+        try:       
+            self.lakeshore.set_heater_range(2, self.HEATER_STATES.index(val))
+        except (ConnectionResetError, ConnectionAbortedError):
+            self.connect_to_lakeshore()
         
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
