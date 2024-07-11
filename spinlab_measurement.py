@@ -329,11 +329,21 @@ class MainWindow(ManagedDockWindow):
         choices = find_instruments.show_instrument()
 
         for address in self.procedure_class.address_list:
+
+            old_choices = eval("self.procedure_class."+address+"._choices")
+            old_address_idx = eval("self.inputs."+address+".value()")
+            old_address = old_choices[old_address_idx]
+
             exec("self.procedure_class."+address+"._choices = dict(zip(choices, choices))")
-            exec("self.inputs."+address+"._parameter._choices = dict(zip(choices, choices))")
-            exec("self.inputs."+address+".clear()")
-            exec("self.inputs."+address+".addItems(choices)")
-        
+            input_widget = eval("self.inputs."+address)
+            input_widget._parameter._choices = dict(zip(choices, choices))
+            input_widget.clear()
+            input_widget.addItems(choices)
+
+            if old_address in choices:
+                input_widget.setValue(str(old_address))
+                continue
+            input_widget.setValue("None")
     
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
