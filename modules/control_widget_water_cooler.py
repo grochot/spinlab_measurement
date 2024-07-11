@@ -3,9 +3,11 @@ import sys
 import nidaqmx
 
 class WaterCoolerControl(QtWidgets.QWidget):
+    object_name = "water_cooler_control"
     def __init__(self):
         super(WaterCoolerControl, self).__init__()
         self.state = False
+        self.name = "Water Cooler Control"
 
         self.setWindowTitle("Water Cooler Control")
 
