@@ -6,10 +6,11 @@ import nidaqmx.task
 
 class WaterCoolerControl(QtWidgets.QWidget):
     object_name = "water_cooler_control"
-    def __init__(self):
+    def __init__(self, address_list):
         super(WaterCoolerControl, self).__init__()
         self.state = False
         self.name = "Water Cooler Control"
+        self.address_list = address_list
 
         self._setup_ui()
         self._layout()
