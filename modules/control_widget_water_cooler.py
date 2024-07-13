@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore, QtGui
+from pymeasure.display.Qt import QtCore, QtWidgets
 import sys
 import nidaqmx
 import nidaqmx.system
