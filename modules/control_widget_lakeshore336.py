@@ -28,6 +28,7 @@ class NotConnectedDialog(QtWidgets.QDialog):
 class Lakeshore336Control(QtWidgets.QWidget):
 
     ready_to_meas_signal = QtCore.pyqtSignal()
+    object_name = "lakeshore336_control"
 
     def __init__(self, ip_address: str = "192.168.0.12"):
         super().__init__()
@@ -45,6 +46,8 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.do_update: bool = True
         self.kelvin_readings: List[float] = []
         self.prev_temp_diff: float = 0.0
+        self.name = "Lakeshore 336"
+        
 
         self.not_connected_dialog = NotConnectedDialog()
 

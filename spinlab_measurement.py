@@ -27,6 +27,9 @@ from logic.save_parameters import SaveParameters
 from datetime import datetime
 from datetime import timedelta
 
+from modules.control_widget_water_cooler import WaterCoolerControl
+from modules.control_widget_lakeshore336 import Lakeshore336Control
+
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
 
@@ -91,9 +94,7 @@ class SpinLabMeasurement(Procedure):
   
     address_pulsegenerator=ListParameter("Pulse generator address", default = parameters_from_file["address_pulsegenerator"] if parameters_from_file["address_pulsegenerator"] in finded_instruments else 'None', choices=finded_instruments, group_by = {"mode": lambda v: v=="CIMSMode", "set_pulsegenerator": lambda v: v != "none"})
 
-    
-    
-    
+    address_list = ["address_sourcemeter", "address_multimeter", "address_gaussmeter", "address_lockin", "address_switch", "address_analyzer", "address_generator", "address_daq", "address_lfgen", "address_pulsegenerator"]
    
     #MeasurementParameters
     sample_name = Parameter("Sample name", default = parameters_from_file["sample_name"], group_by={"mode": lambda v: v != "CalibrationFieldMode"}) 
@@ -299,11 +300,12 @@ class MainWindow(ManagedDockWindow):
             sequencer=True,                                  
             sequencer_inputs=["sourcemeter_bias","lockin_frequency","field_constant","set_field_value_fmr", "set_field_value", "field_step","constant_field_value","field_bias_value", "generator_frequency", "generator_power", "lfgen_freq", "lfgen_amp", "rotation_polar_constant", "rotation_azimuth_constant", "set_polar_angle", "set_azimuthal_angle", "pulsegenerator_offset", "pulsegenerator_duration"],
             inputs_in_scrollarea=True,
-            
+            ext_devices = [WaterCoolerControl]
         )
        
         self.setWindowTitle('SpinLab Measurement System v.0.95')
         self.directory = self.procedure_class.path_file.ReadFile()
+
     
     def set_calibration_constant(self, value):
         self.inputs.field_constant.setValue(value)
@@ -325,7 +327,27 @@ class MainWindow(ManagedDockWindow):
         results = Results(procedure, filename)
         experiment = self.new_experiment(results)
         self.manager.queue(experiment)
-        
+
+    def refresh(self):
+        find_instruments = FindInstrument()
+        choices = find_instruments.show_instrument()
+
+        for address in self.procedure_class.address_list:
+
+            old_choices = eval("self.procedure_class."+address+"._choices")
+            old_address_idx = eval("self.inputs."+address+".value()")
+            old_address = old_choices[old_address_idx]
+
+            exec("self.procedure_class."+address+"._choices = dict(zip(choices, choices))")
+            input_widget = eval("self.inputs."+address)
+            input_widget._parameter._choices = dict(zip(choices, choices))
+            input_widget.clear()
+            input_widget.addItems(choices)
+
+            if old_address in choices:
+                input_widget.setValue(str(old_address))
+                continue
+            input_widget.setValue("None")
     
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

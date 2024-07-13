@@ -26,6 +26,7 @@ import logging
 
 from ..widgets.dock_widget import DockWidget
 from ..widgets.log_widget import LogWidget
+from ..widgets.devices_widget import DevicesWidget
 from .managed_window import ManagedWindowBase
 
 log = logging.getLogger(__name__)
@@ -82,10 +83,12 @@ class ManagedDockWindow(ManagedWindowBase):
         self.log_widget = LogWidget("Experiment Log", fmt=log_fmt, datefmt=log_datefmt)
         self.dock_widget = DockWidget("Dock Tab", procedure_class, self.x_axis_labels,
                                       self.y_axis_labels, linewidth=linewidth)
+        self.devices_widget = DevicesWidget("Devices Tab", kwargs["ext_devices"])
+        kwargs.pop("ext_devices")
 
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()
-        kwargs["widget_list"] = kwargs["widget_list"] + (self.dock_widget, self.log_widget)
+        kwargs["widget_list"] = kwargs["widget_list"] + (self.dock_widget, self.log_widget, self.devices_widget)
 
         super().__init__(procedure_class, **kwargs)
 
