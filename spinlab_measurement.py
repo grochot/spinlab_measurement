@@ -334,12 +334,12 @@ class MainWindow(ManagedDockWindow):
 
         for address in self.procedure_class.address_list:
 
-            old_choices = eval("self.procedure_class."+address+"._choices")
-            old_address_idx = eval("self.inputs."+address+".value()")
+            old_choices = getattr(self.procedure_class, address)._choices
+            old_address_idx = getattr(self.procedure_class, address)._value
             old_address = old_choices[old_address_idx]
 
-            exec("self.procedure_class."+address+"._choices = dict(zip(choices, choices))")
-            input_widget = eval("self.inputs."+address)
+            getattr(self.procedure_class, address)._choices = dict(zip(choices, choices))
+            input_widget = getattr(self.inputs, address)
             input_widget._parameter._choices = dict(zip(choices, choices))
             input_widget.clear()
             input_widget.addItems(choices)

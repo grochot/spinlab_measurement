@@ -6,11 +6,11 @@ import nidaqmx.task
 
 class WaterCoolerControl(QtWidgets.QWidget):
     object_name = "water_cooler_control"
-    def __init__(self, address_list):
+    def __init__(self):
         super(WaterCoolerControl, self).__init__()
         self.state = False
         self.name = "Water Cooler Control"
-        self.address_list = address_list
+        self.address_list = ["None"]
 
         self._setup_ui()
         self._layout()
@@ -101,6 +101,12 @@ class WaterCoolerControl(QtWidgets.QWidget):
         self.not_connected_widget.setLayout(self.not_connected_layout)
         self.not_connected_layout.addWidget(self.not_connected_l)
 
+    def get_available_addresses(self):
+        system = nidaqmx.system.System.local()
+        for device in system.devices:
+            for channel in device.ao_physical_chans:
+                self.address_list.append(channel.name)
+
     def updateGUI(self):
         self.address_cb.setCurrentText(self.address)
         if self.state:
@@ -182,14 +188,8 @@ class WaterCoolerControl(QtWidgets.QWidget):
         self.stack.setCurrentIndex(0)
 
 if __name__ == "__main__":
-    found_addreses = ["None"]
-    system = nidaqmx.system.System.local()
-    for device in system.devices:
-        for channel in device.ao_physical_chans:
-            found_addreses.append(channel.name)
-
     app = QtWidgets.QApplication(sys.argv)
-    widget = WaterCoolerControl(found_addreses)
+    widget = WaterCoolerControl()
     widget.show()
     sys.exit(app.exec_())
 

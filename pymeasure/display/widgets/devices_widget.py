@@ -16,8 +16,8 @@ class DevicesWidget(TabWidget, QtWidgets.QWidget):
 
     def _setup_ui(self):
         for device in self.devices:
-            button = QtWidgets.QPushButton(eval("self."+device.object_name+".name"))
-            button.clicked.connect(eval("self."+device.object_name+".show"))
+            button = QtWidgets.QPushButton(getattr(self, device.object_name).name)
+            button.clicked.connect(getattr(self, device.object_name).show)
             self.devices_widgets.append(button)
 
     def _layout(self):
