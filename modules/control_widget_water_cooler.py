@@ -12,12 +12,16 @@ class WaterCoolerControl(QtWidgets.QWidget):
         self.name = "Water Cooler Control"
         self.icon_path = "modules\icons\WaterCooler.ico"
         self.address_list = ["None"]
+        self.address = "None"
 
+        self.loadState()
         self._setup_ui()
         self._layout()
 
-        self.loadState()
+    def open_widget(self):
+        self.get_available_addresses()
         self.updateGUI()
+        self.show()
 
     def _setup_ui(self):
         
@@ -69,6 +73,7 @@ class WaterCoolerControl(QtWidgets.QWidget):
         self.stack.setCurrentIndex(1)
 
         self.not_connected_l = QtWidgets.QLabel("DEVICE NOT CONNECTED!")
+        self.not_connected_l.setAlignment(QtCore.Qt.AlignCenter)
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.finish_pulse)
@@ -104,13 +109,30 @@ class WaterCoolerControl(QtWidgets.QWidget):
         self.not_connected_layout.addWidget(self.not_connected_l)
 
     def get_available_addresses(self):
+        self.address_list = ["None"]
         system = nidaqmx.system.System.local()
         for device in system.devices:
             for channel in device.ao_physical_chans:
                 self.address_list.append(channel.name)
 
     def updateGUI(self):
+        self.address_cb.currentIndexChanged.disconnect()
+        self.address_cb.clear()
+
+        for address in self.address_list:
+            self.address_cb.addItem(address)
+
+        if self.address not in self.address_list:
+            self.address = "None"
+
+        if len(self.address_list) > 1:
+            self.not_connected_l.setText("Select device address")
+        else:
+            self.not_connected_l.setText("DEVICE NOT CONNECTED!")
+
+        self.display()
         self.address_cb.setCurrentText(self.address)
+        self.address_cb.currentIndexChanged.connect(self.on_address_change)
         if self.state:
             self.on_indicator.setStyleSheet("background: green; border: 3px solid gray;")
             self.off_indicator.setStyleSheet("border: 3px solid gray;")
@@ -132,12 +154,21 @@ class WaterCoolerControl(QtWidgets.QWidget):
             with open('water_cooler_params.txt', 'r') as f:
                 state = f.readline()
                 self.state = False if state == "False" else True
-                address = f.readline()
+                address = f.readline().strip()
                 self.address = address
         except FileNotFoundError as e:
             pass
 
     def pulse(self, state):
+        try:
+            with nidaqmx.Task() as task:
+                task.ao_channels.add_ao_voltage_chan(self.address, min_val=0, max_val=5)
+                task.write(3.3)
+        except Exception as e:
+            print(e)
+            self.connection_lost()
+            return
+
         self.state = state
         self.save_params()
         if state:
@@ -151,17 +182,17 @@ class WaterCoolerControl(QtWidgets.QWidget):
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
 
-        with nidaqmx.Task() as task:
-            task.ao_channels.add_ao_voltage_chan(self.address, min_val=0, max_val=5)
-            task.write(5)
-
-        self.timer.start(100)
+        self.timer.start(500)
 
     def finish_pulse(self):
         self.timer.stop()
-        with nidaqmx.Task() as task:
-            task.ao_channels.add_ao_voltage_chan(self.address, min_val=0, max_val=5)
-            task.write(0)
+        try:
+            with nidaqmx.Task() as task:
+                task.ao_channels.add_ao_voltage_chan(self.address, min_val=0, max_val=5)
+                task.write(0)
+        except Exception as e:
+            print(e)
+            self.connection_lost()
 
     def on_toggle(self):
         self.state = not self.state
@@ -186,8 +217,12 @@ class WaterCoolerControl(QtWidgets.QWidget):
         if self.address == "None":
             self.stack.setCurrentIndex(1)
             return
-        
         self.stack.setCurrentIndex(0)
+
+    def connection_lost(self):
+        self.address_list = ["None"]
+        self.updateGUI()
+        self.display()
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
