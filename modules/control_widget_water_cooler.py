@@ -1,4 +1,4 @@
-from pymeasure.display.Qt import QtCore, QtWidgets
+from pymeasure.display.Qt import QtCore, QtWidgets, QtGui
 import sys
 import nidaqmx
 import nidaqmx.system
@@ -10,6 +10,7 @@ class WaterCoolerControl(QtWidgets.QWidget):
         super(WaterCoolerControl, self).__init__()
         self.state = False
         self.name = "Water Cooler Control"
+        self.icon_path = "modules\icons\WaterCooler.ico"
         self.address_list = ["None"]
 
         self._setup_ui()
@@ -21,6 +22,7 @@ class WaterCoolerControl(QtWidgets.QWidget):
     def _setup_ui(self):
         
         self.setWindowTitle("Water Cooler Control")
+        self.setWindowIcon(QtGui.QIcon(self.icon_path))
 
         self.setStyleSheet("QLabel { font-size: 14pt; } QPushButton { font-size: 14pt; } QComboBox { font-size: 14pt; }")
 
