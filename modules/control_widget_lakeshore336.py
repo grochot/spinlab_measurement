@@ -1,4 +1,4 @@
-from pymeasure.display.Qt import QtWidgets, QtCore
+from pymeasure.display.Qt import QtWidgets, QtCore, QtGui
 import sys
 from lakeshore import Model336
 from typing import List
@@ -47,16 +47,18 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.kelvin_readings: List[float] = []
         self.prev_temp_diff: float = 0.0
         self.name = "Lakeshore 336"
+        self.icon_path = "modules\icons\Lakeshore336.ico"
         
 
         self.not_connected_dialog = NotConnectedDialog()
 
         # Connect to Lakeshore 336
-        self.connect_to_lakeshore()
+        # self.connect_to_lakeshore()
 
         # GUI setup
         self.setMinimumWidth(550)
         self.setWindowTitle("Lakeshore 336 control")
+        self.setWindowIcon(QtGui.QIcon(self.icon_path))
 
         self.setStyleSheet("QLabel {font-size: 10pt;} QSpinBox {font-size: 14pt;} QLineEdit {font-size: 14pt;} QPushButton {font-size: 14pt;} QDoubleSpinBox {font-size: 14pt;} QComboBox {font-size: 14pt;}")
 
@@ -198,21 +200,24 @@ class Lakeshore336Control(QtWidgets.QWidget):
 
         # Timers
 
-        self.refresh_timer = QtCore.QTimer(self)
-        self.refresh_timer.timeout.connect(self.refresh_tick)
-        self.refresh_timer.start(1000)
+        # self.refresh_timer = QtCore.QTimer(self)
+        # self.refresh_timer.timeout.connect(self.refresh_tick)
+        # self.refresh_timer.start(1000)
 
-        self.delay_timer = QtCore.QTimer(self)
-        self.delay_timer.timeout.connect(self.set_ready_to_meas)
-        self.delay_timer.setSingleShot(True)
+        # self.delay_timer = QtCore.QTimer(self)
+        # self.delay_timer.timeout.connect(self.set_ready_to_meas)
+        # self.delay_timer.setSingleShot(True)
 
-        self.timeout_timer = QtCore.QTimer(self)
-        self.timeout_timer.timeout.connect(self.timeout_reached)
-        self.timeout_timer.setSingleShot(True)
+        # self.timeout_timer = QtCore.QTimer(self)
+        # self.timeout_timer.timeout.connect(self.timeout_reached)
+        # self.timeout_timer.setSingleShot(True)
 
-        self.update_gui()
-        self.refresh_tick()
+        # self.update_gui()
+        # self.refresh_tick()
 
+    def open_widget(self):
+        self.show()
+    
     def connect_to_lakeshore(self):
         while True:
             try:

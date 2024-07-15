@@ -9,7 +9,7 @@ class WaterCoolerControl(QtWidgets.QWidget):
     def __init__(self):
         super(WaterCoolerControl, self).__init__()
         self.state = False
-        self.name = "Water Cooler Control"
+        self.name = "Water Cooler"
         self.icon_path = "modules\icons\WaterCooler.ico"
         self.address_list = ["None"]
         self.address = "None"

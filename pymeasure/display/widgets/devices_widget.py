@@ -103,8 +103,7 @@ class DeviceWidget(QtWidgets.QWidget):
         self.button = QtWidgets.QPushButton()
         self.button.setIcon(QtGui.QIcon(self.device.icon_path))
         self.button.setIconSize(QtCore.QSize(75, 75))
-        self.button.setFixedSize(100, 100)
-        self.button.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        self.button.setFixedSize(90, 90)
         self.button.clicked.connect(self.device.open_widget)
 
         self.label = QtWidgets.QLabel(self.device.name)
