@@ -363,13 +363,13 @@ class Lakeshore336Control(QtWidgets.QWidget):
 
         self.out1_indicator.setStyleSheet("border: 3px solid gray;")
         self.out2_indicator.setStyleSheet("border: 3px solid gray;")
-        self.out1_cb.setCurrentIndex(0)
-        self.out2_cb.setCurrentIndex(0)
+        self.out1_widget.heater_range_cb.setCurrentIndex(0)
+        self.out2_widget.heater_range_cb.setCurrentIndex(0)
 
 
     def set_out1(self):
         self.do_update = False
-        val = self.out1_cb.currentText()
+        val = self.out1_widget.heater_range_cb.currentText()
         if val == "OFF":
             try:
                 self.device.set_heater_range(1, 0)
@@ -396,7 +396,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
 
     def set_out2(self):
         self.do_update = False
-        val = self.out2_cb.currentText()
+        val = self.out2_widget.heater_range_cb.currentText()
         if val == "OFF":
             
             try:
