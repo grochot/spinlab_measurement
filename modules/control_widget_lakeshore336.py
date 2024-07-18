@@ -62,6 +62,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.do_update: bool = True
         self.kelvin_readings: List[float] = []
         self.prev_temp_diff: float = 0.0
+        self.HEATER_RANGES = ["OFF", "LOW", "MID", "HIGH"]
         
         self._setup_ui()
         self._layout()    
@@ -389,7 +390,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.out1_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")
         
         try:
-            self.device.set_heater_range(1, self.HEATER_STATES.index(val))
+            self.device.set_heater_range(1, self.HEATER_RANGES.index(val))
         except ConnectionResetError:
             self.lost_connection()
             return
@@ -417,7 +418,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.out2_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")
         
         try:
-            self.device.set_heater_range(2, self.HEATER_STATES.index(val))
+            self.device.set_heater_range(2, self.HEATER_RANGES.index(val))
         except ConnectionResetError:
             self.lost_connection()
             return
