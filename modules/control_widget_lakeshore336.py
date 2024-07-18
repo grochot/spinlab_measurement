@@ -2,6 +2,7 @@ from pymeasure.display.Qt import QtWidgets, QtCore, QtGui
 import sys
 from lakeshore import Model336
 from typing import List
+from logging import WARNING
         
 class HeaterControl(QtWidgets.QWidget):
     def __init__(self, label_text):
@@ -231,8 +232,9 @@ class Lakeshore336Control(QtWidgets.QWidget):
     def connect_to_lakeshore(self):
         try:
             self.device = Model336(ip_address=self.IP_ADDRESS)
+            self.device.logger.setLevel(WARNING)
         except TimeoutError as e:
-            print(e)
+            print("!LakeShore336:", e)
             return
         
         if self.device:
