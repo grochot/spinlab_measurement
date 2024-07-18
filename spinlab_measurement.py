@@ -334,13 +334,9 @@ class MainWindow(ManagedDockWindow):
         choices = find_instruments.show_instrument()
 
         for address in self.procedure_class.address_list:
-
-            old_choices = getattr(self.procedure_class, address)._choices
-            old_address_idx = getattr(self.procedure_class, address)._value
-            old_address = old_choices[old_address_idx]
-
             getattr(self.procedure_class, address)._choices = dict(zip(choices, choices))
             input_widget = getattr(self.inputs, address)
+            old_address = input_widget.value()
             input_widget._parameter._choices = dict(zip(choices, choices))
             input_widget.clear()
             input_widget.addItems(choices)
