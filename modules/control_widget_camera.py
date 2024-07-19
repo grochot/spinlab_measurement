@@ -1,8 +1,39 @@
+import os
+os.environ["OPENCV_LOG_LEVEL"]="SILENT"
 import sys
 import cv2
 import numpy as np
-from pymeasure.display.Qt import QtWidgets, QtCore, QtGui
+from pymeasure.display.Qt import QtWidgets, QtGui, QtCore
 from pyqtgraph.dockarea import DockArea, Dock
+
+class IpDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(IpDialog, self).__init__(parent)
+        self.setWindowTitle("IP Camera")
+
+        self.ip_edit = None
+
+        self._setup_ui()
+        self._layout()
+
+    def _setup_ui(self):
+        self.ip_edit = QtWidgets.QLineEdit("rtsp://")
+        ip_regex = QtCore.QRegExp(r"^rtsp://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
+        ip_validator = QtGui.QRegExpValidator(ip_regex, self.ip_edit)
+        self.ip_edit.setValidator(ip_validator)
+
+        self.buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+
+    def _layout(self):
+        self.main_layout = QtWidgets.QFormLayout()
+
+        self.main_layout.addRow("IP Address", self.ip_edit)
+        self.main_layout.addWidget(self.buttons)
+
+        self.setLayout(self.main_layout)
+        
 
 class CameraDock(Dock):
     signalDockClosed = QtCore.pyqtSignal(str, int)
@@ -26,9 +57,13 @@ class CameraWidget(QtWidgets.QWidget):
         self.prev_channel = "None"
         self.channel = "None"
         self.capture = None
+        self.data_stripe = True
+        self.sharpen_on = False
         self.capture_width = 640
         self.capture_height = 480
         self.button_width = 100
+        self.brightness = 50
+        self.frame_to_save = None
 
 
         self._setup_ui()
@@ -45,19 +80,72 @@ class CameraWidget(QtWidgets.QWidget):
         self.image_label = QtWidgets.QLabel()
         self.image_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
-        self.setMinimumSize(640+100, 480)
+        self.setMinimumSize(640+self.button_width, 480)
 
         self.channel_cb = QtWidgets.QComboBox()
         for channel in self.available_channels:
             self.channel_cb.addItem(str(channel))
         self.channel_cb.currentTextChanged.connect(self.on_channel_change)
         self.channel_cb.setFixedWidth(self.button_width)
-    
+
+        self.save_img_btn = QtWidgets.QPushButton("Save Image")
+        self.save_img_btn.clicked.connect(self.save_image)
+        self.save_img_btn.setFixedWidth(self.button_width)  
+
+        self.brightness_sld = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.brightness_sld.setRange(0, 100)
+        self.brightness_sld.setValue(50)
+        self.brightness_sld.setFixedWidth(self.button_width)
+        self.brightness_sld.valueChanged.connect(self.update_brightness)
+
+        self.data_stripe_checkbox = QtWidgets.QCheckBox("Show data")
+        self.data_stripe_checkbox.setChecked(True)
+        self.data_stripe_checkbox.stateChanged.connect(self.toggle_data_stripe)
+
+        self.sharpen_checkbox = QtWidgets.QCheckBox("Sharpen video")
+        self.sharpen_checkbox.setChecked(False)
+        self.sharpen_checkbox.stateChanged.connect(self.toggle_gauss_blur)
+
+        self.brightness_text = QtWidgets.QLabel("Brightness")
+        self.brightness_text.setFixedWidth(self.button_width)
+        self.brightness_text.setFixedHeight(20)
+
+        self.channel_text = QtWidgets.QLabel("Channel:")
+        self.channel_text.setFixedWidth(self.button_width)
+        self.channel_text.setFixedHeight(20)
+
     def _layout(self):
         self.main_layout = QtWidgets.QHBoxLayout()
-        self.main_layout.addWidget(self.channel_cb)
+
+        self.button_layout = QtWidgets.QVBoxLayout()
+        self.button_layout.addWidget(self.channel_text)
+        self.button_layout.addWidget(self.channel_cb)
+        self.button_layout.addWidget(self.save_img_btn)
+        self.button_layout.addWidget(self.brightness_text)
+        self.button_layout.addWidget(self.brightness_sld)
+        self.button_layout.addWidget(self.sharpen_checkbox)
+        self.button_layout.addWidget(self.data_stripe_checkbox)
+        self.button_layout.addStretch()
+   
+
+        self.main_layout.addLayout(self.button_layout)
         self.main_layout.addWidget(self.image_label)
         self.setLayout(self.main_layout)
+
+    def update_brightness(self, value):
+        self.brightness = value
+
+    def save_image(self):
+        if self.channel is None or not self.capture:
+            return
+
+
+        
+        path_to_save = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Image', 'image.jpg', 'Image Files (*.png *.jpg *.bmp)')[0]
+        if path_to_save != "":
+            cv2.imwrite(str(path_to_save), self.frame_to_save)
+        else:
+            print("Failed to capture frame")
     
     def set_available_channels(self):
         self.channel_cb.blockSignals(True)
@@ -78,7 +166,6 @@ class CameraWidget(QtWidgets.QWidget):
         self.channel_cb.addItem(channel)
         self.channel_cb.blockSignals(False)
 
-
     def on_channel_change(self, text):
         if self.capture:
             self.capture.release()
@@ -87,12 +174,23 @@ class CameraWidget(QtWidgets.QWidget):
         self.prev_channel = self.channel
         self.channel = text
 
+
         if self.channel != "None":
-            self.capture = cv2.VideoCapture(int(self.channel), cv2.CAP_DSHOW)
+            if self.channel[:4] == "rtsp":
+                self.capture = cv2.VideoCapture(self.channel)
+            else:
+                self.capture = cv2.VideoCapture(int(self.channel), cv2.CAP_DSHOW)
+
+
             if not self.capture.isOpened():
                 print(f"Failed to open channel {self.channel}")
                 self.capture = None
 
+    def toggle_data_stripe(self, state):
+        self.data_stripe = state
+    
+    def toggle_gauss_blur(self, state):
+        self.sharpen_on = state
 
     def update_frame(self):
         if self.channel is None or not self.capture:
@@ -101,23 +199,51 @@ class CameraWidget(QtWidgets.QWidget):
 
         ret, frame = self.capture.read()
         if ret:
+            brightness = self.brightness - 50
+            frame = cv2.convertScaleAbs(frame, beta=brightness)
+
+            if self.data_stripe:
+                timestamp = QtCore.QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
+                cv2.putText(frame, timestamp, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
+
+            if self.sharpen_on:
+                frame = self.sharpen_frame(frame)
+
+            frame_1080p = cv2.resize(frame, (1920, 1080))
             frame = cv2.resize(frame, (self.capture_width, self.capture_height))
+
+            self.frame_to_save = frame_1080p
+
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             h, w, ch = frame.shape
             bytes_per_line = ch * w
             converted_Qt_image = QtGui.QImage(frame.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
             self.image_label.setPixmap(QtGui.QPixmap.fromImage(converted_Qt_image))
+
         else:
             self.image_label.setText("Failed to capture frame")
 
+
+    def sharpen_frame(self, frame):
+        kernel = np.array([[0, -1, 0],
+                           [-1, 5, -1],
+                           [0, -1, 0]])
+        sharpened = cv2.filter2D(frame, -1, kernel)
+        return sharpened
+
     def resizeEvent(self, event):
         QtWidgets.QWidget.resizeEvent(self, event)
-        self.change_size(event.size().width())
+        self.change_size(self.image_label.width(), self.image_label.height())
 
 
-    def change_size(self, value):
-        self.capture_width = value - (self.button_width + 50)
-        self.capture_height = int(self.capture_width * 9 / 16) 
+    def change_size(self, width, height):
+        new_width = width
+        new_height = int(new_width * 9 / 16)
+        if new_height > height:
+            new_height = height
+            new_width = int(new_height * 16 / 9)
+        self.capture_width = new_width
+        self.capture_height = new_height
 
     def on_close(self):
         if self.capture:
@@ -135,39 +261,14 @@ class CameraControl(QtWidgets.QWidget):
 
         self.working_channels = ["None"]
         self.available_channels = []
+        self.added_ip_channels = []
+
         self.docks = []
         self.widget_count = 0
 
         self.get_working_channels()
         self._setup_ui()
         self._layout()
-        
-    def open_widget(self):
-        self.show()
-
-    def refresh_channels(self):
-        self.get_working_channels()
-        for dock in self.docks:
-            dock.camera_control.available_channels = self.available_channels
-            dock.camera_control.set_available_channels()
-
-    def get_working_channels(self):
-        dev_port = 0
-        non_working_channels = ["None"]
-        self.working_channels = ["None"]
-
-        while len(non_working_channels) < 2:
-            camera = cv2.VideoCapture(dev_port, cv2.CAP_DSHOW)
-            if not camera.isOpened():
-                non_working_channels.append(dev_port)
-            else:
-                is_reading, img = camera.read()
-                if is_reading:
-                    self.working_channels.append(str(dev_port))
-                camera.release()
-            dev_port += 1
- 
-        self.available_channels = self.working_channels.copy()
 
     def _setup_ui(self):
         self.setWindowTitle(self.name)
@@ -179,6 +280,9 @@ class CameraControl(QtWidgets.QWidget):
         self.refresh_btn = QtWidgets.QPushButton('Refresh')
         self.refresh_btn.clicked.connect(self.refresh_channels)
 
+        self.add_ip_cam_btn = QtWidgets.QPushButton('Add IP Camera')
+        self.add_ip_cam_btn.clicked.connect(self.open_ip_dialog)
+
         self.dock_area=DockArea()
         self.add_dock()
 
@@ -188,10 +292,48 @@ class CameraControl(QtWidgets.QWidget):
         self.btn_layout = QtWidgets.QHBoxLayout()
         self.btn_layout.addWidget(self.add_dock_btn)
         self.btn_layout.addWidget(self.refresh_btn)
+        self.btn_layout.addWidget(self.add_ip_cam_btn)
 
         self.main_layout.addLayout(self.btn_layout)
         self.main_layout.addWidget(self.dock_area)
         self.setLayout(self.main_layout)
+    
+    def open_widget(self):
+        self.show()
+    
+    def refresh_channels(self):
+        self.get_working_channels()
+        for dock in self.docks:
+            dock.camera_control.available_channels = self.available_channels
+            dock.camera_control.set_available_channels()
+
+    def get_working_channels(self):
+        dev_port = 0
+        non_working_channels = ["None"]
+        self.working_channels = ["None"]
+
+
+        while len(non_working_channels) < 5:
+            camera = cv2.VideoCapture(dev_port, cv2.CAP_DSHOW)
+            if not camera.isOpened():
+                non_working_channels.append(dev_port)
+            else:
+                is_reading, img = camera.read()
+                if is_reading:
+                    self.working_channels.append(str(dev_port))
+            camera.release()
+            dev_port += 1
+ 
+        self.available_channels = self.working_channels.copy()
+        self.available_channels.extend(self.added_ip_channels)
+
+    def open_ip_dialog(self):
+        ip_dialog = IpDialog()
+        if ip_dialog.exec_():
+            ip = ip_dialog.ip_edit.text()
+            self.added_ip_channels.append(ip)
+            self.release_channel(ip, -1)
+
         
     def add_dock(self):
         dock = CameraDock('Dock', self.widget_count, self.available_channels, closable=True, autoOrientation=False)
@@ -229,6 +371,8 @@ class CameraControl(QtWidgets.QWidget):
         self.release_channel(channel, id)
 
 if __name__ == "__main__":
+
+    # cv2.utils.logging.setLogLevel(cv2.utils.logging.LOG_LEVEL_SILENT)
     app = QtWidgets.QApplication(sys.argv)
     camera_control = CameraControl()
     camera_control.show()
