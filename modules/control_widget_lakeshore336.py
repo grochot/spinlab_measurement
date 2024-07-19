@@ -24,7 +24,7 @@ class HeaterControl(QtWidgets.QWidget):
         
         self.heater_range_cb = QtWidgets.QComboBox()
         self.heater_range_cb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        self.setFixedWidth(200)
+        self.setFixedWidth(300)
         for state in self.HEATER_RANGES:
             self.heater_range_cb.addItem(state)
         
@@ -40,6 +40,55 @@ class HeaterControl(QtWidgets.QWidget):
         layout.addWidget(self.label)
         layout.addWidget(self.heater_range_cb)
         layout.addWidget(self.set_btn)
+
+class Indicator(QtWidgets.QPushButton):
+    def __init__(self, width=40, height=33):
+        super().__init__()
+        self.setFixedWidth(width)
+        self.setFixedHeight(height)
+        self.setStyleSheet(f"border: 3px solid gray")
+        self.setEnabled(False)
+        self.state = 0
+        
+    def set_color(self, color):
+        self.setStyleSheet(f"border: 3px solid gray; background-color: {color};")
+        
+    def set_on(self):
+        self.set_color("green")
+        self.state = 1
+        
+    def set_off(self):
+        self.setStyleSheet("border: 3px solid gray;")
+        self.state = 0
+        
+    def set_warning(self):
+        self.set_color("yellow")
+        self.state = 1
+        
+    def set_error(self):
+        self.set_color("red")
+        self.state = 1
+        
+    def toggle(self, color):
+        if self.state == 0:
+            self.setStyleSheet(f"border: 3px solid gray; background-color: {color};")
+            self.state = 1
+        else:
+            self.set_off()
+            
+    def start_blinking(self, color):
+        self.setStyleSheet(f"border: 3px solid gray; background-color: {color};")
+        self.state = 1
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(lambda: self.toggle(color))
+        self.timer.start(500)
+        
+    def stop_blinking(self):
+        try:
+            self.timer.stop()
+        except AttributeError:
+            pass
+        self.set_off()
 
 class Lakeshore336Control(QtWidgets.QWidget):
 
@@ -95,7 +144,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.control_widget = QtWidgets.QWidget()
         self.stack.addWidget(self.control_widget)
         # Temperature control
-        self.set_temp_l = QtWidgets.QLabel("Temp. setpoint [K]")
+        self.set_temp_l = QtWidgets.QLabel("Setpoint [K]")
         self.set_temp_l.setAlignment(QtCore.Qt.AlignCenter)
         
         self.set_temp_sb = QtWidgets.QDoubleSpinBox()
@@ -110,12 +159,14 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.set_out1_btn.setFixedHeight(33)
         self.set_out1_btn.clicked.connect(self.setpoint_changed)
         
-        self.curr_temp_l = QtWidgets.QLabel("Temp. current [K]")
+        self.curr_temp_l = QtWidgets.QLabel("Temperature [K]")
         self.curr_temp_l.setAlignment(QtCore.Qt.AlignCenter)
         
         self.curr_temp_le = QtWidgets.QLineEdit("0")
         self.curr_temp_le.setReadOnly(True)
         self.curr_temp_le.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        
+        self.curr_temp_indicator = Indicator()
         
         # Time control
         self.set_delay_l = QtWidgets.QLabel("Delay [min]")
@@ -124,6 +175,8 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.set_delay_sb = QtWidgets.QSpinBox()
         self.set_delay_sb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         self.set_delay_sb.setValue(10)
+        
+        self.delay_indicator = Indicator()
 
         self.set_timeout_l = QtWidgets.QLabel("Timeout [min]")
         self.set_timeout_l.setAlignment(QtCore.Qt.AlignCenter)
@@ -131,6 +184,8 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.set_timeout_sb = QtWidgets.QSpinBox()
         self.set_timeout_sb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         self.set_timeout_sb.setValue(30)
+        
+        self.timeout_indicator = Indicator()
         
         # Heater control
         self.out1_widget = HeaterControl("OUT1")
@@ -141,17 +196,9 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.out2_widget.heater_range_cb.currentTextChanged.connect(self.remote_change)
         self.out2_widget.set_btn.clicked.connect(self.set_out2)
 
-        self.out1_indicator = QtWidgets.QPushButton()
-        self.out1_indicator.setFixedWidth(40)
-        self.out1_indicator.setFixedHeight(33)
-        self.out1_indicator.setStyleSheet("border: 3px solid gray;")
-        self.out1_indicator.setEnabled(False)
+        self.out1_indicator = Indicator()
 
-        self.out2_indicator = QtWidgets.QPushButton()
-        self.out2_indicator.setFixedWidth(40)
-        self.out2_indicator.setFixedHeight(33)
-        self.out2_indicator.setEnabled(False)
-        self.out2_indicator.setStyleSheet("border: 3px solid gray;")
+        self.out2_indicator = Indicator()
 
         self.all_off_btn = QtWidgets.QPushButton("ALL\nOFF")
         self.all_off_btn.setFixedWidth(75)
@@ -177,6 +224,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.setLayout(main_layout)
         
         main_layout.addWidget(self.stack)
+        main_layout.addStretch()
         
         control_layout = QtWidgets.QVBoxLayout()
         self.control_widget.setLayout(control_layout)
@@ -192,13 +240,22 @@ class Lakeshore336Control(QtWidgets.QWidget):
         set_temp_layout.addWidget(self.set_out1_btn)
         
         grid_layout.addWidget(self.curr_temp_l, 0, 1)
-        grid_layout.addWidget(self.curr_temp_le, 1, 1)
+        curr_temp_layout = QtWidgets.QHBoxLayout()
+        grid_layout.addLayout(curr_temp_layout, 1, 1)
+        curr_temp_layout.addWidget(self.curr_temp_le)
+        curr_temp_layout.addWidget(self.curr_temp_indicator)
         
         grid_layout.addWidget(self.set_delay_l, 2, 0)
-        grid_layout.addWidget(self.set_delay_sb, 3, 0)
+        delay_layout = QtWidgets.QHBoxLayout()
+        grid_layout.addLayout(delay_layout, 3, 0)
+        delay_layout.addWidget(self.set_delay_sb)
+        delay_layout.addWidget(self.delay_indicator)
         
         grid_layout.addWidget(self.set_timeout_l, 2, 1)
-        grid_layout.addWidget(self.set_timeout_sb, 3, 1)
+        timeout_layout = QtWidgets.QHBoxLayout()
+        grid_layout.addLayout(timeout_layout, 3, 1)   
+        timeout_layout.addWidget(self.set_timeout_sb)
+        timeout_layout.addWidget(self.timeout_indicator)
         
         output_layout = QtWidgets.QVBoxLayout()
         grid_layout.addLayout(output_layout, 4, 0)
@@ -246,9 +303,10 @@ class Lakeshore336Control(QtWidgets.QWidget):
     def lost_connection(self):
         self.device = None
         self.ready_to_meas = False
+        self.curr_temp_indicator.set_off()
         self.refresh_timer.stop()
-        self.timeout_timer.stop()
-        self.delay_timer.stop()
+        self.stop_timeout_timer()
+        self.stop_delay_timer()
         self.stack.setCurrentWidget(self.not_conn_widget)       
 
     def remote_change(self):
@@ -273,36 +331,42 @@ class Lakeshore336Control(QtWidgets.QWidget):
         
         self.out1_widget.heater_range_cb.setCurrentIndex(out1_range)
         if out1_range > 0:
-            self.out1_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")
+            self.out1_indicator.set_on()
             self.out1_on = True
         else:
             self.out1_on = False
-            self.out1_indicator.setStyleSheet("border: 3px solid gray;")
+            self.out1_indicator.set_off()
 
         
         self.out2_widget.heater_range_cb.setCurrentIndex(out2_range)
         if out2_range > 0:
-            self.out2_indicator.setStyleSheet("border: 3px solid gray; background-color: green;")
+            self.out2_indicator.set_on()
             self.out2_on = True
         else:
-            self.out2_indicator.setStyleSheet("border: 3px solid gray;")
+            self.out2_indicator.set_off()
             self.out2_on = False
 
         if not (self.out1_on or self.out2_on):
             self.timeout_timer.stop()
-            self.delay_timer.stop()
+            self.stop_delay_timer()
             self.ready_to_meas = False
 
     def setpoint_changed(self):
         self.do_update = True
         value = float(self.set_temp_sb.value())
         self.setpoint_value = value
-        
+
         try:
+            curr_temp = self.device.get_all_kelvin_reading()[0]                
             self.device.set_control_setpoint(1, value)
         except ConnectionResetError:
             self.lost_connection()
             return
+        
+        # if abs(curr_temp - value) > 0.01:
+        #     self.ready_to_meas = False
+        #     self.curr_temp_indicator.set_off()
+        #     self.stop_delay_timer()
 
     def refresh_tick(self):
 
@@ -316,18 +380,25 @@ class Lakeshore336Control(QtWidgets.QWidget):
 
         self.curr_temp_le.setText(f"{self.kelvin_readings[0]:.3f}")
 
-        if abs(self.kelvin_readings[0] - self.setpoint_value) < 0.01 and not(self.delay_timer.isActive()) and (self.out1_on or self.out2_on) and not(self.ready_to_meas):
-            self.setpoint_reached()
+        if (self.out1_on or self.out2_on):
+            if abs(self.kelvin_readings[0] - self.setpoint_value) < 0.01:
+                if not self.ready_to_meas and not(self.delay_timer.isActive()):
+                    self.setpoint_reached()
+            else:
+                self.ready_to_meas = False
+                self.curr_temp_indicator.set_off()
+                self.stop_delay_timer()
+                
 
         if (self.out1_on or self.out2_on) and not(self.delay_timer.isActive()) and not(self.ready_to_meas):
             temp_diff = abs(self.kelvin_readings[0] - self.setpoint_value)
             if abs(temp_diff - self.prev_temp_diff) < 1:
                 if not self.timeout_timer.isActive():
                     print("Starting timeout timer")
-                    self.timeout_timer.start(1000 * 60 * int(self.set_timeout_sb.value()))
+                    self.start_timeout_timer()
             else:
                 print("Stopping timeout timer")
-                self.timeout_timer.stop()
+                self.stop_timeout_timer()
 
             self.prev_temp_diff = temp_diff
 
@@ -335,14 +406,18 @@ class Lakeshore336Control(QtWidgets.QWidget):
             print("Setpoint reached")
             print("\tStarting delay timer")
             print("\tStopping timeout timer")
-            self.timeout_timer.stop()
-            delay = 60 * 1000 * int(self.set_delay_sb.value())
-            self.delay_timer.start(delay)
+            self.stop_timeout_timer()
+            self.start_delay_timer()
+            
+            self.curr_temp_indicator.set_warning()
 
     def set_ready_to_meas(self):
         print("Ready to measure")
         self.ready_to_meas_signal.emit()
         self.ready_to_meas = True
+        
+        self.stop_delay_timer()
+        self.curr_temp_indicator.set_on()
 
     def timeout_reached(self):
         print("Timeout reached!!!")
@@ -359,13 +434,14 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.out1_on = False
         self.out2_on = False
 
-        self.delay_timer.stop()
-        self.timeout_timer.stop()
+        self.stop_delay_timer()
+        self.stop_timeout_timer()
 
         self.ready_to_meas = False
+        self.curr_temp_indicator.set_off()
 
-        self.out1_indicator.setStyleSheet("border: 3px solid gray;")
-        self.out2_indicator.setStyleSheet("border: 3px solid gray;")
+        self.out1_indicator.set_off()
+        self.out2_indicator.set_off()
         self.out1_widget.heater_range_cb.setCurrentIndex(0)
         self.out2_widget.heater_range_cb.setCurrentIndex(0)
 
@@ -380,11 +456,14 @@ class Lakeshore336Control(QtWidgets.QWidget):
                 self.lost_connection()
                 return
 
-            self.out1_indicator.setStyleSheet("border: 3px solid gray;")
+            self.out1_indicator.set_off()
             self.out1_on = False
 
             if not self.out2_on:
-                self.timeout_timer.stop()
+                self.stop_timeout_timer()
+                self.stop_delay_timer()
+                self.ready_to_meas = False
+                self.curr_temp_indicator.set_off()
 
             return
         
@@ -412,7 +491,10 @@ class Lakeshore336Control(QtWidgets.QWidget):
             self.out2_on = False
 
             if not self.out1_on:
-                self.timeout_timer.stop()
+                self.stop_timeout_timer()
+                self.stop_delay_timer()
+                self.ready_to_meas = False
+                self.curr_temp_indicator.set_off()
 
             return
         
@@ -424,6 +506,24 @@ class Lakeshore336Control(QtWidgets.QWidget):
         except ConnectionResetError:
             self.lost_connection()
             return
+        
+    def start_delay_timer(self):
+        delay = 60 * 1000 * int(self.set_delay_sb.value())
+        self.delay_timer.start(delay)
+        self.delay_indicator.start_blinking("yellow")
+        
+    def stop_delay_timer(self):
+        self.delay_timer.stop()
+        self.delay_indicator.stop_blinking()
+        
+    def start_timeout_timer(self):
+        timeout = 60 * 1000 * int(self.set_timeout_sb.value())
+        self.timeout_timer.start(timeout)
+        self.timeout_indicator.start_blinking("red")
+        
+    def stop_timeout_timer(self):
+        self.timeout_timer.stop()
+        self.timeout_indicator.stop_blinking()
 
         
 if __name__ == "__main__":
