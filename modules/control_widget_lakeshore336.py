@@ -3,6 +3,32 @@ import sys
 from lakeshore import Model336
 from typing import List
 from logging import WARNING
+
+class DummyLakeshore336:
+    def __init__(self):
+        self.setpoint = 0.0
+        self.heater = {
+            1: 0,
+            2: 0
+        }
+
+    def get_control_setpoint(self, channel):
+        return self.setpoint
+
+    def get_heater_range(self, channel):
+        return self.heater[channel]
+
+    def get_all_kelvin_reading(self):
+        return [300.123]
+
+    def set_control_setpoint(self, channel, value):
+        self.setpoint = value
+
+    def all_heaters_off(self):
+        pass
+
+    def set_heater_range(self, channel, value):
+        self.heater[channel] = value
         
 class HeaterControl(QtWidgets.QWidget):
     def __init__(self, label_text):
@@ -288,8 +314,9 @@ class Lakeshore336Control(QtWidgets.QWidget):
     
     def connect_to_lakeshore(self):
         try:
-            self.device = Model336(ip_address=self.IP_ADDRESS)
-            self.device.logger.setLevel(WARNING)
+            # self.device = Model336(ip_address=self.IP_ADDRESS)
+            # self.device.logger.setLevel(WARNING)
+            self.device = DummyLakeshore336()
         except TimeoutError as e:
             print("!LakeShore336:", e)
             return
