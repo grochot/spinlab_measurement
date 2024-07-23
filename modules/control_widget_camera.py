@@ -236,10 +236,6 @@ class CameraWidget(QtWidgets.QWidget):
         brightness = self.brightness - 50
         frame = cv2.convertScaleAbs(frame, beta=brightness)
 
-        if self.data_stripe:
-            timestamp = QtCore.QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
-            cv2.putText(frame, timestamp, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
-
         if self.sharpen_on:
             frame = self.sharpen_frame(frame)
 
@@ -252,6 +248,11 @@ class CameraWidget(QtWidgets.QWidget):
         if self.zoom_factor == 1.0:
             self.change_size(self.image_label.width(), self.image_label.height())
             frame = cv2.resize(frame, (self.capture_width, self.capture_height))
+            
+        if self.data_stripe:
+            timestamp = QtCore.QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
+            cv2.putText(frame, timestamp, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 4, cv2.LINE_AA)
+            cv2.putText(frame, timestamp, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         h, w, ch = frame.shape
@@ -260,16 +261,19 @@ class CameraWidget(QtWidgets.QWidget):
         self.image_label.setPixmap(QtGui.QPixmap.fromImage(converted_Qt_image))
 
     def apply_zoom(self, frame):
-        # h, w, _ = frame.shape
-        h = self.image_label.height()
-        w = self.image_label.width()
+        h, w, _ = frame.shape
+        # h = self.image_label.height()
+        # w = self.image_label.width()
         center_x, center_y = self.zoom_center
         zoom_w, zoom_h = int(w / self.zoom_factor), int(h / self.zoom_factor)
+        
+        a = zoom_h // 2 - (h - center_y) if center_y > h // 2 else zoom_h // 2 - center_y
+        b = zoom_w // 2 - (w - center_x) if center_x > w // 2 else zoom_w // 2 - center_x
 
-        start_x = max(0, center_x - zoom_w // 2)
-        end_x = min(w, center_x + zoom_w // 2)
-        start_y = max(0, center_y - zoom_h // 2)
-        end_y = min(h, center_y + zoom_h // 2)
+        start_x = max(0, center_x - zoom_w // 2 - b)
+        end_x = min(w, center_x + zoom_w // 2 + b)
+        start_y = max(0, center_y - zoom_h // 2 - a)
+        end_y = min(h, center_y + zoom_h // 2 + a)
 
         frame = frame[start_y:end_y, start_x:end_x]
         return cv2.resize(frame, (w, h))
@@ -300,6 +304,15 @@ class CameraWidget(QtWidgets.QWidget):
         self.close()
 
     def wheelEvent(self, event):
+        cursor_pos = self.image_label.mapFromGlobal(QtGui.QCursor.pos())
+        # print(cursor_pos.x(), cursor_pos.y())
+        cursor_x = cursor_pos.x() - (self.image_label.width() - self.capture_width) // 2
+        cursor_y = cursor_pos.y() - (self.image_label.height() - self.capture_height) // 2
+        print(cursor_x, cursor_y)
+        
+        if cursor_x < 0 or cursor_x > self.capture_width or cursor_y < 0 or cursor_y > self.capture_height:
+            return
+        
         delta = event.angleDelta().y()
         if delta > 0:
             self.zoom_factor = min(4.0, self.zoom_factor * 1.1)
@@ -307,11 +320,8 @@ class CameraWidget(QtWidgets.QWidget):
             self.zoom_factor = max(1.0, self.zoom_factor / 1.1)
         print(self.zoom_factor)
 
-        cursor_pos = self.image_label.mapFromGlobal(QtGui.QCursor.pos())
-        print(cursor_pos.x(), cursor_pos.y())
-
-        if cursor_pos.x() > 0 and cursor_pos.y() > 0 and self.zoom_factor > 1.0:
-            self.zoom_center = (cursor_pos.x(), cursor_pos.y())
+        if self.zoom_factor > 1.0:
+            self.zoom_center = (cursor_x, cursor_y)
         
         # self.update_frame()
 
