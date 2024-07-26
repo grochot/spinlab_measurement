@@ -101,10 +101,19 @@ class DeviceWidget(QtWidgets.QWidget):
 
     def _setup_ui(self):
         self.button = QtWidgets.QPushButton()
-        self.button.setIcon(QtGui.QIcon(self.device.icon_path))
-        self.button.setIconSize(QtCore.QSize(75, 75))
+        
+        try:
+            self.button.setIcon(QtGui.QIcon(self.device.icon_path))
+            self.button.setIconSize(QtCore.QSize(75, 75))
+        except AttributeError:
+            self.button.setText("OPEN")
+        
         self.button.setFixedSize(90, 90)
-        self.button.clicked.connect(self.device.open_widget)
+        
+        try:
+            self.button.clicked.connect(self.device.open_widget)
+        except AttributeError:
+            self.button.clicked.connect(self.device.show)
 
         self.label = QtWidgets.QLabel(self.device.name)
         self.label.setAlignment(QtCore.Qt.AlignCenter)
