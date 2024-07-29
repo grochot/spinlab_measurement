@@ -4,6 +4,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from pyqtgraph.dockarea import DockArea, Dock
 import logging
 import numpy as np
+import json
 
 os.environ["OPENCV_LOG_LEVEL"] = "SILENT"
 import cv2
@@ -43,6 +44,10 @@ class CameraControl(QtWidgets.QWidget):
         app = QtWidgets.QApplication.instance()
         app.aboutToQuit.connect(self.shutdown)
 
+        self.ip_camera_widget = IpCameraWidget()
+        self.ip_camera_widget.sigAddIpCamera.connect(self.add_ip_camera)
+        self.ip_camera_widget.sigRemoveIpCamera.connect(self.remove_ip_camera)
+
         # self.thread_pool: QtCore.QThreadPool = QtCore.QThreadPool()
         self.thread_pool = QtCore.QThreadPool.globalInstance()
 
@@ -50,13 +55,18 @@ class CameraControl(QtWidgets.QWidget):
         self.max_docks: int = 4
         self.dock_count: int = 0
 
-        self.free_channels: list[str] = ["None"]
+        self.free_channels: list[str] = ["None"] + self.ip_camera_widget.ip_cameras
         self.get_camera_indexes()
 
         self._setup_ui()
         self._layout()
 
     def get_camera_indexes(self) -> None:
+        try:
+            self.add_ip_camera_button.setEnabled(False)
+        except AttributeError:
+            pass
+
         for dock in self.camera_docks:
             dock.channel_combobox.setEnabled(False)
 
@@ -65,7 +75,12 @@ class CameraControl(QtWidgets.QWidget):
         self.thread_pool.start(task)
 
     def on_camera_indexes_ready(self, indexes: list[int]) -> None:
-        self.free_channels += [str(index) for index in indexes]
+        self.free_channels = (
+            ["None"]
+            + [str(index) for index in indexes]
+            + self.ip_camera_widget.ip_cameras
+        )
+        self.add_ip_camera_button.setEnabled(True)
         for dock in self.camera_docks:
             dock.channels = self.free_channels
             dock.reset_channels()
@@ -75,11 +90,15 @@ class CameraControl(QtWidgets.QWidget):
         self.setWindowTitle("Camera Control")
         self.setMinimumSize(1024, 576)
 
-        self.add_dock_button = QtWidgets.QPushButton("Add Camera")
+        self.add_dock_button = QtWidgets.QPushButton("Add dock")
         self.add_dock_button.clicked.connect(self.add_dock)
 
         self.refresh_button = QtWidgets.QPushButton("Refresh")
         self.refresh_button.clicked.connect(self.refresh_channels)
+
+        self.add_ip_camera_button = QtWidgets.QPushButton("IP cameras")
+        self.add_ip_camera_button.clicked.connect(self.open_camera_widget)
+        self.add_ip_camera_button.setEnabled(False)
 
         self.dock_area = DockArea(self)
         self.add_dock()
@@ -90,6 +109,7 @@ class CameraControl(QtWidgets.QWidget):
         button_layout = QtWidgets.QHBoxLayout()
         button_layout.addWidget(self.add_dock_button)
         button_layout.addWidget(self.refresh_button)
+        button_layout.addWidget(self.add_ip_camera_button)
 
         layout.addLayout(button_layout)
         layout.addWidget(self.dock_area)
@@ -141,6 +161,9 @@ class CameraControl(QtWidgets.QWidget):
         self.release_channel(dock.channel, -1)
         self.add_dock_button.setEnabled(True)
 
+    def open_camera_widget(self):
+        self.ip_camera_widget.show()
+
     def stop_all_videos(self) -> None:
         for dock in self.camera_docks:
             dock.stop_video()
@@ -148,8 +171,21 @@ class CameraControl(QtWidgets.QWidget):
     def refresh_channels(self) -> None:
         self.stop_all_videos()
 
-        self.free_channels = ["None"]
+        self.free_channels = ["None"] + self.ip_camera_widget.ip_cameras
         self.get_camera_indexes()
+
+    def add_ip_camera(self, ip: str) -> None:
+        self.free_channels.append(ip)
+        for dock in self.camera_docks:
+            dock.add_channel(ip)
+
+    def remove_ip_camera(self, ip: str) -> None:
+        try:
+            self.free_channels.remove(ip)
+        except ValueError:
+            pass
+        for dock in self.camera_docks:
+            dock.remove_channel(ip)
 
     def closeEvent(self, event):
         self.stop_all_videos()
@@ -164,6 +200,87 @@ class CameraControl(QtWidgets.QWidget):
     def shutdown(self):
         self.stop_all_videos()
         self.thread_pool.waitForDone()
+
+
+class IpCameraWidget(QtWidgets.QWidget):
+    sigAddIpCamera = QtCore.pyqtSignal(str)
+    sigRemoveIpCamera = QtCore.pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super(IpCameraWidget, self).__init__(parent)
+        self.setWindowTitle("IP Cameras")
+
+        self.ip_cameras: list[str] = []
+
+        self._setup_ui()
+        self._layout()
+        self.load_ip_cameras()
+
+    def _setup_ui(self):
+        self.ip_edit = QtWidgets.QLineEdit("rtsp://")
+        ip_regex = QtCore.QRegExp(r"^rtsp://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
+        ip_validator = QtGui.QRegExpValidator(ip_regex)
+        self.ip_edit.setValidator(ip_validator)
+
+        self.add_button = QtWidgets.QPushButton("Add")
+        self.add_button.clicked.connect(self.add_ip_camera)
+
+        self.camera_table = QtWidgets.QTableWidget()
+        self.camera_table.setColumnCount(2)
+        self.camera_table.setHorizontalHeaderLabels(["IP", ""])
+        self.camera_table.horizontalHeader().setSectionResizeMode(
+            0, QtWidgets.QHeaderView.Stretch
+        )
+        self.camera_table.horizontalHeader().setSectionResizeMode(
+            1, QtWidgets.QHeaderView.ResizeToContents
+        )
+
+    def _layout(self):
+        layout = QtWidgets.QVBoxLayout()
+
+        add_layout = QtWidgets.QHBoxLayout()
+        add_layout.addWidget(self.ip_edit)
+        add_layout.addWidget(self.add_button)
+
+        layout.addLayout(add_layout)
+        layout.addWidget(self.camera_table)
+
+        self.setLayout(layout)
+
+    def add_ip_camera(self):
+        ip = self.ip_edit.text()
+        if ip not in self.ip_cameras:
+            self.sigAddIpCamera.emit(ip)
+            self.ip_cameras.append(ip)
+            self.add_camera_to_table(ip)
+            self.save_ip_cameras()
+
+    def add_camera_to_table(self, ip: str):
+        row_position = self.camera_table.rowCount()
+        self.camera_table.insertRow(row_position)
+        self.camera_table.setItem(row_position, 0, QtWidgets.QTableWidgetItem(ip))
+
+        remove_button = QtWidgets.QPushButton("Remove")
+        remove_button.clicked.connect(lambda: self.remove_ip_camera(ip))
+        self.camera_table.setCellWidget(row_position, 1, remove_button)
+
+    def remove_ip_camera(self, ip: str):
+        self.sigRemoveIpCamera.emit(ip)
+        row = self.ip_cameras.index(ip)
+        self.ip_cameras.remove(ip)
+        self.camera_table.removeRow(row)
+        self.save_ip_cameras()
+
+    def save_ip_cameras(self):
+        with open("ip_cameras.json", "w") as file:
+            json.dump(self.ip_cameras, file)
+
+    def load_ip_cameras(self):
+        if os.path.exists("ip_cameras.json"):
+            with open("ip_cameras.json", "r") as file:
+                self.ip_cameras = json.load(file)
+                for ip in self.ip_cameras:
+                    self.add_camera_to_table(ip)
 
 
 class CameraDock(Dock):
@@ -203,8 +320,7 @@ class CameraDock(Dock):
         if len(self.channels) == 1:
             self.channel_combobox.setEnabled(False)
         self.channel_combobox.currentTextChanged.connect(self.on_channel_change)
-        for channel in self.channels:
-            self.channel_combobox.addItem(channel)
+        self.channel_combobox.addItems(self.channels)
 
         self.timestamp_checkbox = QtWidgets.QCheckBox("Timestamp")
         self.timestamp_checkbox.setChecked(False)
@@ -307,6 +423,11 @@ class CameraDock(Dock):
 
     def remove_channel(self, channel: str):
         self.channel_combobox.blockSignals(True)
+        if channel == self.channel:
+            self.stop_video()
+            self.image_label.setText("No camera selected")
+            self.channel = "None"
+            self.channel_combobox.setCurrentText("None")
         self.channel_combobox.removeItem(self.channel_combobox.findText(channel))
         self.channel_combobox.blockSignals(False)
 
@@ -320,8 +441,7 @@ class CameraDock(Dock):
         self.image_label.setText("No camera selected")
         self.channel_combobox.blockSignals(True)
         self.channel_combobox.clear()
-        for channel in self.channels:
-            self.channel_combobox.addItem(channel)
+        self.channel_combobox.addItems(self.channels)
         self.channel_combobox.blockSignals(False)
 
     def resizeEvent(self, ev: QtGui.QResizeEvent) -> None:
@@ -359,8 +479,11 @@ class VideoTask(QtCore.QRunnable):
 
     def run(self):
         self.running = True
+        if "rtsp://" in self.channel:
+            self.capture = cv2.VideoCapture(self.channel, cv2.CAP_FFMPEG)
+        else:
+            self.capture = cv2.VideoCapture(int(self.channel), cv2.CAP_DSHOW)
 
-        self.capture = cv2.VideoCapture(int(self.channel), cv2.CAP_DSHOW)
         if not self.capture.isOpened():
             self.signal.sigError.emit("Failed to open camera")
             return
