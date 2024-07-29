@@ -50,13 +50,26 @@ class CameraControl(QtWidgets.QWidget):
         self.max_docks: int = 4
         self.dock_count: int = 0
 
-        self.working_channels: list[str] = ["None"] + [
-            str(channel) for channel in get_camera_indexes()
-        ]
-        self.free_channels: list[str] = self.working_channels.copy()
+        self.free_channels: list[str] = ["None"]
+        self.get_camera_indexes()
 
         self._setup_ui()
         self._layout()
+
+    def get_camera_indexes(self) -> None:
+        for dock in self.camera_docks:
+            dock.channel_combobox.setEnabled(False)
+
+        task = GetCameraIndexesTask()
+        task.signals.sigCameraIndexesReady.connect(self.on_camera_indexes_ready)
+        self.thread_pool.start(task)
+
+    def on_camera_indexes_ready(self, indexes: list[int]) -> None:
+        self.free_channels += [str(index) for index in indexes]
+        for dock in self.camera_docks:
+            dock.channels = self.free_channels
+            dock.reset_channels()
+            dock.channel_combobox.setEnabled(True)
 
     def _setup_ui(self) -> None:
         self.setWindowTitle("Camera Control")
@@ -65,12 +78,20 @@ class CameraControl(QtWidgets.QWidget):
         self.add_dock_button = QtWidgets.QPushButton("Add Camera")
         self.add_dock_button.clicked.connect(self.add_dock)
 
+        self.refresh_button = QtWidgets.QPushButton("Refresh")
+        self.refresh_button.clicked.connect(self.refresh_channels)
+
         self.dock_area = DockArea(self)
         self.add_dock()
 
     def _layout(self) -> None:
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(self.add_dock_button)
+
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addWidget(self.add_dock_button)
+        button_layout.addWidget(self.refresh_button)
+
+        layout.addLayout(button_layout)
         layout.addWidget(self.dock_area)
         self.setLayout(layout)
 
@@ -104,7 +125,7 @@ class CameraControl(QtWidgets.QWidget):
         for dock in self.camera_docks:
             if dock.id == id:
                 continue
-            dock.channel_occupied(channel)
+            dock.remove_channel(channel)
 
     def release_channel(self, channel: str, id: int) -> None:
         if channel == "None":
@@ -113,16 +134,25 @@ class CameraControl(QtWidgets.QWidget):
         for dock in self.camera_docks:
             if dock.id == id:
                 continue
-            dock.channel_released(channel)
+            dock.add_channel(channel)
 
     def on_dock_close(self, dock) -> None:
         self.camera_docks.remove(dock)
         self.release_channel(dock.channel, -1)
         self.add_dock_button.setEnabled(True)
 
-    def closeEvent(self, event):
+    def stop_all_videos(self) -> None:
         for dock in self.camera_docks:
             dock.stop_video()
+
+    def refresh_channels(self) -> None:
+        self.stop_all_videos()
+
+        self.free_channels = ["None"]
+        self.get_camera_indexes()
+
+    def closeEvent(self, event):
+        self.stop_all_videos()
         event.accept()
 
     def showEvent(self, event):
@@ -132,10 +162,8 @@ class CameraControl(QtWidgets.QWidget):
         event.accept()
 
     def shutdown(self):
-        for dock in self.camera_docks:
-            dock.stop_video()
+        self.stop_all_videos()
         self.thread_pool.waitForDone()
-        self.close()
 
 
 class CameraDock(Dock):
@@ -172,6 +200,8 @@ class CameraDock(Dock):
         self.image_label.setText("No camera selected")
 
         self.channel_combobox = QtWidgets.QComboBox()
+        if len(self.channels) == 1:
+            self.channel_combobox.setEnabled(False)
         self.channel_combobox.currentTextChanged.connect(self.on_channel_change)
         for channel in self.channels:
             self.channel_combobox.addItem(channel)
@@ -245,13 +275,14 @@ class CameraDock(Dock):
         self.video_task.brightness = value
 
     def save_image(self):
+        if not self.video_task:
+            return
         save_task = SaveImageTask(self.video_task)
         self.thread_pool.start(save_task)
 
     def start_video(self, channel: str):
         self.image_label.setText("Opening camera...")
         self.video_task = VideoTask(
-            Signals(),
             channel,
             self.image_label.size(),
             self.timestamp_checkbox.isChecked(),
@@ -274,14 +305,23 @@ class CameraDock(Dock):
         self.sigDockClose.emit(self)
         self.stop_video()
 
-    def channel_occupied(self, channel: str):
+    def remove_channel(self, channel: str):
         self.channel_combobox.blockSignals(True)
         self.channel_combobox.removeItem(self.channel_combobox.findText(channel))
         self.channel_combobox.blockSignals(False)
 
-    def channel_released(self, channel: str):
+    def add_channel(self, channel: str):
         self.channel_combobox.blockSignals(True)
         self.channel_combobox.addItem(channel)
+        self.channel_combobox.blockSignals(False)
+
+    def reset_channels(self):
+        self.channel = "None"
+        self.image_label.setText("No camera selected")
+        self.channel_combobox.blockSignals(True)
+        self.channel_combobox.clear()
+        for channel in self.channels:
+            self.channel_combobox.addItem(channel)
         self.channel_combobox.blockSignals(False)
 
     def resizeEvent(self, ev: QtGui.QResizeEvent) -> None:
@@ -290,7 +330,7 @@ class CameraDock(Dock):
         super().resizeEvent(ev)
 
 
-class Signals(QtCore.QObject):
+class VideoTaskSignals(QtCore.QObject):
     sigPixmapReady = QtCore.pyqtSignal(QtGui.QPixmap)
     sigError = QtCore.pyqtSignal(str)
 
@@ -298,7 +338,6 @@ class Signals(QtCore.QObject):
 class VideoTask(QtCore.QRunnable):
     def __init__(
         self,
-        signal: Signals,
         channel: str,
         label_size: QtCore.QSize,
         show_timestamp: bool = False,
@@ -306,7 +345,7 @@ class VideoTask(QtCore.QRunnable):
         brightness: int = 50,
     ):
         super(VideoTask, self).__init__()
-        self.signal = signal
+        self.signal: VideoTaskSignals = VideoTaskSignals()
         self.channel: str = channel
         self.capture = None
         self.running: bool = False
@@ -442,8 +481,23 @@ class SaveImageTask(QtCore.QRunnable):
                 cv2.imwrite(file_path, frame)
 
 
+class GetCameraIndexesTaskSignals(QtCore.QObject):
+    sigCameraIndexesReady = QtCore.pyqtSignal(list)
+
+
+class GetCameraIndexesTask(QtCore.QRunnable):
+    def __init__(self, limit: int = 5):
+        super(GetCameraIndexesTask, self).__init__()
+        self.limit = limit
+        self.signals: GetCameraIndexesTaskSignals = GetCameraIndexesTaskSignals()
+
+    def run(self):
+        indexes = get_camera_indexes(self.limit)
+        self.signals.sigCameraIndexesReady.emit(indexes)
+
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    camera_control = CameraControl(nested=False)
+    camera_control = CameraControl()
     camera_control.show()
     sys.exit(app.exec_())
