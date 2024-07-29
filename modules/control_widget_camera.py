@@ -1,455 +1,449 @@
 import os
-os.environ["OPENCV_LOG_LEVEL"]="SILENT"
 import sys
-import cv2
-import numpy as np
-from pymeasure.display.Qt import QtWidgets, QtGui, QtCore
+from PyQt5 import QtWidgets, QtGui, QtCore
 from pyqtgraph.dockarea import DockArea, Dock
+import logging
+import numpy as np
+
+os.environ["OPENCV_LOG_LEVEL"] = "SILENT"
+import cv2
+
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
-class VideoThread(QtCore.QThread):
-    frame_captured = QtCore.pyqtSignal(np.ndarray)
-    error = QtCore.pyqtSignal(str)
-
-    def __init__(self, source, parent=None):
-        super(VideoThread, self).__init__(parent)
-        self.source = source
-        self.capture = None
-        self.running = False
-
-    def run(self):
-        self.running = True
-        if "rtsp://" in self.source:
-            self.capture = cv2.VideoCapture(self.source)
+def get_camera_indexes(limit: int = 5) -> list[int]:
+    port = 0
+    non_working_ports = []
+    working_ports = []
+    while len(non_working_ports) < limit:
+        cap = cv2.VideoCapture(port, cv2.CAP_DSHOW)
+        if not cap.isOpened():
+            non_working_ports.append(port)
         else:
-            self.capture = cv2.VideoCapture(int(self.source), cv2.CAP_DSHOW)
-        
-        if not self.capture.isOpened():
-            self.error.emit("Failed to open video stream")
-            return
-
-        while self.running:
-            ret, frame = self.capture.read()
-            if ret:
-                self.frame_captured.emit(frame)
-                self.msleep(2)
-            else:
-                self.error.emit("Failed to capture frame")
-                break
-
-    def stop(self):
-        self.running = False
-        self.quit()
-        self.wait()
-        if self.capture:
-            self.capture.release()
-
-
-class IpDialog(QtWidgets.QDialog):
-    def __init__(self, parent=None):
-        super(IpDialog, self).__init__(parent)
-        self.setWindowTitle("IP Camera")
-
-        self.ip_edit = None
-
-        self._setup_ui()
-        self._layout()
-
-    def _setup_ui(self):
-        self.ip_edit = QtWidgets.QLineEdit("rtsp://")
-        ip_regex = QtCore.QRegExp(r"^rtsp://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
-        ip_validator = QtGui.QRegExpValidator(ip_regex, self.ip_edit)
-        self.ip_edit.setValidator(ip_validator)
-
-        self.buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
-        self.buttons.accepted.connect(self.accept)
-        self.buttons.rejected.connect(self.reject)
-
-    def _layout(self):
-        self.main_layout = QtWidgets.QFormLayout()
-
-        self.main_layout.addRow("IP Address", self.ip_edit)
-        self.main_layout.addWidget(self.buttons)
-
-        self.setLayout(self.main_layout)
-        
-
-class CameraDock(Dock):
-    signalDockClosed = QtCore.pyqtSignal(str, int)
-    def __init__(self, name, id, available_channels, **kwargs):
-
-        super(CameraDock, self).__init__(name, **kwargs)
-        self.id = id
-        self.camera_control = CameraWidget(available_channels)
-        self.addWidget(self.camera_control)
-        self.sigClosed.connect(self.on_close)
-
-    def on_close(self):
-        self.camera_control.on_close()
-        self.signalDockClosed.emit(self.camera_control.channel, self.id)
-
-
-class CameraWidget(QtWidgets.QWidget):
-    def __init__(self, available_channels, parent=None):
-        super(CameraWidget, self).__init__(parent)
-        self.available_channels = available_channels
-        self.prev_channel = "None"
-        self.channel = "None"
-        self.capture_thread = None
-        self.data_stripe = True
-        self.sharpen_on = False
-        self.capture_width = 640
-        self.capture_height = 480
-        self.button_width = 100
-        self.brightness = 50
-        self.frame_to_save = None
-
-        # Variables for zooming
-        self.zoom_factor = 1.0
-        self.zoom_center = None
-
-        self._setup_ui()
-        self._layout()
-
-    def _setup_ui(self):
-        self.image_label = QtWidgets.QLabel()
-        self.image_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.image_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.image_label.setStyleSheet("border: 1px solid black; font-size: 20px;")
-
-        self.setMinimumSize(640+self.button_width, 480)
-
-        self.channel_cb = QtWidgets.QComboBox()
-        for channel in self.available_channels:
-            self.channel_cb.addItem(str(channel))
-        self.channel_cb.currentTextChanged.connect(self.on_channel_change)
-        self.channel_cb.setFixedWidth(self.button_width)
-
-        self.save_img_btn = QtWidgets.QPushButton("Save Image")
-        self.save_img_btn.clicked.connect(self.save_image)
-        self.save_img_btn.setFixedWidth(self.button_width)  
-
-        self.brightness_sld = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-        self.brightness_sld.setRange(0, 100)
-        self.brightness_sld.setValue(50)
-        self.brightness_sld.setFixedWidth(self.button_width)
-        self.brightness_sld.valueChanged.connect(self.update_brightness)
-
-        self.data_stripe_checkbox = QtWidgets.QCheckBox("Show data")
-        self.data_stripe_checkbox.setChecked(True)
-        self.data_stripe_checkbox.stateChanged.connect(self.toggle_data_stripe)
-
-        self.sharpen_checkbox = QtWidgets.QCheckBox("Sharpen video")
-        self.sharpen_checkbox.setChecked(False)
-        self.sharpen_checkbox.stateChanged.connect(self.toggle_sharpen)
-
-        self.brightness_text = QtWidgets.QLabel("Brightness")
-        self.brightness_text.setFixedWidth(self.button_width)
-        self.brightness_text.setFixedHeight(20)
-
-        self.channel_text = QtWidgets.QLabel("Channel:")
-        self.channel_text.setFixedWidth(self.button_width)
-        self.channel_text.setFixedHeight(20)
-
-    def _layout(self):
-        self.main_layout = QtWidgets.QHBoxLayout()
-
-        self.button_layout = QtWidgets.QVBoxLayout()
-        self.button_layout.addWidget(self.channel_text)
-        self.button_layout.addWidget(self.channel_cb)
-        self.button_layout.addWidget(self.save_img_btn)
-        self.button_layout.addWidget(self.brightness_text)
-        self.button_layout.addWidget(self.brightness_sld)
-        self.button_layout.addWidget(self.sharpen_checkbox)
-        self.button_layout.addWidget(self.data_stripe_checkbox)
-        self.button_layout.addStretch()
-
-        self.main_layout.addLayout(self.button_layout)
-        self.main_layout.addWidget(self.image_label)
-        self.setLayout(self.main_layout)
-
-    def update_brightness(self, value):
-        self.brightness = value
-
-    def save_image(self):
-        if self.channel is None or not self.capture_thread:
-            return
-
-        path_to_save = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Image', 'image.jpg', 'Image Files (*.png *.jpg *.bmp)')[0]
-        if path_to_save != "":
-            cv2.imwrite(str(path_to_save), self.frame_to_save)
-        else:
-            print("Failed to capture frame")
-    
-    def set_available_channels(self):
-        self.channel_cb.blockSignals(True)
-        self.channel_cb.clear()
-        self.prev_channel = "None"
-        self.channel = "None"
-        for channel in self.available_channels:
-            self.channel_cb.addItem(str(channel))
-        self.channel_cb.blockSignals(False)
-
-    def channel_occupied(self, channel):
-        self.channel_cb.blockSignals(True)
-        self.channel_cb.removeItem(self.channel_cb.findText(channel))
-        self.channel_cb.blockSignals(False)
-
-    def channel_released(self, channel):
-        self.channel_cb.blockSignals(True)
-        self.channel_cb.addItem(channel)
-        self.channel_cb.blockSignals(False)
-
-    def on_channel_change(self, text):
-        if self.capture_thread:
-            self.capture_thread.frame_captured.disconnect(self.process_frame)
-            self.capture_thread.stop()
-            self.capture_thread = None
-
-        self.prev_channel = self.channel
-        self.channel = text
-
-        if self.channel != "None":
-            self.image_label.setText("Loading...")
-            
-            self.capture_thread = VideoThread(self.channel)
-            self.capture_thread.frame_captured.connect(self.process_frame)
-            self.capture_thread.error.connect(self.frame_capture_failed)
-            self.capture_thread.start()
-            return
-        
-        self.image_label.setText("No channel selected")
-            
-    def frame_capture_failed(self, error):
-        self.capture_thread.frame_captured.disconnect(self.process_frame)
-        self.capture_thread.stop()
-        self.capture_thread = None
-        self.image_label.setText(error)
-
-    def toggle_data_stripe(self, state):
-        self.data_stripe = state
-    
-    def toggle_sharpen(self, state):
-        self.sharpen_on = state
-
-    def process_frame(self, frame):
-        brightness = self.brightness - 50
-        frame = cv2.convertScaleAbs(frame, beta=brightness)
-
-        if self.sharpen_on:
-            frame = self.sharpen_frame(frame)
-
-        if self.zoom_center is not None and self.zoom_factor != 1.0:
-            frame = self.apply_zoom(frame)
-
-        frame_1080p = cv2.resize(frame, (1920, 1080))
-        self.frame_to_save = frame_1080p
-
-        if self.zoom_factor == 1.0:
-            self.change_size(self.image_label.width(), self.image_label.height())
-            frame = cv2.resize(frame, (self.capture_width, self.capture_height))
-            
-        if self.data_stripe:
-            timestamp = QtCore.QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
-            cv2.putText(frame, timestamp, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 4, cv2.LINE_AA)
-            cv2.putText(frame, timestamp, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
-
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        h, w, ch = frame.shape
-        bytes_per_line = ch * w
-        converted_Qt_image = QtGui.QImage(frame.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        self.image_label.setPixmap(QtGui.QPixmap.fromImage(converted_Qt_image))
-
-    def apply_zoom(self, frame):
-        h, w, _ = frame.shape
-        # h = self.image_label.height()
-        # w = self.image_label.width()
-        center_x, center_y = self.zoom_center
-        zoom_w, zoom_h = int(w / self.zoom_factor), int(h / self.zoom_factor)
-        
-        a = zoom_h // 2 - (h - center_y) if center_y > h // 2 else zoom_h // 2 - center_y
-        b = zoom_w // 2 - (w - center_x) if center_x > w // 2 else zoom_w // 2 - center_x
-
-        start_x = max(0, center_x - zoom_w // 2 - b)
-        end_x = min(w, center_x + zoom_w // 2 + b)
-        start_y = max(0, center_y - zoom_h // 2 - a)
-        end_y = min(h, center_y + zoom_h // 2 + a)
-
-        frame = frame[start_y:end_y, start_x:end_x]
-        return cv2.resize(frame, (w, h))
-
-    def sharpen_frame(self, frame):
-        kernel = np.array([[0, -1, 0],
-                           [-1, 5, -1],
-                           [0, -1, 0]])
-        sharpened = cv2.filter2D(frame, -1, kernel)
-        return sharpened
-
-    def resizeEvent(self, event):
-        QtWidgets.QWidget.resizeEvent(self, event)
-        self.change_size(self.image_label.width(), self.image_label.height())
-
-    def change_size(self, width, height):
-        new_width = width
-        new_height = int(new_width * 9 / 16)
-        if new_height > height:
-            new_height = height
-            new_width = int(new_height * 16 / 9)
-        self.capture_width = new_width
-        self.capture_height = new_height
-
-    def on_close(self):
-        if self.capture_thread:
-            self.capture_thread.stop()
-        self.close()
-
-    def wheelEvent(self, event):
-        cursor_pos = self.image_label.mapFromGlobal(QtGui.QCursor.pos())
-        # print(cursor_pos.x(), cursor_pos.y())
-        cursor_x = cursor_pos.x() - (self.image_label.width() - self.capture_width) // 2
-        cursor_y = cursor_pos.y() - (self.image_label.height() - self.capture_height) // 2
-        print(cursor_x, cursor_y)
-        
-        if cursor_x < 0 or cursor_x > self.capture_width or cursor_y < 0 or cursor_y > self.capture_height:
-            return
-        
-        delta = event.angleDelta().y()
-        if delta > 0:
-            self.zoom_factor = min(4.0, self.zoom_factor * 1.1)
-        else:
-            self.zoom_factor = max(1.0, self.zoom_factor / 1.1)
-        print(self.zoom_factor)
-
-        if self.zoom_factor > 1.0:
-            self.zoom_center = (cursor_x, cursor_y)
-        
-        # self.update_frame()
-
+            is_read, _ = cap.read()
+            if is_read:
+                working_ports.append(port)
+        cap.release()
+        port += 1
+    return working_ports
 
 
 class CameraControl(QtWidgets.QWidget):
     object_name = "camera_control"
 
-    def __init__(self,parent=None):
+    def __init__(self, parent=None):
         super(CameraControl, self).__init__(parent)
         self.name = "Camera Control"
-        self.icon_path = "modules\icons\Camera.ico"
+        # self.icon_path = "modules\icons\Camera.ico"
+        self.icon_path = os.path.join("modules", "icons", "Camera.ico")
 
-        self.working_channels = ["None"]
-        self.available_channels = []
-        self.added_ip_channels = []
+        app = QtWidgets.QApplication.instance()
+        app.aboutToQuit.connect(self.shutdown)
 
-        self.docks = []
-        self.widget_count = 0
+        # self.thread_pool: QtCore.QThreadPool = QtCore.QThreadPool()
+        self.thread_pool = QtCore.QThreadPool.globalInstance()
 
-        self.get_working_channels()
+        self.camera_docks: list[CameraDock] = []
+        self.max_docks: int = 4
+        self.dock_count: int = 0
+
+        self.working_channels: list[str] = ["None"] + [
+            str(channel) for channel in get_camera_indexes()
+        ]
+        self.free_channels: list[str] = self.working_channels.copy()
+
         self._setup_ui()
         self._layout()
 
-    def _setup_ui(self):
-        self.setWindowTitle(self.name)
-        self.setWindowIcon(QtGui.QIcon(self.icon_path))
+    def _setup_ui(self) -> None:
+        self.setWindowTitle("Camera Control")
+        self.setMinimumSize(1024, 576)
 
-        self.add_dock_btn=QtWidgets.QPushButton('Add Camera')
-        self.add_dock_btn.clicked.connect(self.add_dock)
+        self.add_dock_button = QtWidgets.QPushButton("Add Camera")
+        self.add_dock_button.clicked.connect(self.add_dock)
 
-        self.refresh_btn = QtWidgets.QPushButton('Refresh')
-        self.refresh_btn.clicked.connect(self.refresh_channels)
-
-        self.add_ip_cam_btn = QtWidgets.QPushButton('Add IP Camera')
-        self.add_ip_cam_btn.clicked.connect(self.open_ip_dialog)
-
-        self.dock_area=DockArea()
+        self.dock_area = DockArea(self)
         self.add_dock()
 
-    def _layout(self):
-        self.main_layout = QtWidgets.QVBoxLayout()
+    def _layout(self) -> None:
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(self.add_dock_button)
+        layout.addWidget(self.dock_area)
+        self.setLayout(layout)
 
-        self.btn_layout = QtWidgets.QHBoxLayout()
-        self.btn_layout.addWidget(self.add_dock_btn)
-        self.btn_layout.addWidget(self.refresh_btn)
-        self.btn_layout.addWidget(self.add_ip_cam_btn)
+    def add_dock(self) -> None:
+        if len(self.camera_docks) == self.max_docks - 1:
+            self.add_dock_button.setEnabled(False)
 
-        self.main_layout.addLayout(self.btn_layout)
-        self.main_layout.addWidget(self.dock_area)
-        self.setLayout(self.main_layout)
-    
-    def open_widget(self):
-        self.show()
-    
-    def refresh_channels(self):
-        self.get_working_channels()
-        for dock in self.docks:
-            dock.camera_control.available_channels = self.available_channels
-            dock.camera_control.set_available_channels()
+        dock: CameraDock = CameraDock(
+            self.dock_count, self.free_channels, self.thread_pool
+        )
+        self.dock_count += 1
+        dock.sigDockClose.connect(self.on_dock_close)
+        dock.sigChannelChange.connect(self.on_channel_change)
 
-    def get_working_channels(self):
-        dev_port = 0
-        non_working_channels = ["None"]
-        self.working_channels = ["None"]
+        self.camera_docks.append(dock)
+        self.dock_area.addDock(dock, "right")
+
+    def on_channel_change(
+        self, prev_channel: str, new_channel: str, dock_id: int
+    ) -> None:
+        self.occupy_channel(new_channel, dock_id)
+        self.release_channel(prev_channel, dock_id)
+
+    def occupy_channel(self, channel: str, id: int) -> None:
+        if channel == "None":
+            return
+        try:
+            self.free_channels.remove(channel)
+        except ValueError:
+            return
+        for dock in self.camera_docks:
+            if dock.id == id:
+                continue
+            dock.channel_occupied(channel)
+
+    def release_channel(self, channel: str, id: int) -> None:
+        if channel == "None":
+            return
+        self.free_channels.append(channel)
+        for dock in self.camera_docks:
+            if dock.id == id:
+                continue
+            dock.channel_released(channel)
+
+    def on_dock_close(self, dock) -> None:
+        self.camera_docks.remove(dock)
+        self.release_channel(dock.channel, -1)
+        self.add_dock_button.setEnabled(True)
+
+    def closeEvent(self, event):
+        for dock in self.camera_docks:
+            dock.stop_video()
+        event.accept()
+
+    def showEvent(self, event):
+        for dock in self.camera_docks:
+            if dock.channel != "None":
+                dock.start_video(dock.channel)
+        event.accept()
+
+    def shutdown(self):
+        for dock in self.camera_docks:
+            dock.stop_video()
+        self.thread_pool.waitForDone()
+        self.close()
 
 
-        while len(non_working_channels) < 5:
-            camera = cv2.VideoCapture(dev_port, cv2.CAP_DSHOW)
-            if not camera.isOpened():
-                non_working_channels.append(dev_port)
+class CameraDock(Dock):
+    sigDockClose = QtCore.pyqtSignal(object)
+    sigChannelChange = QtCore.pyqtSignal(str, str, int)
+
+    def __init__(
+        self, id, channels: list[str], thread_pool: QtCore.QThreadPool, parent=None
+    ):
+        super(CameraDock, self).__init__("Camera", closable=True, autoOrientation=False)
+        self.parent = parent
+
+        self.id: int = id
+        self.channels = channels
+        self.channel: str = "None"
+        self.thread_pool: QtCore.QThreadPool = thread_pool
+        self.video_task: VideoTask = None
+
+        self.sigClosed.connect(self.dock_close_event)
+
+        self._setup_ui()
+        self._layout()
+
+    def _setup_ui(self) -> None:
+        self.central_widget = QtWidgets.QWidget()
+
+        self.image_label = QtWidgets.QLabel()
+        self.image_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.image_label.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
+        self.image_label.setMinimumSize(320, 180)
+        self.image_label.setStyleSheet("border: 1px solid black;")
+        self.image_label.setText("No camera selected")
+
+        self.channel_combobox = QtWidgets.QComboBox()
+        self.channel_combobox.currentTextChanged.connect(self.on_channel_change)
+        for channel in self.channels:
+            self.channel_combobox.addItem(channel)
+
+        self.timestamp_checkbox = QtWidgets.QCheckBox("Timestamp")
+        self.timestamp_checkbox.setChecked(False)
+        self.timestamp_checkbox.stateChanged.connect(self.on_timestamp_change)
+
+        self.sharpen_checkbox = QtWidgets.QCheckBox("Sharpen")
+        self.sharpen_checkbox.setChecked(False)
+        self.sharpen_checkbox.stateChanged.connect(self.on_sharpen_change)
+
+        self.brightness_label = QtWidgets.QLabel("Brightness")
+
+        self.brightness_slider = ResetableSlider(QtCore.Qt.Horizontal)
+        self.brightness_slider.setRange(0, 100)
+        self.brightness_slider.setValue(50)
+        self.brightness_slider.setTickInterval(10)
+        self.brightness_slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
+        self.brightness_slider.setSizePolicy(
+            QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum
+        )
+        self.brightness_slider.valueChanged.connect(self.on_brightness_change)
+
+        self.save_button = QtWidgets.QPushButton("Save Image")
+        self.save_button.clicked.connect(self.save_image)
+
+    def _layout(self) -> None:
+        main_layout = QtWidgets.QHBoxLayout()
+        utils_layout = QtWidgets.QVBoxLayout()
+
+        utils_layout.addWidget(self.channel_combobox)
+        utils_layout.addWidget(self.timestamp_checkbox)
+        utils_layout.addWidget(self.sharpen_checkbox)
+
+        utils_layout.addWidget(self.brightness_label)
+        utils_layout.addWidget(self.brightness_slider)
+        utils_layout.addWidget(self.save_button)
+
+        utils_layout.addStretch()
+        main_layout.addLayout(utils_layout)
+        main_layout.addWidget(self.image_label)
+        self.central_widget.setLayout(main_layout)
+        self.addWidget(self.central_widget)
+
+    def on_channel_change(self, channel: str) -> None:
+        self.sigChannelChange.emit(self.channel, channel, self.id)
+        self.channel = channel
+
+        self.stop_video()
+
+        if channel == "None":
+            self.image_label.setText("No camera selected")
+            return
+
+        self.start_video(channel)
+
+    def on_timestamp_change(self, state: int) -> None:
+        if not self.video_task:
+            return
+        self.video_task.show_timestamp = state == QtCore.Qt.Checked
+
+    def on_sharpen_change(self, state: int) -> None:
+        if not self.video_task:
+            return
+        self.video_task.sharpen = state == QtCore.Qt.Checked
+
+    def on_brightness_change(self, value: int) -> None:
+        if not self.video_task:
+            return
+        self.video_task.brightness = value
+
+    def save_image(self):
+        save_task = SaveImageTask(self.video_task)
+        self.thread_pool.start(save_task)
+
+    def start_video(self, channel: str):
+        self.image_label.setText("Opening camera...")
+        self.video_task = VideoTask(
+            Signals(),
+            channel,
+            self.image_label.size(),
+            self.timestamp_checkbox.isChecked(),
+            self.sharpen_checkbox.isChecked(),
+            self.brightness_slider.value(),
+        )
+        self.video_task.signal.sigPixmapReady.connect(self.update_image)
+        self.video_task.signal.sigError.connect(self.image_label.setText)
+        self.thread_pool.start(self.video_task)
+
+    def stop_video(self):
+        if self.video_task:
+            self.video_task.stop()
+            self.video_task = None
+
+    def update_image(self, pixmap: QtGui.QPixmap) -> None:
+        self.image_label.setPixmap(pixmap)
+
+    def dock_close_event(self):
+        self.sigDockClose.emit(self)
+        self.stop_video()
+
+    def channel_occupied(self, channel: str):
+        self.channel_combobox.blockSignals(True)
+        self.channel_combobox.removeItem(self.channel_combobox.findText(channel))
+        self.channel_combobox.blockSignals(False)
+
+    def channel_released(self, channel: str):
+        self.channel_combobox.blockSignals(True)
+        self.channel_combobox.addItem(channel)
+        self.channel_combobox.blockSignals(False)
+
+    def resizeEvent(self, ev: QtGui.QResizeEvent) -> None:
+        if self.video_task:
+            self.video_task.label_size = self.image_label.size()
+        super().resizeEvent(ev)
+
+
+class Signals(QtCore.QObject):
+    sigPixmapReady = QtCore.pyqtSignal(QtGui.QPixmap)
+    sigError = QtCore.pyqtSignal(str)
+
+
+class VideoTask(QtCore.QRunnable):
+    def __init__(
+        self,
+        signal: Signals,
+        channel: str,
+        label_size: QtCore.QSize,
+        show_timestamp: bool = False,
+        sharpen: bool = False,
+        brightness: int = 50,
+    ):
+        super(VideoTask, self).__init__()
+        self.signal = signal
+        self.channel: str = channel
+        self.capture = None
+        self.running: bool = False
+        self.label_size = label_size
+        self.show_timestamp: bool = show_timestamp
+        self.sharpen: bool = sharpen
+        self.brightness: int = brightness
+        self.current_frame = None
+
+        self.mutex = QtCore.QMutex()
+
+    def run(self):
+        self.running = True
+
+        self.capture = cv2.VideoCapture(int(self.channel), cv2.CAP_DSHOW)
+        if not self.capture.isOpened():
+            self.signal.sigError.emit("Failed to open camera")
+            return
+
+        while self.running:
+            is_read, frame = self.capture.read()
+            if is_read:
+                frame = cv2.convertScaleAbs(frame, alpha=self.brightness / 50)
+
+                if self.sharpen:
+                    frame = self.sharpen_image(frame)
+
+                if self.show_timestamp:
+                    frame = self.add_timestamp(frame)
+
+                self.mutex.lock()
+                self.current_frame = frame
+                self.mutex.unlock()
+
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                image = QtGui.QImage(
+                    frame.data,
+                    frame.shape[1],
+                    frame.shape[0],
+                    QtGui.QImage.Format_RGB888,
+                )
+                pixmap = QtGui.QPixmap.fromImage(image)
+                scaled_pixmap = pixmap.scaled(
+                    self.label_size,
+                    QtCore.Qt.KeepAspectRatio,
+                    QtCore.Qt.SmoothTransformation,
+                )
+                self.signal.sigPixmapReady.emit(scaled_pixmap)
+                QtCore.QThread.msleep(2)
             else:
-                is_reading, img = camera.read()
-                if is_reading:
-                    self.working_channels.append(str(dev_port))
-            camera.release()
-            dev_port += 1
- 
-        self.available_channels = self.working_channels.copy()
-        self.available_channels.extend(self.added_ip_channels)
+                self.signal.sigError.emit("Failed to capture frame")
+                break
 
-    def open_ip_dialog(self):
-        ip_dialog = IpDialog()
-        if ip_dialog.exec_():
-            ip = ip_dialog.ip_edit.text()
-            self.added_ip_channels.append(ip)
-            self.release_channel(ip, -1)
+    def add_timestamp(self, frame):
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        timestamp = str(
+            QtCore.QDateTime.currentDateTime().toString("hh:mm:ss dd.MM.yyyy")
+        )
 
-        
-    def add_dock(self):
-        dock = CameraDock('Dock', self.widget_count, self.available_channels, closable=True, autoOrientation=False)
-        dock.signalDockClosed.connect(self.on_dock_close)
-        self.widget_count += 1
-        self.docks.append(dock)
-        dock.camera_control.channel_cb.currentTextChanged.connect(lambda channel: self.on_channel_change(channel, dock.id))
-        self.dock_area.addDock(dock, 'right')
+        frame_height = frame.shape[0]
+        font_scale = frame_height / 500
+        thickness = 2
 
-    def on_channel_change(self, channel, id):
-        self.occupy_channel(channel, id)
-        self.release_channel(self.docks[id].camera_control.prev_channel, id)
-            
-    def occupy_channel(self, channel, id):
-        if channel == "None":
-            return
-        
-        self.available_channels.remove(channel)
-        for i in range(len(self.docks)):
-            if i == id:
-                continue
-            self.docks[i].camera_control.channel_occupied(channel)
+        text_size = cv2.getTextSize(timestamp, font, font_scale, thickness)[0]
+        origin = (frame.shape[1] - text_size[0] - 10, frame.shape[0] - 10)
 
-    def release_channel(self, channel, id):
-        if channel == "None":
-            return
-        
-        self.available_channels.append(channel)
-        for i in range(len(self.docks)):
-            if i == id:
-                continue
-            self.docks[i].camera_control.channel_released(channel)
+        cv2.putText(
+            frame,
+            timestamp,
+            origin,
+            font,
+            font_scale,
+            (0, 0, 0),
+            thickness * 2,
+            cv2.LINE_AA,
+        )
+        cv2.putText(
+            frame,
+            timestamp,
+            origin,
+            font,
+            font_scale,
+            (255, 255, 255),
+            thickness,
+            cv2.LINE_AA,
+        )
+        return frame
 
-    def on_dock_close(self, channel, id):
-        self.release_channel(channel, id)
+    def sharpen_image(self, frame):
+        kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+        sharpened = cv2.filter2D(frame, -1, kernel)
+        return sharpened
+
+    def stop(self):
+        self.running = False
+        self.signal.sigPixmapReady.disconnect()
+        self.signal.sigError.disconnect()
+        if self.capture:
+            self.capture.release()
+
+    def get_current_frame(self):
+        self.mutex.lock()
+        frame = self.current_frame
+        self.mutex.unlock()
+        return frame
+
+
+class ResetableSlider(QtWidgets.QSlider):
+    def __init__(self, *args, **kwargs):
+        super(ResetableSlider, self).__init__(*args, **kwargs)
+
+    def mousePressEvent(self, ev: QtGui.QMouseEvent | None) -> None:
+        if ev.button() == QtCore.Qt.RightButton:
+            self.setValue(50)
+        return super().mousePressEvent(ev)
+
+
+class SaveImageTask(QtCore.QRunnable):
+    def __init__(self, video_task: VideoTask):
+        super(SaveImageTask, self).__init__()
+        self.video_task = video_task
+
+    def run(self):
+        frame = self.video_task.get_current_frame()
+        if frame is not None:
+            file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
+                None,
+                "Save Image",
+                "",
+                "Images (*.png *.jpg *.jpeg);;All Files (*)",
+            )
+            if file_path:
+                cv2.imwrite(file_path, frame)
+
 
 if __name__ == "__main__":
-
-    # cv2.utils.logging.setLogLevel(cv2.utils.logging.LOG_LEVEL_SILENT)
     app = QtWidgets.QApplication(sys.argv)
-    camera_control = CameraControl()
+    camera_control = CameraControl(nested=False)
     camera_control.show()
     sys.exit(app.exec_())

@@ -127,13 +127,14 @@ class DeviceWidget(QtWidgets.QWidget):
         layout.addWidget(self.label, alignment=QtCore.Qt.AlignCenter)
         self.setLayout(layout)
 class DevicesWidget(TabWidget, QtWidgets.QWidget):
-    def __init__(self, name, devices, parent=None):
+    def __init__(self, name, device_classes, parent=None):
         super().__init__(name, parent)
-        self.devices = devices
+        self.devices = []
         self.devices_widgets = []
 
-        for device in self.devices:
+        for device in device_classes:
             setattr(self, device.object_name, device())
+            self.devices.append(getattr(self, device.object_name))
 
         self._setup_ui()
         self._layout()
