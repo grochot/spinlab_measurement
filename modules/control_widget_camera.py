@@ -58,6 +58,8 @@ class CameraControl(QtWidgets.QWidget):
         self.free_channels: list[str] = ["None"] + self.ip_camera_widget.ip_cameras
         self.get_camera_indexes()
 
+        self.free_channels_mutex = QtCore.QMutex()
+
         self._setup_ui()
         self._layout()
 
@@ -75,11 +77,12 @@ class CameraControl(QtWidgets.QWidget):
         self.thread_pool.start(task)
 
     def on_camera_indexes_ready(self, indexes: list[int]) -> None:
-        self.free_channels = (
-            ["None"]
-            + [str(index) for index in indexes]
-            + self.ip_camera_widget.ip_cameras
-        )
+        with QtCore.QMutexLocker(self.free_channels_mutex):
+            self.free_channels = (
+                ["None"]
+                + [str(index) for index in indexes]
+                + self.ip_camera_widget.ip_cameras
+            )
         self.add_ip_camera_button.setEnabled(True)
         for dock in self.camera_docks:
             dock.channels = self.free_channels
@@ -139,7 +142,8 @@ class CameraControl(QtWidgets.QWidget):
         if channel == "None":
             return
         try:
-            self.free_channels.remove(channel)
+            with QtCore.QMutexLocker(self.free_channels_mutex):
+                self.free_channels.remove(channel)
         except ValueError:
             return
         for dock in self.camera_docks:
@@ -150,7 +154,8 @@ class CameraControl(QtWidgets.QWidget):
     def release_channel(self, channel: str, id: int) -> None:
         if channel == "None":
             return
-        self.free_channels.append(channel)
+        with QtCore.QMutexLocker(self.free_channels_mutex):
+            self.free_channels.append(channel)
         for dock in self.camera_docks:
             if dock.id == id:
                 continue
@@ -171,24 +176,29 @@ class CameraControl(QtWidgets.QWidget):
     def refresh_channels(self) -> None:
         self.stop_all_videos()
 
-        self.free_channels = ["None"] + self.ip_camera_widget.ip_cameras
+        with QtCore.QMutexLocker(self.free_channels_mutex):
+            self.free_channels = ["None"] + self.ip_camera_widget.ip_cameras
         self.get_camera_indexes()
 
     def add_ip_camera(self, ip: str) -> None:
-        self.free_channels.append(ip)
+        with QtCore.QMutexLocker(self.free_channels_mutex):
+            self.free_channels.append(ip)
         for dock in self.camera_docks:
             dock.add_channel(ip)
 
     def remove_ip_camera(self, ip: str) -> None:
-        try:
-            self.free_channels.remove(ip)
-        except ValueError:
-            pass
+        with QtCore.QMutexLocker(self.free_channels_mutex):
+            try:
+                self.free_channels.remove(ip)
+            except ValueError:
+                pass
+
         for dock in self.camera_docks:
             dock.remove_channel(ip)
 
     def closeEvent(self, event):
         self.stop_all_videos()
+        self.ip_camera_widget.close()
         event.accept()
 
     def showEvent(self, event):
@@ -217,6 +227,8 @@ class IpCameraWidget(QtWidgets.QWidget):
         self.load_ip_cameras()
 
     def _setup_ui(self):
+        self.setMinimumWidth(400)
+
         self.ip_edit = QtWidgets.QLineEdit("rtsp://")
         ip_regex = QtCore.QRegExp(r"^rtsp://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
         ip_validator = QtGui.QRegExpValidator(ip_regex)
@@ -276,11 +288,14 @@ class IpCameraWidget(QtWidgets.QWidget):
             json.dump(self.ip_cameras, file)
 
     def load_ip_cameras(self):
-        if os.path.exists("ip_cameras.json"):
-            with open("ip_cameras.json", "r") as file:
-                self.ip_cameras = json.load(file)
-                for ip in self.ip_cameras:
-                    self.add_camera_to_table(ip)
+        try:
+            if os.path.exists("ip_cameras.json"):
+                with open("ip_cameras.json", "r") as file:
+                    self.ip_cameras = json.load(file)
+                    for ip in self.ip_cameras:
+                        self.add_camera_to_table(ip)
+        except json.JSONDecodeError:
+            pass
 
 
 class CameraDock(Dock):
@@ -298,6 +313,8 @@ class CameraDock(Dock):
         self.channel: str = "None"
         self.thread_pool: QtCore.QThreadPool = thread_pool
         self.video_task: VideoTask = None
+        self.is_dragging: bool = False
+        self.last_mouse_pos: QtCore.QPoint = None
 
         self.sigClosed.connect(self.dock_close_event)
 
@@ -316,6 +333,7 @@ class CameraDock(Dock):
         self.image_label.setStyleSheet("border: 1px solid black;")
         self.image_label.setText("No camera selected")
 
+        self.channel_label = QtWidgets.QLabel("Source:")
         self.channel_combobox = QtWidgets.QComboBox()
         if len(self.channels) == 1:
             self.channel_combobox.setEnabled(False)
@@ -349,12 +367,20 @@ class CameraDock(Dock):
         main_layout = QtWidgets.QHBoxLayout()
         utils_layout = QtWidgets.QVBoxLayout()
 
+        utils_layout.addWidget(self.channel_label)
         utils_layout.addWidget(self.channel_combobox)
+
+        line = QtWidgets.QFrame()
+        line.setFrameShape(QtWidgets.QFrame.HLine)
+        line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        utils_layout.addWidget(line)
+
         utils_layout.addWidget(self.timestamp_checkbox)
         utils_layout.addWidget(self.sharpen_checkbox)
 
         utils_layout.addWidget(self.brightness_label)
         utils_layout.addWidget(self.brightness_slider)
+
         utils_layout.addWidget(self.save_button)
 
         utils_layout.addStretch()
@@ -449,6 +475,51 @@ class CameraDock(Dock):
             self.video_task.label_size = self.image_label.size()
         super().resizeEvent(ev)
 
+    def wheelEvent(self, ev: QtGui.QWheelEvent) -> None:
+        if not self.video_task:
+            return
+
+        if self.image_label.geometry().contains(ev.pos()):
+            if ev.angleDelta().y() > 0:
+                self.video_task.zoom = min(6, self.video_task.zoom + 1)
+            else:
+                self.video_task.zoom = max(0, self.video_task.zoom - 1)
+        super().wheelEvent(ev)
+
+    def mousePressEvent(self, ev: QtGui.QMouseEvent) -> None:
+        if not self.video_task:
+            return
+
+        if self.image_label.geometry().contains(ev.pos()):
+            if ev.button() == QtCore.Qt.RightButton:
+                self.video_task.zoom = 0
+
+            if (
+                ev.button() == QtCore.Qt.LeftButton
+                and not self.is_dragging
+                and self.video_task.zoom > 0
+            ):
+                self.is_dragging = True
+                self.last_mouse_pos = ev.pos()
+
+        super().mousePressEvent(ev)
+
+    def mouseMoveEvent(self, ev: QtGui.QMouseEvent) -> None:
+        if self.video_task:
+            if self.image_label.geometry().contains(ev.pos()):
+                if self.is_dragging:
+                    delta = self.last_mouse_pos - ev.pos()
+                    self.video_task.pan(delta)
+                    self.last_mouse_pos = ev.pos()
+
+        super().mouseMoveEvent(ev)
+
+    def mouseReleaseEvent(self, ev: QtGui.QMouseEvent) -> None:
+        if ev.button() == QtCore.Qt.LeftButton:
+            self.is_dragging = False
+
+        super().mouseReleaseEvent(ev)
+
 
 class VideoTaskSignals(QtCore.QObject):
     sigPixmapReady = QtCore.pyqtSignal(QtGui.QPixmap)
@@ -475,7 +546,10 @@ class VideoTask(QtCore.QRunnable):
         self.brightness: int = brightness
         self.current_frame = None
 
-        self.mutex = QtCore.QMutex()
+        self.zoom: int = 0
+        self.pan_offset: QtCore.QPoint = QtCore.QPoint(0, 0)
+
+        self.current_frame_mutex = QtCore.QMutex()
 
     def run(self):
         self.running = True
@@ -491,7 +565,10 @@ class VideoTask(QtCore.QRunnable):
         while self.running:
             is_read, frame = self.capture.read()
             if is_read:
-                frame = cv2.convertScaleAbs(frame, alpha=self.brightness / 50)
+
+                frame = self.apply_zoom(frame)
+
+                frame = self.adjust_brightness(frame)
 
                 if self.sharpen:
                     frame = self.sharpen_image(frame)
@@ -499,9 +576,8 @@ class VideoTask(QtCore.QRunnable):
                 if self.show_timestamp:
                     frame = self.add_timestamp(frame)
 
-                self.mutex.lock()
-                self.current_frame = frame
-                self.mutex.unlock()
+                with QtCore.QMutexLocker(self.current_frame_mutex):
+                    self.current_frame = frame
 
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 image = QtGui.QImage(
@@ -521,6 +597,9 @@ class VideoTask(QtCore.QRunnable):
             else:
                 self.signal.sigError.emit("Failed to capture frame")
                 break
+
+    def adjust_brightness(self, frame):
+        return cv2.convertScaleAbs(frame, alpha=self.brightness / 50)
 
     def add_timestamp(self, frame):
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -562,6 +641,49 @@ class VideoTask(QtCore.QRunnable):
         sharpened = cv2.filter2D(frame, -1, kernel)
         return sharpened
 
+    def apply_zoom(self, frame):
+        if self.zoom == 0:
+            return frame
+        center_x, center_y = frame.shape[1] // 2, frame.shape[0] // 2
+
+        radius_x, radius_y = int(center_x / (self.zoom + 1)), int(
+            center_y / (self.zoom + 1)
+        )
+
+        min_x, max_x = (
+            center_x - radius_x + self.pan_offset.x(),
+            center_x + radius_x + self.pan_offset.x(),
+        )
+        min_y, max_y = (
+            center_y - radius_y + self.pan_offset.y(),
+            center_y + radius_y + self.pan_offset.y(),
+        )
+
+        min_x = max(0, min_x)
+        min_y = max(0, min_y)
+        max_x = min(frame.shape[1], max_x)
+        max_y = min(frame.shape[0], max_y)
+
+        cropped = frame[min_y:max_y, min_x:max_x]
+
+        frame = cv2.resize(cropped, frame.shape[1::-1], interpolation=cv2.INTER_LINEAR)
+        return frame
+
+    def pan(self, delta: QtCore.QPoint):
+        self.pan_offset += delta
+        self.pan_offset.setX(
+            min(
+                max(self.pan_offset.x(), -self.label_size.width() // 2),
+                self.label_size.width() // 2,
+            )
+        )
+        self.pan_offset.setY(
+            min(
+                max(self.pan_offset.y(), -self.label_size.height() // 2),
+                self.label_size.height() // 2,
+            )
+        )
+
     def stop(self):
         self.running = False
         self.signal.sigPixmapReady.disconnect()
@@ -574,6 +696,9 @@ class VideoTask(QtCore.QRunnable):
         frame = self.current_frame
         self.mutex.unlock()
         return frame
+        self.mutex.lock()
+        self.zoom = value
+        self.mutex.unlock()
 
 
 class ResetableSlider(QtWidgets.QSlider):
