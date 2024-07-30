@@ -692,13 +692,9 @@ class VideoTask(QtCore.QRunnable):
             self.capture.release()
 
     def get_current_frame(self):
-        self.mutex.lock()
-        frame = self.current_frame
-        self.mutex.unlock()
-        return frame
-        self.mutex.lock()
-        self.zoom = value
-        self.mutex.unlock()
+        with QtCore.QMutexLocker(self.current_frame_mutex):
+            frame = self.current_frame
+            return frame
 
 
 class ResetableSlider(QtWidgets.QSlider):
