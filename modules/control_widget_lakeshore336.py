@@ -3,12 +3,21 @@ import sys
 import os
 from lakeshore import Model336
 import json
+from threading import Lock
+from abc import ABC, abstractmethod
+
+
+def format_time(time):
+    minutes = time // 60
+    seconds = time % 60
+    return f"{minutes:02d}:{seconds:02d}"
 
 
 class DummyModel336:
     def __init__(self):
         self.setpoint = 0.0
-        self.heater = {1: 1, 2: 0}
+        self.heater = {1: 0, 2: 0}
+        self.kelwin_reading = 0
 
     def get_control_setpoint(self, channel):
         return self.setpoint
@@ -17,10 +26,14 @@ class DummyModel336:
         return self.heater[channel]
 
     def get_all_kelvin_reading(self):
-        return [300.123]
+        tmp = self.kelwin_reading
+        if self.kelwin_reading < self.setpoint:
+            self.kelwin_reading += 0.1
+        return [tmp]
 
     def set_control_setpoint(self, channel, value):
         self.setpoint = value
+        self.kelwin_reading = value - 2
         print(f"Set control setpoint {channel} to {value}")
 
     def all_heaters_off(self):
@@ -39,13 +52,16 @@ class DummyModel336:
         pass
 
 
-class State:
+class State(ABC):
+    @abstractmethod
     def on_entry(self, context: "Lakeshore336Control"):
         pass
 
+    @abstractmethod
     def on_tick(self, context: "Lakeshore336Control"):
         pass
 
+    @abstractmethod
     def on_exit(self, context: "Lakeshore336Control"):
         pass
 
@@ -60,11 +76,17 @@ class NotConnectedState(State):
         context.settings_win.connect_btn.setEnabled(True)
         context.settings_win.disconnect_btn.setEnabled(False)
 
+    def on_tick(self, context):
+        pass
+
+    def on_exit(self, context):
+        pass
+
 
 class ConnectedState(State):
     def on_entry(self, context):
         context.query_device()
-        context.tick_timer.start(400)
+        context.tick_timer.start(context.settings_win.refresh_interval)
 
         context.settings_win.connect_btn.setEnabled(False)
         context.settings_win.disconnect_btn.setEnabled(True)
@@ -74,68 +96,115 @@ class ConnectedState(State):
         if any([heater.is_on for heater in context.outputs]):
             context.change_state(context.heaterOnState)
 
+    def on_exit(self, context):
+        pass
+
 
 class HeaterOnState(State):
+    def on_entry(self, context):
+        pass
+
     def on_tick(self, context):
         if not any([heater.is_on for heater in context.outputs]):
             context.change_state(context.connectedState)
 
         if context.is_setpoint_reached():
             context.change_state(context.delayState)
+            return
+
+        context.time_delta -= context.settings_win.refresh_interval
+        if context.time_delta > 0:
+            return
 
         if context.is_error_not_changing():
             context.change_state(context.timeoutState)
+            return
+
+    def on_exit(self, context):
+        pass
 
 
 class DelayState(State):
     def on_entry(self, context):
-        delay_duration = float(context.settings_win.delay_le.text())
-        delay_duration = int(delay_duration * 60 * 1000)
+        self.delay_duration = float(context.settings_win.delay_duration)
+        self.delay_duration = int(self.delay_duration * 60 * 1000)
         context.single_shot_timer.timeout.connect(
             lambda: context.change_state(context.readyState)
         )
-        context.single_shot_timer.start(delay_duration)
+        context.single_shot_timer.start(self.delay_duration)
+        context.delay_timer_label.setText(
+            f"DELAY: {format_time(self.delay_duration // 1000)}"
+        )
         context.delay_timer_indicator.start_blink("green", 500)
 
     def on_tick(self, context):
+        self.delay_duration -= context.settings_win.refresh_interval
+        context.delay_timer_label.setText(
+            f"DELAY: {format_time(self.delay_duration // 1000)}"
+        )
+
         if not any([heater.is_on for heater in context.outputs]):
             context.change_state(context.connectedState)
+            return
 
         if not context.is_setpoint_reached():
             context.change_state(context.heaterOnState)
+            return
 
     def on_exit(self, context):
         context.single_shot_timer.stop()
         context.single_shot_timer.disconnect()
         context.delay_timer_indicator.stop_blink()
+        context.delay_timer_label.setText("Delay")
 
 
 class TimeoutState(State):
     def on_entry(self, context):
-        timeout_duration = float(context.settings_win.timeout_le.text())
-        timeout_duration = int(timeout_duration * 60 * 1000)
+        self.timeout_duration = float(context.settings_win.timeout_duration)
+        self.timeout_duration = int(self.timeout_duration * 60 * 1000)
         context.single_shot_timer.timeout.connect(
             lambda: context.change_state(context.timeoutErrorState)
         )
-        context.single_shot_timer.start(timeout_duration)
+
+        context.single_shot_timer.start(self.timeout_duration)
         context.timeout_timer_indicator.start_blink("red", 500)
+        context.timeout_timer_label.setText(
+            f"TIMEOUT: {format_time(self.timeout_duration // 1000)}"
+        )
 
     def on_tick(self, context):
+        self.timeout_duration -= context.settings_win.refresh_interval
+        context.timeout_timer_label.setText(
+            f"TIMEOUT: {format_time(self.timeout_duration // 1000)}"
+        )
+
         if not any([heater.is_on for heater in context.outputs]):
             context.change_state(context.connectedState)
+            return
+
+        if context.is_setpoint_reached():
+            context.change_state(context.delayState)
+            return
+
+        context.time_delta -= context.settings_win.refresh_interval
+        if context.time_delta > 0:
+            return
 
         if not context.is_error_not_changing():
             context.change_state(context.heaterOnState)
+            return
 
     def on_exit(self, context):
         context.single_shot_timer.stop()
         context.single_shot_timer.disconnect()
         context.timeout_timer_indicator.stop_blink()
+        context.timeout_timer_label.setText("Timeout")
 
 
 class ReadyState(State):
     def on_entry(self, context):
         context.set_ready(True)
+        context.ready_label.setText("READY")
 
     def on_tick(self, context):
         if not any([heater.is_on for heater in context.outputs]):
@@ -143,6 +212,7 @@ class ReadyState(State):
 
     def on_exit(self, context):
         context.set_ready(False)
+        context.ready_label.setText("Ready")
 
 
 class TimeoutErrorState(State):
@@ -165,11 +235,22 @@ class Lakeshore336Control(QtWidgets.QWidget):
         super(Lakeshore336Control, self).__init__(parent)
         self.name = "Lakeshore 336"
         self.icon_path = os.path.join("modules", "icons", "LakeShore336.ico")
-        
-        self.settings_win = SettingsWindow()
+
+        self.lock = Lock()
+
+        self.settings_win = SettingsWindow(self.lock)
         self.settings_win.load_settings()
         self.settings_win.connect_btn.clicked.connect(self.on_connect_btn_clicked)
         self.settings_win.disconnect_btn.clicked.connect(self.on_disconnect_btn_clicked)
+        self.settings_win.refresh_int_btn.clicked.connect(
+            lambda: self.on_timer_btn_clicked("refresh")
+        )
+        self.settings_win.delay_btn.clicked.connect(
+            lambda: self.on_timer_btn_clicked("delay")
+        )
+        self.settings_win.timeout_cond_btn.clicked.connect(
+            lambda: self.on_timer_btn_clicked("timeout")
+        )
 
         self.notConnectedState = NotConnectedState()
         self.connectedState = ConnectedState()
@@ -180,11 +261,13 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.timeoutErrorState = TimeoutErrorState()
 
         self.ready: bool = False
-        self.current_state = self.notConnectedState
+        self.current_state: State = self.notConnectedState
         self.device: Model336 = None
 
+        self.setpoint = 0.0
         self.is_setpoint_set: bool = True
-        self.prev_temp_diff: float = 0.0
+        self.prev_temp: float = 0.0
+        self.time_delta: int = self.settings_win.dt * 1000
 
         self.tick_timer = QtCore.QTimer()
         self.tick_timer.timeout.connect(self.on_tick)
@@ -223,7 +306,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.setpoint_le.returnPressed.connect(self.on_setpoint_set_clicked)
 
         self.setpoint_btn = QtWidgets.QPushButton("SET")
-        self.setpoint_btn.setFixedWidth(40)
+        self.setpoint_btn.setFixedWidth(45)
         self.setpoint_btn.clicked.connect(self.on_setpoint_set_clicked)
 
         self.curr_temp_l = QtWidgets.QLabel("Temperature [K]")
@@ -241,10 +324,10 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.all_off_btn = QtWidgets.QPushButton("ALL OFF")
         self.all_off_btn.clicked.connect(self.on_all_off_btn_clicked)
 
-        self.delay_timer_label = QtWidgets.QLabel("Delay Timer")
+        self.delay_timer_label = QtWidgets.QLabel("Delay")
         self.delay_timer_indicator = Indicator()
 
-        self.timeout_timer_label = QtWidgets.QLabel("Timeout Timer")
+        self.timeout_timer_label = QtWidgets.QLabel("Timeout")
         self.timeout_timer_indicator = Indicator()
 
         self.ready_label = QtWidgets.QLabel("Ready")
@@ -326,10 +409,12 @@ class Lakeshore336Control(QtWidgets.QWidget):
         layout.addStretch()
         self.setLayout(layout)
 
+    @QtCore.pyqtSlot()
     def change_state(self, state: State):
-        self.current_state.on_exit(self)
-        self.current_state = state
-        self.current_state.on_entry(self)
+        with self.lock:
+            self.current_state.on_exit(self)
+            self.current_state = state
+            self.current_state.on_entry(self)
 
     def on_connect_btn_clicked(self):
         self.connect_with_device()
@@ -341,9 +426,9 @@ class Lakeshore336Control(QtWidgets.QWidget):
         try:
             if self.settings_win.ip_le.text() == "":
                 raise ValueError("IP address is empty")
-            self.device = Model336(ip_address=self.settings_win.ip_le.text())
-            self.device.logger.setLevel("WARNING")
-            # self.device = DummyModel336()
+            # self.device = Model336(ip_address=self.settings_win.ip_le.text())
+            # self.device.logger.setLevel("WARNING")
+            self.device = DummyModel336()
             self.change_state(self.connectedState)
         except Exception as e:
             self.change_state(self.notConnectedState)
@@ -355,6 +440,24 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.device = None
         self.change_state(self.notConnectedState)
 
+    def on_timer_btn_clicked(self, timer: str):
+        match timer:
+            case "refresh":
+                if self.tick_timer.isActive():
+                    self.tick_timer.stop()
+                self.tick_timer.start(self.settings_win.refresh_interval)
+            case "delay":
+                if self.current_state == self.delayState:
+                    dialog = RestartTimerDialog()
+                    if dialog.exec():
+                        self.change_state(self.delayState)
+
+            case "timeout":
+                if self.current_state == self.timeoutState:
+                    dialog = RestartTimerDialog()
+                    if dialog.exec():
+                        self.change_state(self.timeoutState)
+
     def set_ready(self, ready: bool):
         self.ready = ready
         if ready:
@@ -363,6 +466,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
         else:
             self.ready_indicator.set_off()
 
+    @QtCore.pyqtSlot()
     def on_tick(self):
         self.query_device()
         self.current_state.on_tick(self)
@@ -370,6 +474,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
     def query_device(self):
         try:
             setpoint = self.device.get_control_setpoint(1)
+            self.setpoint = setpoint
             if self.is_setpoint_set:
                 self.setpoint_le.blockSignals(True)
                 self.setpoint_le.setText(f"{setpoint:.3f}")
@@ -396,20 +501,17 @@ class Lakeshore336Control(QtWidgets.QWidget):
             self.outputs[0].indicator.set_on()
 
     def is_setpoint_reached(self):
-        try:
-            setpoint = self.device.get_control_setpoint(1)
-            curr_temp = self.device.get_all_kelvin_reading()[0]
-        except Exception as e:
-            print(e)
-            self.change_state(self.notConnectedState)
+        with self.lock:
+            setpoint = self.setpoint
+        curr_temp = float(self.curr_temp_le.text())
 
-        match self.settings_win.ready_condition.currentText():
+        match self.settings_win.ready_condition:
             case "absolute error":
                 error = abs(setpoint - curr_temp)
             case "relative error":
                 error = abs(setpoint - curr_temp) / setpoint * 100
 
-        error_threshold = float(self.settings_win.value_le.text())
+        error_threshold = self.settings_win.error_threshold
 
         if error < error_threshold:
             return True
@@ -417,17 +519,14 @@ class Lakeshore336Control(QtWidgets.QWidget):
             return False
 
     def is_error_not_changing(self):
-        try:
-            curr_temp = self.device.get_all_kelvin_reading()[0]
-        except Exception as e:
-            print(e)
-            self.change_state(self.notConnectedState)
+        self.time_delta = self.settings_win.dt * 1000
 
-        error = abs(self.device.get_control_setpoint(1) - curr_temp)
-        tmp = self.prev_temp_diff
-        self.prev_temp_diff = error
+        curr_temp = float(self.curr_temp_le.text())
 
-        if abs(error - tmp) < 0.01:
+        tmp = self.prev_temp
+        self.prev_temp = float(self.curr_temp_le.text())
+
+        if abs(curr_temp - tmp) < self.settings_win.dT:
             return True
         else:
             return False
@@ -437,35 +536,59 @@ class Lakeshore336Control(QtWidgets.QWidget):
 
     def on_setpoint_changed(self, text):
         self.is_setpoint_set = False
-        self.setpoint_btn.setStyleSheet("color: RED;")
+        if float(text) != self.setpoint:
+            self.setpoint_btn.setStyleSheet("color: RED;")
+        else:
+            self.setpoint_btn.setStyleSheet("")
 
     def on_setpoint_set_clicked(self):
-        self.setpoint_btn.setFocus()
-        self.is_setpoint_set = True
-        self.setpoint_btn.setStyleSheet("")
-        setpoint = self.setpoint_le.text()
-        try:
-            setpoint = float(setpoint.replace(",", "."))
-            self.device.set_control_setpoint(1, setpoint)
-        except Exception as e:
-            print(e)
-            self.change_state(self.notConnectedState)
+        with self.lock:
+            self.setpoint_btn.setFocus()
+            self.is_setpoint_set = True
+            self.setpoint_btn.setStyleSheet("")
+            setpoint = (
+                float(self.setpoint_le.text())
+                if self.setpoint_le.text() != ""
+                else self.setpoint
+            )
+            self.setpoint = setpoint
+            try:
+                self.device.set_control_setpoint(1, self.setpoint)
+            except Exception as e:
+                print(e)
+                self.change_state(self.notConnectedState)
 
     def on_output_set_clicked(self, output: int):
-        heater_range = self.outputs[output - 1].range_cb.currentIndex()
-        self.outputs[output - 1]._set_range(heater_range)
-        try:
-            self.device.set_heater_range(output, heater_range)
-        except Exception as e:
-            print(e)
-            self.change_state(self.notConnectedState)
+        with self.lock:
+            heater_range = self.outputs[output - 1].range_cb.currentIndex()
+            self.outputs[output - 1]._set_range(heater_range)
+            try:
+                self.device.set_heater_range(output, heater_range)
+            except Exception as e:
+                print(e)
+                self.change_state(self.notConnectedState)
 
     def on_all_off_btn_clicked(self):
-        try:
-            self.device.all_heaters_off()
-        except Exception as e:
-            print(e)
-            self.change_state(self.notConnectedState)
+        with self.lock:
+            try:
+                self.device.all_heaters_off()
+                for output in self.outputs:
+                    output._set_range(0)
+            except Exception as e:
+                print(e)
+                self.change_state(self.notConnectedState)
+
+    def closeEvent(self, event):
+        if self.tick_timer.isActive():
+            self.tick_timer.stop()
+        if self.single_shot_timer.isActive():
+            self.single_shot_timer.stop()
+        if self.device is not None:
+            self.device.disconnect_tcp()
+            self.device = None
+
+        self.settings_win.close()
+        event.accept()
 
 
 class HeaterWidget(QtWidgets.QWidget):
@@ -474,6 +597,7 @@ class HeaterWidget(QtWidgets.QWidget):
         self._label_text = label_text
 
         self.HEATER_RANGE = {0: "OFF", 1: "LOW", 2: "MID", 3: "HIGH"}
+        self.prev_heater_range: int = 0
         self.is_heater_set: bool = True
         self.is_on: bool = False
 
@@ -494,7 +618,7 @@ class HeaterWidget(QtWidgets.QWidget):
         self.range_cb.currentIndexChanged.connect(self.on_range_cb_changed)
 
         self.btn = QtWidgets.QPushButton("SET")
-        self.btn.setFixedWidth(40)
+        self.btn.setFixedWidth(45)
         self.btn.clicked.connect(self.on_btn_clicked)
 
         self.indicator = Indicator()
@@ -523,9 +647,13 @@ class HeaterWidget(QtWidgets.QWidget):
 
     def on_range_cb_changed(self, index):
         self.is_heater_set = False
-        self.btn.setStyleSheet("color: RED;")
+        if index != self.prev_heater_range:
+            self.btn.setStyleSheet("color: RED;")
+        else:
+            self.btn.setStyleSheet("")
 
     def on_btn_clicked(self):
+        self.prev_heater_range = self.range_cb.currentIndex()
         self.is_heater_set = True
         self.btn.setStyleSheet("")
 
@@ -589,15 +717,28 @@ class Indicator(QtWidgets.QFrame):
 
 
 class SettingsWindow(QtWidgets.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, lock: Lock, parent=None):
         super(SettingsWindow, self).__init__(parent)
+        self.save_path = os.path.join("LakeShore336_parameters.json")
+
+        self.refresh_interval: int = None
+        self.delay_duration: float = None
+        self.timeout_duration: float = None
+        self.lock = lock
+
+        self.ready_condition: str = None
+        self.error_threshold: float = None
+
+        self.dT: float = None
+        self.dt: float = None
 
         self._setup_ui()
         self._layout()
 
     def _setup_ui(self):
         self.setWindowTitle("LakeShore 336 - Settings")
-        self.setWindowIcon(QtGui.QIcon("modules/icons/LakeShore336.ico"))
+        icon_path = os.path.join("modules", "icons", "LakeShore336.ico")
+        self.setWindowIcon(QtGui.QIcon(icon_path))
         self.setStyleSheet("font-size: 12pt;")
 
         self.ip_le = QtWidgets.QLineEdit()
@@ -610,26 +751,97 @@ class SettingsWindow(QtWidgets.QDialog):
         self.disconnect_btn = QtWidgets.QPushButton("Disconnect")
         self.disconnect_btn.setEnabled(False)
 
+        self.refresh_int_le = QtWidgets.QLineEdit("500")
+        self.refresh_int_le.setAlignment(QtCore.Qt.AlignCenter)
+        validator = QtGui.QIntValidator(bottom=100)
+        validator.setLocale(QtCore.QLocale(QtCore.QLocale.English))
+        self.refresh_int_le.setValidator(validator)
+        self.refresh_int_le.textChanged.connect(
+            lambda text: self.time_le_changed(
+                text, self.refresh_interval, self.refresh_int_btn
+            )
+        )
+        self.refresh_int_le.returnPressed.connect(self.on_refresh_btn_clicked)
+
+        self.refresh_int_btn = QtWidgets.QPushButton("SET")
+        self.refresh_int_btn.setFixedWidth(45)
+        self.refresh_int_btn.clicked.connect(self.on_refresh_btn_clicked)
+
         self.delay_le = QtWidgets.QLineEdit("1")
         self.delay_le.setAlignment(QtCore.Qt.AlignCenter)
         validator = QtGui.QDoubleValidator(bottom=0)
         validator.setLocale(QtCore.QLocale(QtCore.QLocale.English))
         self.delay_le.setValidator(validator)
+        self.delay_le.textChanged.connect(
+            lambda text: self.time_le_changed(text, self.delay_duration, self.delay_btn)
+        )
+        self.delay_le.returnPressed.connect(self.on_delay_btn_clicked)
+
+        self.delay_btn = QtWidgets.QPushButton("SET")
+        self.delay_btn.setFixedWidth(45)
+        self.delay_btn.clicked.connect(self.on_delay_btn_clicked)
 
         self.timeout_le = QtWidgets.QLineEdit("10")
         self.timeout_le.setAlignment(QtCore.Qt.AlignCenter)
         validator = QtGui.QDoubleValidator(bottom=0)
         validator.setLocale(QtCore.QLocale(QtCore.QLocale.English))
         self.timeout_le.setValidator(validator)
+        self.timeout_le.textChanged.connect(
+            lambda text: self.time_le_changed(
+                text, self.timeout_duration, self.timeout_cond_btn
+            )
+        )
+        self.timeout_le.returnPressed.connect(self.on_timeout_btn_clicked)
 
-        self.ready_condition = QtWidgets.QComboBox()
-        self.ready_condition.addItems(["absolute error", "relative error"])
-        self.ready_condition.currentIndexChanged.connect(
+        self.timeout_btn = QtWidgets.QPushButton("SET")
+        self.timeout_btn.setFixedWidth(45)
+        self.timeout_btn.clicked.connect(self.on_timeout_btn_clicked)
+
+        self.ready_cond_l = QtWidgets.QLabel("Ready condition:")
+        self.ready_condition_cb = QtWidgets.QComboBox()
+        self.ready_condition_cb.addItems(["absolute error", "relative error"])
+        self.ready_condition_cb.currentIndexChanged.connect(
             self.on_ready_condition_changed
         )
-
-        self.value_l = QtWidgets.QLabel("error [K] < ")
+        self.value_l = QtWidgets.QLabel("[K] <")
         self.value_le = QtWidgets.QLineEdit("0.1")
+        self.value_le.setAlignment(QtCore.Qt.AlignCenter)
+        validator = QtGui.QDoubleValidator(bottom=0.001)
+        validator.setLocale(QtCore.QLocale(QtCore.QLocale.English))
+        self.value_le.setValidator(validator)
+        self.value_le.textChanged.connect(self.on_value_changed)
+        self.value_le.returnPressed.connect(self.on_value_btn_clicked)
+
+        self.value_btn = QtWidgets.QPushButton("SET")
+        self.value_btn.setFixedWidth(45)
+        self.value_btn.clicked.connect(self.on_value_btn_clicked)
+
+        self.timeout_cond_l = QtWidgets.QLabel("Timeout condition:")
+        self.timeout_cond_dT_l = QtWidgets.QLabel("\u0394T <")
+        self.timeout_cond_dT_le = QtWidgets.QLineEdit("0.01")
+        self.timeout_cond_dT_le.setAlignment(QtCore.Qt.AlignCenter)
+        validator = QtGui.QDoubleValidator(bottom=0.001)
+        validator.setLocale(QtCore.QLocale(QtCore.QLocale.English))
+        self.timeout_cond_dT_le.setValidator(validator)
+        self.timeout_cond_dT_le.textChanged.connect(self.on_timeout_cond_changed)
+        self.timeout_cond_dT_le.returnPressed.connect(self.on_timeout_btn_clicked)
+        # self.timeout_cond_dT_le.setFixedWidth(130)
+
+        self.timeout_cond_dt_l = QtWidgets.QLabel("[K] /")
+        self.timeout_cond_dt_le = QtWidgets.QLineEdit("10")
+        self.timeout_cond_dt_le.setAlignment(QtCore.Qt.AlignCenter)
+        validator = QtGui.QDoubleValidator(bottom=0.001)
+        validator.setLocale(QtCore.QLocale(QtCore.QLocale.English))
+        self.timeout_cond_dt_le.setValidator(validator)
+        self.timeout_cond_dt_le.textChanged.connect(self.on_timeout_cond_changed)
+        self.timeout_cond_dt_le.returnPressed.connect(self.on_timeout_btn_clicked)
+        # self.timeout_cond_dt_le.setFixedWidth(130)
+
+        self.timeout_cond_btn = QtWidgets.QPushButton("SET")
+        self.timeout_cond_btn.setFixedWidth(45)
+        self.timeout_cond_btn.clicked.connect(self.on_timeout_btn_clicked)
+
+        self.timeout_cond_unit_l = QtWidgets.QLabel("[s]")
 
     def _layout(self):
         layout = QtWidgets.QFormLayout()
@@ -638,44 +850,212 @@ class SettingsWindow(QtWidgets.QDialog):
         btn_layout.addWidget(self.connect_btn)
         btn_layout.addWidget(self.disconnect_btn)
         layout.addRow(btn_layout)
+
         layout.addRow(HorizontalDivider())
-        layout.addRow("Delay [min]", self.delay_le)
-        layout.addRow("Timeout [min]", self.timeout_le)
+
+        refresh_layout = QtWidgets.QHBoxLayout()
+        refresh_layout.addWidget(self.refresh_int_le)
+        refresh_layout.addWidget(self.refresh_int_btn)
+        layout.addRow("Refresh [ms]", refresh_layout)
+
+        delay_layout = QtWidgets.QHBoxLayout()
+        delay_layout.addWidget(self.delay_le)
+        delay_layout.addWidget(self.delay_btn)
+
+        layout.addRow("Delay [min]", delay_layout)
+
+        timeout_layout = QtWidgets.QHBoxLayout()
+        timeout_layout.addWidget(self.timeout_le)
+        timeout_layout.addWidget(self.timeout_btn)
+        layout.addRow("Timeout [min]", timeout_layout)
+
         layout.addRow(HorizontalDivider())
-        layout.addRow("Ready condition", self.ready_condition)
-        layout.addRow(self.value_l, self.value_le)
+        layout.addRow(self.ready_cond_l)
+        ready_cond_layout = QtWidgets.QHBoxLayout()
+        ready_cond_layout.addWidget(self.ready_condition_cb, stretch=1)
+        ready_cond_layout.addWidget(self.value_l)
+        ready_cond_layout.addWidget(self.value_le, stretch=1)
+        ready_cond_layout.addWidget(self.value_btn)
+        layout.addRow(ready_cond_layout)
+
+        layout.addRow(self.timeout_cond_l)
+        timeout_cond_layout = QtWidgets.QHBoxLayout()
+        timeout_cond_layout.addWidget(self.timeout_cond_dT_l)
+        timeout_cond_layout.addWidget(self.timeout_cond_dT_le, stretch=1)
+        timeout_cond_layout.addWidget(self.timeout_cond_dt_l)
+        timeout_cond_layout.addWidget(self.timeout_cond_dt_le, stretch=1)
+        timeout_cond_layout.addWidget(self.timeout_cond_unit_l)
+        timeout_cond_layout.addWidget(self.timeout_cond_btn)
+        layout.addRow(timeout_cond_layout)
 
         self.setLayout(layout)
 
     def on_ready_condition_changed(self, index):
-        if index == 0:
-            self.value_l.setText("error [K] <")
+        if index == 0 or self.value_le.text() == "":
+            self.value_l.setText("[K] <")
         else:
-            self.value_l.setText("error [%] <")
+            self.value_l.setText("[%] <")
+        if (
+            self.ready_condition_cb.currentText() != self.ready_condition
+            or float(self.value_le.text()) != self.error_threshold
+        ):
+            self.value_btn.setStyleSheet("color: RED;")
+        else:
+            self.value_btn.setStyleSheet("")
+
+    def time_le_changed(self, text, param, btn):
+        if text == "":
+            btn.setStyleSheet("color: RED;")
+            return
+
+        if float(text) != float(param):
+            btn.setStyleSheet("color: RED;")
+        else:
+            btn.setStyleSheet("")
+
+    def on_refresh_btn_clicked(self):
+        self.refresh_int_btn.setStyleSheet("")
+
+        with self.lock:
+            self.refresh_interval = (
+                int(self.refresh_int_le.text())
+                if self.refresh_int_le.text() != ""
+                else self.refresh_interval
+            )
+            self.refresh_int_le.setText(str(self.refresh_interval))
+
+    def on_delay_btn_clicked(self):
+        self.delay_btn.setStyleSheet("")
+        with self.lock:
+            self.delay_duration = (
+                float(self.delay_le.text())
+                if self.delay_le.text() != ""
+                else self.delay_duration
+            )
+            self.delay_le.setText(str(self.delay_duration))
+
+    def on_timeout_btn_clicked(self):
+        self.timeout_cond_btn.setStyleSheet("")
+        with self.lock:
+            self.timeout_duration = (
+                float(self.timeout_le.text())
+                if self.timeout_le.text() != ""
+                else self.timeout_duration
+            )
+            self.timeout_le.setText(str(self.timeout_duration))
+
+    def on_value_changed(self, text):
+        if text == "":
+            self.value_btn.setStyleSheet("color: RED;")
+            return
+
+        if (
+            float(text) != float(self.error_threshold)
+            or self.ready_condition != self.ready_condition_cb.currentText()
+        ):
+            self.value_btn.setStyleSheet("color: RED;")
+        else:
+            self.value_btn.setStyleSheet("")
+
+    def on_value_btn_clicked(self):
+        self.value_btn.setStyleSheet("")
+        with self.lock:
+            self.error_threshold = (
+                float(self.value_le.text())
+                if self.value_le.text() != ""
+                else self.error_threshold
+            )
+            self.value_le.setText(str(self.error_threshold))
+            self.ready_condition = self.ready_condition_cb.currentText()
+
+    def on_timeout_cond_changed(self, text):
+        if text == "":
+            self.timeout_cond_btn.setStyleSheet("color: RED;")
+            return
+
+        if self.dT != float(self.timeout_cond_dT_le.text()) or self.dt != float(
+            self.timeout_cond_dt_le.text()
+        ):
+            self.timeout_cond_btn.setStyleSheet("color: RED;")
+        else:
+            self.timeout_cond_btn.setStyleSheet("")
+
+    def on_timeout_btn_clicked(self):
+        self.timeout_cond_btn.setStyleSheet("")
+        with self.lock:
+            self.dT = (
+                float(self.timeout_cond_dT_le.text())
+                if self.timeout_cond_dT_le.text() != ""
+                else self.dT
+            )
+            self.timeout_cond_dT_le.setText(str(self.dT))
+
+            self.dt = (
+                float(self.timeout_cond_dt_le.text())
+                if self.timeout_cond_dt_le.text() != ""
+                else self.dt
+            )
+            self.timeout_cond_dt_le.setText(str(self.dt))
 
     def save_settings(self):
         settings_dict = {
             "ip": self.ip_le.text(),
-            "delay": self.delay_le.text(),
-            "timeout": self.timeout_le.text(),
-            "ready_condition": self.ready_condition.currentText(),
-            "value": self.value_le.text(),
+            "refresh": str(self.refresh_interval),
+            "delay": str(self.delay_duration),
+            "timeout": str(self.timeout_duration),
+            "ready_condition": self.ready_condition,
+            "error_threshold": str(self.error_threshold),
+            "dT": str(self.dT),
+            "dt": str(self.dt),
         }
         try:
-            with open("LakeShore336_parameters.json", "w") as f:
+            with open(self.save_path, "w") as f:
                 json.dump(settings_dict, f)
         except Exception as e:
             print(e)
 
     def load_settings(self):
         try:
-            with open("LakeShore336_parameters.json", "r") as f:
+            with open(self.save_path, "r") as f:
+                self.refresh_int_le.blockSignals(True)
+                self.delay_le.blockSignals(True)
+                self.timeout_le.blockSignals(True)
+                self.ready_condition_cb.blockSignals(True)
+                self.value_le.blockSignals(True)
+                self.timeout_cond_dT_le.blockSignals(True)
+                self.timeout_cond_dt_le.blockSignals(True)
+
                 settings_dict = json.load(f)
                 self.ip_le.setText(settings_dict["ip"])
+
+                self.refresh_int_le.setText(settings_dict["refresh"])
+                self.refresh_interval = int(settings_dict["refresh"])
+
                 self.delay_le.setText(settings_dict["delay"])
+                self.delay_duration = float(settings_dict["delay"])
+
                 self.timeout_le.setText(settings_dict["timeout"])
-                self.ready_condition.setCurrentText(settings_dict["ready_condition"])
-                self.value_le.setText(settings_dict["value"])
+                self.timeout_duration = float(settings_dict["timeout"])
+
+                self.ready_condition_cb.setCurrentText(settings_dict["ready_condition"])
+                self.ready_condition = settings_dict["ready_condition"]
+
+                self.value_le.setText(settings_dict["error_threshold"])
+                self.error_threshold = float(settings_dict["error_threshold"])
+
+                self.timeout_cond_dT_le.setText(settings_dict["dT"])
+                self.dT = float(settings_dict["dT"])
+
+                self.timeout_cond_dt_le.setText(settings_dict["dt"])
+                self.dt = float(settings_dict["dt"])
+
+                self.refresh_int_le.blockSignals(False)
+                self.delay_le.blockSignals(False)
+                self.timeout_le.blockSignals(False)
+                self.ready_condition_cb.blockSignals(False)
+                self.value_le.blockSignals(False)
+                self.timeout_cond_dT_le.blockSignals(False)
+                self.timeout_cond_dt_le.blockSignals(False)
         except FileNotFoundError:
             pass
         except Exception as e:
@@ -684,6 +1064,27 @@ class SettingsWindow(QtWidgets.QDialog):
     def closeEvent(self, event):
         self.save_settings()
         event.accept()
+
+
+class RestartTimerDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(RestartTimerDialog, self).__init__(parent)
+        self.setWindowTitle("Restart timer")
+        self.setStyleSheet("font-size: 12pt;")
+
+        self.label = QtWidgets.QLabel("Timer is already running! Restart?")
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+
+        QBtn = QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
+
+        self.dialogBtns = QtWidgets.QDialogButtonBox(QBtn)
+        self.dialogBtns.accepted.connect(self.accept)
+        self.dialogBtns.rejected.connect(self.reject)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.label)
+        layout.addWidget(self.dialogBtns)
+        self.setLayout(layout)
 
 
 class HorizontalDivider(QtWidgets.QFrame):
