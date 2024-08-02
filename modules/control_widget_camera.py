@@ -9,10 +9,10 @@ import json
 os.environ["OPENCV_LOG_LEVEL"] = "SILENT"
 import cv2
 
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+# logging.basicConfig(
+#     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+# )
+# logger = logging.getLogger(__name__)
 
 
 def get_camera_indexes(limit: int = 5) -> list[int]:
@@ -220,6 +220,7 @@ class IpCameraWidget(QtWidgets.QWidget):
         super(IpCameraWidget, self).__init__(parent)
         self.setWindowTitle("IP Cameras")
 
+        self.save_path = os.path.join("CameraControl_ipCameras.json")
         self.ip_cameras: list[str] = []
 
         self._setup_ui()
@@ -284,13 +285,13 @@ class IpCameraWidget(QtWidgets.QWidget):
         self.save_ip_cameras()
 
     def save_ip_cameras(self):
-        with open("ip_cameras.json", "w") as file:
+        with open(self.save_path, "w") as file:
             json.dump(self.ip_cameras, file)
 
     def load_ip_cameras(self):
         try:
-            if os.path.exists("ip_cameras.json"):
-                with open("ip_cameras.json", "r") as file:
+            if os.path.exists(self.save_path):
+                with open(self.save_path, "r") as file:
                     self.ip_cameras = json.load(file)
                     for ip in self.ip_cameras:
                         self.add_camera_to_table(ip)
@@ -546,6 +547,9 @@ class VideoTask(QtCore.QRunnable):
         self.brightness: int = brightness
         self.current_frame = None
 
+        self.width: int = 0
+        self.height: int = 0
+
         self.zoom: int = 0
         self.pan_offset: QtCore.QPoint = QtCore.QPoint(0, 0)
 
@@ -565,6 +569,7 @@ class VideoTask(QtCore.QRunnable):
         while self.running:
             is_read, frame = self.capture.read()
             if is_read:
+                self.width, self.height = frame.shape[1], frame.shape[0]
 
                 frame = self.apply_zoom(frame)
 
@@ -573,8 +578,7 @@ class VideoTask(QtCore.QRunnable):
                 if self.sharpen:
                     frame = self.sharpen_image(frame)
 
-                if self.show_timestamp:
-                    frame = self.add_timestamp(frame)
+                frame = self.add_text(frame)
 
                 with QtCore.QMutexLocker(self.current_frame_mutex):
                     self.current_frame = frame
@@ -601,39 +605,67 @@ class VideoTask(QtCore.QRunnable):
     def adjust_brightness(self, frame):
         return cv2.convertScaleAbs(frame, alpha=self.brightness / 50)
 
-    def add_timestamp(self, frame):
+    def add_text(self, frame):
         font = cv2.FONT_HERSHEY_SIMPLEX
-        timestamp = str(
-            QtCore.QDateTime.currentDateTime().toString("hh:mm:ss dd.MM.yyyy")
-        )
-
         frame_height = frame.shape[0]
         font_scale = frame_height / 500
         thickness = 2
 
-        text_size = cv2.getTextSize(timestamp, font, font_scale, thickness)[0]
-        origin = (frame.shape[1] - text_size[0] - 10, frame.shape[0] - 10)
+        if self.show_timestamp:
+            timestamp = str(
+                QtCore.QDateTime.currentDateTime().toString("hh:mm:ss dd.MM.yyyy")
+            )
+            timestamp_size = cv2.getTextSize(timestamp, font, font_scale, thickness)[0]
+            timestamp_origin = (
+                frame.shape[1] - timestamp_size[0] - 10,
+                frame.shape[0] - 10,
+            )
 
-        cv2.putText(
-            frame,
-            timestamp,
-            origin,
-            font,
-            font_scale,
-            (0, 0, 0),
-            thickness * 2,
-            cv2.LINE_AA,
-        )
-        cv2.putText(
-            frame,
-            timestamp,
-            origin,
-            font,
-            font_scale,
-            (255, 255, 255),
-            thickness,
-            cv2.LINE_AA,
-        )
+            cv2.putText(
+                frame,
+                timestamp,
+                timestamp_origin,
+                font,
+                font_scale,
+                (0, 0, 0),
+                thickness * 2,
+                cv2.LINE_AA,
+            )
+            cv2.putText(
+                frame,
+                timestamp,
+                timestamp_origin,
+                font,
+                font_scale,
+                (255, 255, 255),
+                thickness,
+                cv2.LINE_AA,
+            )
+
+        if self.zoom > 0:
+            zoom_text = f"x{self.zoom+1}"
+            zoom_origin = (10, frame.shape[0] - 10)
+            cv2.putText(
+                frame,
+                zoom_text,
+                zoom_origin,
+                font,
+                font_scale,
+                (0, 0, 0),
+                thickness * 2,
+                cv2.LINE_AA,
+            )
+            cv2.putText(
+                frame,
+                zoom_text,
+                zoom_origin,
+                font,
+                font_scale,
+                (255, 255, 255),
+                thickness,
+                cv2.LINE_AA,
+            )
+
         return frame
 
     def sharpen_image(self, frame):
@@ -673,14 +705,14 @@ class VideoTask(QtCore.QRunnable):
         self.pan_offset += delta
         self.pan_offset.setX(
             min(
-                max(self.pan_offset.x(), -self.label_size.width() // 2),
-                self.label_size.width() // 2,
+                max(self.pan_offset.x(), -self.width // 4),
+                self.width // 4,
             )
         )
         self.pan_offset.setY(
             min(
-                max(self.pan_offset.y(), -self.label_size.height() // 2),
-                self.label_size.height() // 2,
+                max(self.pan_offset.y(), -self.height // 4),
+                self.height // 4,
             )
         )
 
