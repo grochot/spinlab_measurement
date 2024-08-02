@@ -537,13 +537,16 @@ class Lakeshore336Control(QtWidgets.QWidget):
 
     def on_setpoint_changed(self, text):
         self.is_setpoint_set = False
+        if text == "":
+            self.setpoint_btn.setStyleSheet("color: RED;")
+            return
         if float(text) != self.setpoint:
             self.setpoint_btn.setStyleSheet("color: RED;")
         else:
             self.setpoint_btn.setStyleSheet("")
 
     def on_setpoint_set_clicked(self):
-        if self.current_state == self.readyState:
+        if self.current_state in [self.delayState, self.readyState, self.timeoutState]:
             self.change_state(self.connectedState)
         with self.lock:
             self.setpoint_btn.setFocus()
