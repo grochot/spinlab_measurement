@@ -4,6 +4,9 @@ import logging
 import math
 import sys
 import random
+import os
+import requests
+import subprocess
 from time import sleep, time
 import traceback
 from logic.find_instrument import FindInstrument
@@ -16,6 +19,8 @@ from pymeasure.experiment import (
     Procedure, FloatParameter, BooleanParameter, IntegerParameter, Parameter,ListParameter, Results, VectorParameter
 )
 from logic.unique_name import unique_name
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QMessageBox
+
 from modules.resistance_mode import ResistanceMode
 from modules.harmonic_mode import HarmonicMode
 from modules.fmr_mode import FMRMode
@@ -38,19 +43,18 @@ class SpinLabMeasurement(Procedure):
     find_instruments = FindInstrument()
     save_parameter = SaveParameters()
     finded_instruments = find_instruments.show_instrument() 
-    used_parameters_list=['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'mode_harmonic', 'set_sourcemeter', 'set_multimeter','set_pulsegenerator', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','set_switch', 'set_kriostat', 'set_lfgen', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','address_pulsegenerator','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp', 'set_field_value','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias', 'rotation_axis', 'rotation_polar_constant', 'rotation_azimuth_constant', 'constant_field_value', 'address_rotationstation', 'mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','delay_measurement','pulsegenerator_compliance','pulsegenerator_source_range','return_the_rotationstation','field_bias_value','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','remanency_correction','set_polar_angle','set_azimuthal_angle','set_rotationstation_const_angle','remanency_correction_time', 'layout_type']
+    used_parameters_list=['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'set_sourcemeter', 'set_multimeter','set_pulsegenerator', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','set_switch', 'set_kriostat', 'set_lfgen', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','address_pulsegenerator','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias', 'rotation_axis', 'rotation_polar_constant', 'rotation_azimuth_constant', 'constant_field_value', 'address_rotationstation', 'mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','delay_measurement','pulsegenerator_compliance','pulsegenerator_source_range','return_the_rotationstation','field_bias_value','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','remanency_correction','set_polar_angle','set_azimuthal_angle','remanency_correction_time', 'layout_type']
     parameters_from_file = save_parameter.ReadFile()
 #################################################################### PARAMETERS #####################################################################
     mode = ListParameter("Mode", default = parameters_from_file["mode"] , choices=['ResistanceMode', 'FMRMode', 'VSMMode', 'HarmonicMode', 'CalibrationFieldMode', 'PulseMode','CIMSMode'], group_by = {"layout_type":True})
     mode_resistance = BooleanParameter("Use 4-points measurement", default = parameters_from_file["mode_resistance"], group_by={"mode": lambda v: v=="ResistanceMode", "layout_type": False})
     mode_fmr = ListParameter("FMR Mode",default = parameters_from_file["mode_fmr"], choices = ["const H", "const f"], group_by={"mode": lambda v: v == "FMRMode", "layout_type": False})
-    mode_harmonic = ListParameter("Harmonic mode",default = parameters_from_file["mode_harmonic"],  choices = ["Field harmonic", "Angular harmonic"], group_by = {"mode": lambda v: v == "HarmonicMode", "layout_type": False})
     mode_cims_relays = BooleanParameter("Use relays", default = parameters_from_file["mode_cims_relays"], group_by={"mode": "CIMSMode", "layout_type": False})
-    return_the_rotationstation = BooleanParameter("Return the rotationstation", default = parameters_from_file["return_the_rotationstation"], group_by={"mode": lambda v: v=="CIMSMode" or v=="ResistanceMode", "layout_type": False})
+    return_the_rotationstation = BooleanParameter("Return the rotationstation", default = parameters_from_file["return_the_rotationstation"], group_by={"mode": lambda v: v=="CIMSMode" or v=="ResistanceMode" or v == "HarmonicMode", "layout_type": True, "rotationstation": lambda k: k == True})
     remagnetization=BooleanParameter("Remagnetize sample", default = parameters_from_file["remagnetization"], group_by = {"mode": lambda v: v == "CIMSMode", "layout_type": False})
     remagnetization_value=FloatParameter("Remagnetization value", default = parameters_from_file["remagnetization_value"], units="Oe", group_by={"mode": lambda v: v == "CIMSMode", "layout_type": False})
     remagnetization_time=FloatParameter("Remagnetization time", default = parameters_from_file["remagnetization_time"], units="s", group_by={"mode": lambda v: v == "CIMSMode", "layout_type": False})
-    hold_the_field_after_measurement=BooleanParameter("Hold the field after measurement", default = parameters_from_file["hold_the_field_after_measurement"], group_by = {"mode": lambda v: v == "CIMSMode", "layout_type": False})
+    hold_the_field_after_measurement=BooleanParameter("Hold the field after measurement", default = parameters_from_file["hold_the_field_after_measurement"], group_by = {"mode": lambda v: v == "CIMSMode" or v == "HarmonicMode", "layout_type": True})
     remanency_correction = BooleanParameter("Remanency correction", default = parameters_from_file["remanency_correction"], group_by = {"mode": lambda v: v == "CIMSMode", "layout_type": False})
     remanency_correction_time=FloatParameter("Remanency correction time", default = parameters_from_file["remanency_correction_time"], units="s", group_by={"mode": lambda v: v == "CIMSMode", "layout_type": False})
 
@@ -62,11 +66,10 @@ class SpinLabMeasurement(Procedure):
     set_gaussmeter = ListParameter("Gaussmeter", default = parameters_from_file["set_gaussmeter"], choices=["Lakeshore", "none"], group_by={"mode":lambda v: v == "ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" or v=="CIMSMode", "layout_type": False })
     set_field = ListParameter("Magnetic Field", default = parameters_from_file["set_field"], choices = ["DAQ", "Lockin", "none"], group_by = {"mode": lambda v: v == "ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" or v=="CIMSMode", "layout_type": False })
     set_lockin = ListParameter("Lockin", default = parameters_from_file["set_lockin"], choices = ["Zurich", "SR830", "none"], group_by = {"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "layout_type": False})
-    set_automaticstation = BooleanParameter("Automatic Station",  default = parameters_from_file["set_automaticstation"], group_by={"mode": lambda v: v != "CalibrationFieldMode", "layout_type": False})
-    set_rotationstation = BooleanParameter("Rotation Station", default = parameters_from_file["set_rotationstation"], group_by={"mode": lambda v: v != "CalibrationFieldMode"})
-    set_rotationstation_const_angle = BooleanParameter("Rotation Station for constant angle", default = parameters_from_file["set_rotationstation_const_angle"], group_by={"mode": lambda v: v != "CalibrationFieldMode"})
-    set_switch = BooleanParameter("Switch", default = parameters_from_file["set_switch"], group_by={"mode": lambda v: v != "CalibrationFieldMode"})
-    set_kriostat = BooleanParameter("Kriostat", default = parameters_from_file["set_kriostat"], group_by={"mode": lambda v: v != "CalibrationFieldMode"})
+    set_automaticstation = BooleanParameter("Automatic Station",  default = parameters_from_file["set_automaticstation"], group_by={"mode": lambda v: v != "CalibrationFieldMode" and v != "HarmonicMode", "layout_type": False})
+    set_rotationstation = BooleanParameter("Rotation Station", default = parameters_from_file["set_rotationstation"], group_by={"mode": lambda v: v != "CalibrationFieldMode", "layout_type": True})
+    set_switch = BooleanParameter("Switch", default = parameters_from_file["set_switch"], group_by={"mode": lambda v: v != "CalibrationFieldMode" and v != "HarmonicMode"})
+    set_kriostat = BooleanParameter("Kriostat", default = parameters_from_file["set_kriostat"], group_by={"mode": lambda v: v != "CalibrationFieldMode" and v != "HarmonicMode"})
     set_lfgen = ListParameter("LF Generator", default = parameters_from_file["set_lfgen"], choices = ["SR830", "HP33120A","none"], group_by = {"mode": lambda v: v == "FMRMode"})
     set_analyzer = ListParameter("Vector Analyzer", default = parameters_from_file["set_analyzer"], choices = ['VectorAnalyzer', 'none'], group_by={'mode': lambda v: v=='VSMMode'})
     set_generator = ListParameter("RF Generator", default = parameters_from_file["set_generator"], choices = ["Agilent","WindFreak", "none"], group_by = {"mode": lambda v: v == "FMRMode"})
@@ -86,8 +89,7 @@ class SpinLabMeasurement(Procedure):
     
     if set_rotationstation:
         address_rotationstation=Parameter("RotationStation address", default = parameters_from_file["address_rotationstation"], group_by = {"set_rotationstation": lambda v: v==True, "layout_type": False})
-    if set_rotationstation_const_angle:
-        address_rotationstation=Parameter("RotationStation address", default = parameters_from_file["address_rotationstation"], group_by = {"set_rotationstation_const_angle": lambda v: v==True, "layout_type": False})
+    
   
     address_pulsegenerator=ListParameter("Pulse generator address", default = parameters_from_file["address_pulsegenerator"] if parameters_from_file["address_pulsegenerator"] in finded_instruments else 'None', choices=finded_instruments, group_by = {"mode": lambda v: v=="CIMSMode", "set_pulsegenerator": lambda v: v != "none", "layout_type": False})
 
@@ -140,7 +142,6 @@ class SpinLabMeasurement(Procedure):
     #FieldParameters 
     field_constant = FloatParameter("Field Calibration Constant", default = parameters_from_file["field_constant"], group_by = {"layout_type": False})
     set_field_value_fmr= FloatParameter("Set Constant Field Value", default = parameters_from_file["set_field_value_fmr"], units="Oe", group_by={"mode_fmr": lambda v: v == "ST-FMR", "mode": lambda v: v == "FMRMode", "layout_type": True })
-    set_field_value= FloatParameter("Set Constant Field Value", default = parameters_from_file["set_field_value"], units="Oe", group_by={ "set_rotationstation": lambda v: v == True, "mode": lambda v: v != "CalibrationFieldMode", "layout_type": True })
     field_step = FloatParameter("Field sweep step", default = parameters_from_file["field_step"], units="Oe", group_by={"mode": lambda v: v != "CalibrationFieldMode", "layout_type": True})
     constant_field_value =  FloatParameter("Set Constant Field Value", default = parameters_from_file["constant_field_value"], units="Oe", group_by={"set_rotationstation": lambda v: v ==True, "layout_type": True })
     field_bias_value= FloatParameter("Set Field Bias Value", default = parameters_from_file['field_bias_value'], units="Oe", group_by={"mode": lambda v: v =="CIMSMode", "layout_type": True })
@@ -161,11 +162,11 @@ class SpinLabMeasurement(Procedure):
     lfgen_amp = FloatParameter("LF Generator Amplitude", default = parameters_from_file["lfgen_amp"], units="V", group_by = {"mode": lambda v: v == "FMRMode", "set_lfgen": lambda v: v != "none" and  v != "SR830", "layout_type": True})
     
     #RotationStationParameters 
-    rotation_axis = ListParameter("Rotation axis", default = parameters_from_file["rotation_axis"], choices=["Polar", "Azimuthal"], group_by={"set_rotationstation": lambda v: v == True, "layout_type": True})
+    rotation_axis = ListParameter("Rotation axis", default = parameters_from_file["rotation_axis"], choices=["Polar", "Azimuthal", "None"], group_by={"set_rotationstation": lambda v: v == True, "layout_type": True})
     rotation_polar_constant  = FloatParameter("Polar constant angle", default = parameters_from_file["rotation_polar_constant"],  group_by={"set_rotationstation": lambda v: v == True, "rotation_axis": lambda v: v == "Azimuthal", "layout_type": True})
     rotation_azimuth_constant =  FloatParameter("Azimuthal constant angle", default = parameters_from_file["rotation_azimuth_constant"], group_by={"set_rotationstation": lambda v: v == True, "rotation_axis": lambda v: v == "Polar", "layout_type": True})
-    set_polar_angle=FloatParameter("Set polar angle", default = parameters_from_file["set_polar_angle"], units="Deg", group_by={"set_rotationstation_const_angle": lambda v: v == True, "layout_type": True})
-    set_azimuthal_angle=FloatParameter("Set azimuthal angle", default = parameters_from_file["set_azimuthal_angle"], units="Deg", group_by={"set_rotationstation_const_angle": lambda v: v == True, "layout_type": True})
+    set_polar_angle=FloatParameter("Set polar angle", default = parameters_from_file["set_polar_angle"], units="Deg", group_by={"rotation_axis": lambda v: v == "None","set_rotationstation": lambda k: k == True, "layout_type": True})
+    set_azimuthal_angle=FloatParameter("Set azimuthal angle", default = parameters_from_file["set_azimuthal_angle"], units="Deg", group_by={"rotation_axis": lambda v: v == "None", "set_rotationstation": lambda k: k == True, "layout_type": True})
 
     #pulsegenerator parameters
     pulsegenerator_offset=FloatParameter("pulsegenerator offset", default = parameters_from_file["pulsegenerator_offset"], group_by={"mode": lambda v: v == "CIMSMode", "set_pulsegenerator": lambda v: v == "Agilent 2912" or v=="Tektronix 10,070A" or v=="Keithley 2636", "layout_type": False})
@@ -186,7 +187,7 @@ class SpinLabMeasurement(Procedure):
     
     ################ STARTUP ################## 
     def startup(self):
-        self.sample_name = window.filename_getter()
+        #self.sample_name = window.filename_getter()
         for i in self.used_parameters_list:
             self.param = eval("self."+i)
             self.parameters[i] = self.param
@@ -199,16 +200,17 @@ class SpinLabMeasurement(Procedure):
         
         match self.mode:
             case "ResistanceMode":
-                self.resistancemode = ResistanceMode(self.vector, self.mode_resistance, self.sourcemeter_bias, self.set_sourcemeter, self.set_multimeter, self.set_gaussmeter, self.set_field, self.set_automaticstation, self.set_switch, self.set_kriostat, self.set_rotationstation,self.set_rotationstation_const_angle,self.return_the_rotationstation, self.address_sourcemeter, self.address_multimeter, self.address_gaussmeter, self.address_switch, self.delay_field, self.delay_lockin, self.delay_bias, self.sourcemter_source, self.sourcemeter_compliance, self.sourcemeter_channel, self.sourcemeter_limit, self.sourcemeter_nplc, self.sourcemeter_average, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.multimeter_nplc, self.address_daq, self.field_step, self.address_rotationstation, self.constant_field_value,self.rotation_axis, self.rotation_polar_constant, self.rotation_azimuth_constant,self.set_polar_angle,self.set_azimuthal_angle)
+                self.resistancemode = ResistanceMode(self.vector, self.mode_resistance, self.sourcemeter_bias, self.set_sourcemeter, self.set_multimeter, self.set_gaussmeter, self.set_field, self.set_automaticstation, self.set_switch, self.set_kriostat, self.set_rotationstation,self.return_the_rotationstation, self.address_sourcemeter, self.address_multimeter, self.address_gaussmeter, self.address_switch, self.delay_field, self.delay_lockin, self.delay_bias, self.sourcemter_source, self.sourcemeter_compliance, self.sourcemeter_channel, self.sourcemeter_limit, self.sourcemeter_nplc, self.sourcemeter_average, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.multimeter_nplc, self.address_daq, self.field_step, self.address_rotationstation, self.constant_field_value,self.rotation_axis, self.rotation_polar_constant, self.rotation_azimuth_constant,self.set_polar_angle,self.set_azimuthal_angle)
                 self.points = self.resistancemode.generate_points()
                 self.resistancemode.initializing()
             case "HarmonicMode":
                 self.harmonicmode = HarmonicMode(self.set_automaticstation, 
-                 self.set_lockin, self.set_field, self.set_gaussmeter,  self.set_rotationstation, self.address_lockin, self.address_gaussmeter, self.vector, self.delay_field, self.delay_lockin, self.delay_bias, self.lockin_average, self.lockin_input_coupling, self.lockin_reference_source, self.lockin_dynamic_reserve, self.lockin_input_connection, self.lockin_sensitivity, self.lockin_timeconstant, self.lockin_autophase, self.lockin_frequency, self.lockin_harmonic, self.lockin_sine_amplitude,  self.lockin_channel1, self.lockin_channel2, self.set_field_value, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.address_daq, self.field_step) 
+                 self.set_lockin, self.set_field, self.set_gaussmeter,  self.set_rotationstation, self.address_lockin, self.address_gaussmeter, self.vector, self.delay_field, self.delay_lockin, self.delay_bias, self.lockin_average, self.lockin_input_coupling, self.lockin_reference_source, self.lockin_dynamic_reserve, self.lockin_input_connection, self.lockin_sensitivity, self.lockin_timeconstant, self.lockin_autophase, self.lockin_frequency, self.lockin_harmonic, self.lockin_sine_amplitude,  self.lockin_channel1, self.lockin_channel2, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.address_daq, self.field_step, self.set_rotationstation, self.address_rotationstation, self.constant_field_value, self.rotation_axis, self.rotation_polar_constant, self.rotation_azimuth_constant, self.set_polar_angle,self.set_azimuthal_angle, self.hold_the_field_after_measurement, self.return_the_rotationstation) 
+
                 self.points = self.harmonicmode.generate_points()
                 self.harmonicmode.initializing()
             case "FMRMode":
-                self.fmrmode = FMRMode(self.set_automaticstation, self.set_lockin, self.set_field, self.set_gaussmeter, self.set_generator, self.set_rotationstation, self.address_lockin, self.address_gaussmeter, self.vector, self.delay_field, self.delay_lockin, self.delay_bias, self.lockin_average, self.lockin_input_coupling, self.lockin_reference_source,self.lockin_dynamic_reserve, self.lockin_input_connection, self.lockin_sensitivity, self.lockin_timeconstant, self.lockin_autophase, self.lockin_frequency, self.lockin_harmonic, self.lockin_sine_amplitude, self.lockin_channel1, self.lockin_channel2, self.set_field_value, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.address_generator, self.set_field_value_fmr, self.generator_frequency, self.generator_power,  self.mode_fmr, self.address_daq, self.set_lfgen, self.address_lfgen, self.lfgen_freq, self.lfgen_amp, self.field_step) 
+                self.fmrmode = FMRMode(self.set_automaticstation, self.set_lockin, self.set_field, self.set_gaussmeter, self.set_generator, self.set_rotationstation, self.address_lockin, self.address_gaussmeter, self.vector, self.delay_field, self.delay_lockin, self.delay_bias, self.lockin_average, self.lockin_input_coupling, self.lockin_reference_source,self.lockin_dynamic_reserve, self.lockin_input_connection, self.lockin_sensitivity, self.lockin_timeconstant, self.lockin_autophase, self.lockin_frequency, self.lockin_harmonic, self.lockin_sine_amplitude, self.lockin_channel1, self.lockin_channel2,  self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.address_generator, self.set_field_value_fmr, self.generator_frequency, self.generator_power,  self.mode_fmr, self.address_daq, self.set_lfgen, self.address_lfgen, self.lfgen_freq, self.lfgen_amp, self.field_step) 
                 self.points = self.fmrmode.generate_points()
                 self.fmrmode.initializing()
             case "CalibrationFieldMode": 
@@ -216,7 +218,7 @@ class SpinLabMeasurement(Procedure):
                 self.calibrationmode.initializing()
 
             case "CIMSMode":
-                self.CIMSmode = CIMSMode(self.vector, self.mode_cims_relays, self.sourcemeter_bias, self.set_sourcemeter, self.set_multimeter,self.set_pulsegenerator, self.set_gaussmeter, self.set_field, self.set_automaticstation, self.set_switch, self.set_kriostat, self.set_rotationstation,self.set_rotationstation_const_angle,self.return_the_rotationstation, self.address_sourcemeter, self.address_multimeter,self.address_pulsegenerator, self.address_gaussmeter, self.address_switch, self.delay_field, self.delay_measurement, self.delay_bias, self.sourcemter_source, self.sourcemeter_compliance, self.sourcemeter_channel, self.sourcemeter_limit, self.sourcemeter_nplc, self.sourcemeter_average, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.multimeter_nplc, self.address_daq, self.field_step, self.address_rotationstation, self.constant_field_value,self.rotation_axis, self.rotation_polar_constant, self.rotation_azimuth_constant,self.pulsegenerator_duration,self.pulsegenerator_offset,self.pulsegenerator_pulsetype,self.pulsegenerator_channel,self.pulsegenerator_compliance,self.pulsegenerator_source_range,self.field_bias_value,self.remagnetization,self. remagnetization_value,self.remagnetization_time,self.hold_the_field_after_measurement,self.remanency_correction,self.remanency_correction_time,self.set_polar_angle,self.set_azimuthal_angle)
+                self.CIMSmode = CIMSMode(self.vector, self.mode_cims_relays, self.sourcemeter_bias, self.set_sourcemeter, self.set_multimeter,self.set_pulsegenerator, self.set_gaussmeter, self.set_field, self.set_automaticstation, self.set_switch, self.set_kriostat, self.set_rotationstation,self.return_the_rotationstation, self.address_sourcemeter, self.address_multimeter,self.address_pulsegenerator, self.address_gaussmeter, self.address_switch, self.delay_field, self.delay_measurement, self.delay_bias, self.sourcemter_source, self.sourcemeter_compliance, self.sourcemeter_channel, self.sourcemeter_limit, self.sourcemeter_nplc, self.sourcemeter_average, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.multimeter_nplc, self.address_daq, self.field_step, self.address_rotationstation, self.constant_field_value,self.rotation_axis, self.rotation_polar_constant, self.rotation_azimuth_constant,self.pulsegenerator_duration,self.pulsegenerator_offset,self.pulsegenerator_pulsetype,self.pulsegenerator_channel,self.pulsegenerator_compliance,self.pulsegenerator_source_range,self.field_bias_value,self.remagnetization,self. remagnetization_value,self.remagnetization_time,self.hold_the_field_after_measurement,self.remanency_correction,self.remanency_correction_time,self.set_polar_angle,self.set_azimuthal_angle)
                 self.points = self.CIMSmode.generate_points()
                 self.CIMSmode.initializing()
 
@@ -308,19 +310,21 @@ class MainWindow(ManagedDockWindow):
     # wynik = 0
     # wynik_list = []
     def __init__(self):
+        
         super().__init__(
             procedure_class= SpinLabMeasurement,
-            inputs = ['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'mode_harmonic', 'set_sourcemeter','set_pulsegenerator', 'set_multimeter', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','set_rotationstation_const_angle','address_rotationstation','set_polar_angle','set_azimuthal_angle','rotation_axis', 'rotation_polar_constant', 'rotation_azimuth_constant','set_switch', 'set_kriostat', 'set_lfgen', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','address_pulsegenerator','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'constant_field_value', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp', 'set_field_value','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias','mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','pulsegenerator_compliance','pulsegenerator_source_range','delay_measurement','field_bias_value','remanency_correction','remanency_correction_time','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','return_the_rotationstation', 'layout_type'],
+            inputs = ['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'set_sourcemeter','set_pulsegenerator', 'set_multimeter', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','address_rotationstation','rotation_axis', 'set_polar_angle','set_azimuthal_angle', 'rotation_polar_constant', 'rotation_azimuth_constant','set_switch', 'set_kriostat', 'set_lfgen', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','address_pulsegenerator','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'constant_field_value', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias','mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','pulsegenerator_compliance','pulsegenerator_source_range','delay_measurement','field_bias_value','remanency_correction','remanency_correction_time','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','return_the_rotationstation', 'layout_type'],
             x_axis=['Field (Oe)', 'Voltage (V)'],
             y_axis=['Field (Oe)', 'Resistance (ohm)'],
             # directory_input=True,  
-            sequencer=True,                                  
-            sequencer_inputs=["sourcemeter_bias","lockin_frequency","field_constant","set_field_value_fmr", "set_field_value", "field_step","constant_field_value","field_bias_value", "generator_frequency", "generator_power", "lfgen_freq", "lfgen_amp", "rotation_polar_constant", "rotation_azimuth_constant", "set_polar_angle", "set_azimuthal_angle", "pulsegenerator_offset", "pulsegenerator_duration"],
+            sequencer=True,
+            
+            sequencer_inputs=['constant_field_value', ""],
             inputs_in_scrollarea=True,
             
         )
        
-        self.setWindowTitle('SpinLab Measurement System v.0.95')
+        self.setWindowTitle('SpinLabAPP v.1.00')
         self.directory = self.procedure_class.path_file.ReadFile()
         self.filename = self.procedure_class.parameters_from_file["sample_name"]
         self.store_measurement = False                              # Controls the 'Save data' toggle
@@ -357,8 +361,113 @@ class MainWindow(ManagedDockWindow):
     #     self.manager.queue(experiment)
         
     
+# if __name__ == "__main__":
+#     app = QtWidgets.QApplication(sys.argv)
+#     window = MainWindow()
+#     window.show()
+#     sys.exit(app.exec_())
+
+
+
+    
+class UpdateChecker(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.current_version = '1.0.0'
+        self.initUI()
+        self.check_for_updates()
+
+    def initUI(self):
+        self.setWindowTitle('Sprawdzanie aktualizacji')
+        self.setGeometry(300, 300, 300, 150)
+
+        self.layout = QVBoxLayout()
+        self.label = QLabel('Sprawdzanie aktualizacji...', self)
+        self.layout.addWidget(self.label)
+
+        self.setLayout(self.layout)
+    
+    def check_for_updates(self):
+        try:
+            latest_version = self.get_latest_version_info()
+            if latest_version != self.current_version:
+                reply = QMessageBox.question(
+                    self, 'Aktualizacja dostępna',
+                    f'Nowa wersja {latest_version} jest dostępna. Czy chcesz zaktualizować?',
+                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+                )
+                if reply == QMessageBox.Yes:
+                    self.download_and_install_update()
+                else:
+                   
+                    self.run_main_application()
+            else:
+                self.label.setText('Masz już najnowszą wersję.')
+                self.run_main_application()
+        except Exception as e:
+            self.label.setText(f'Błąd podczas sprawdzania aktualizacji: {e}')
+            self.run_main_application()
+
+    def get_latest_version_info(self):
+        url = 'http://update-test.cytr.us/latest_version.txt'
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.text.strip()
+
+    def download_and_install_update(self):
+        try:
+            download_url = 'http://update-test.cytr.us/SpinLabAPP.exe'
+            output_path = os.path.join(os.path.dirname(__file__), 'MyAppSetup.exe')
+            self.download_new_installer(download_url, output_path)
+            self.label.setText('Pobrano nowy instalator. Uruchamianie aktualizacji...')
+            self.run_installer(output_path)
+        except Exception as e:
+            self.label.setText(f'Błąd podczas pobierania aktualizacji: {e}')
+            #self.run_main_application()
+
+    def download_new_installer(self, download_url, output_path):
+        response = requests.get(download_url, stream=True)
+        response.raise_for_status()
+        with open(output_path, 'wb') as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                file.write(chunk)
+
+    def run_installer(self, installer_path):
+        try:
+
+            # if sys.platform == 'win32':
+            #     os.startfile(installer_path)
+            # else:
+            #     subprocess.run(['open', installer_path], check=True)  # dla macOS
+            QApplication.instance().quit()  # Zamknięcie aplikacji
+            subprocess.run([installer_path], check=True)
+            exit()
+        except Exception as e:
+            self.label.setText(f'Błąd podczas uruchamiania instalatora: {e}')
+            self.run_main_application()
+
+
+
+    def run_main_application(self):
+        # try:
+        #     main_app_path = os.path.join(os.path.dirname(__file__), 'main_app.py')  # Zmień na właściwą nazwę swojej aplikacji
+        #     self.close()  # Zamknięcie okna aktualizacji
+        #     subprocess.run([sys.executable, main_app_path], check=True)
+        #     QApplication.instance().quit()
+        # except Exception as e:
+        #     self.label.setText(f'Błąd podczas uruchamiania aplikacji: {e}')
+        window = MainWindow()
+        window.show()
+        sys.exit(app.exec())
+
+    def main():
+        # app = QApplication(sys.argv)
+        ex = UpdateChecker()
+        ex.show()
+        sys.exit(app.exec_())
+
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+    UpdateChecker.main()
+

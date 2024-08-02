@@ -1,47 +1,4 @@
-
-import json 
-import os
-import sys
-class SaveParameters(): 
-
-    def __init__(self): 
-        pass
-
-
-    def get_executable_path(self):
-        if getattr(sys, 'frozen', False):
-            # Jeśli jest to wersja skompilowana przez PyInstaller
-            return os.path.dirname(sys.executable)+"/logic"
-        else:
-            # Jeśli jest to wersja uruchamiana z kodu źródłowego
-            return os.path.dirname(os.path.abspath(__file__))
-
-   
-
-
-
-    def WriteFile(self, data): 
-        # Znajdź lokalizację pliku exe
-        executable_path = self.get_executable_path()
-
-         # Stwórz nazwę pliku logów
-        parameters_file_path = os.path.join(executable_path, 'parameters.json')
-        json_object = json.dumps(data, indent=4)
-        with open(parameters_file_path, "w") as outfile:
-            outfile.write(json_object)     
-
-    def ReadFile(self):
-         # Znajdź lokalizację pliku exe
-        executable_path = self.get_executable_path()
-
-         # Stwórz nazwę pliku logów
-        parameters_file_path = os.path.join(executable_path, 'parameters.json')
-        try:
-            with open(parameters_file_path, 'r') as openfile:
-                json_object = json.load(openfile)
-            return json_object
-        except:
-            json_object = """{
+{
     "mode": "HarmonicMode",
     "sample_name": "dfsdf",
     "vector": "1,5,100",
@@ -111,7 +68,7 @@ class SaveParameters():
     "rotation_axis": "Azimuthal",
     "rotation_polar_constant": 90.0,
     "rotation_azimuth_constant": 40.0,
-    "constant_field_value": 2.2222222222222223,
+    "constant_field_value": 2.222222222222222,
     "address_rotationstation": "COM4",
     "mode_cims_relays": false,
     "pulsegenerator_offset": 0.0,
@@ -131,14 +88,6 @@ class SaveParameters():
     "set_polar_angle": 0.0,
     "set_azimuthal_angle": 90.0,
     "remanency_correction_time": 5.0,
-    "layout_type": true,
+    "layout_type": true, 
     "path": "C://"
-}"""
-        with open(parameters_file_path, "w") as outfile:
-            outfile.write(json_object)  
-            outfile.close()
-        
-        with open(parameters_file_path, 'r') as openfile:
-            json_object = json.load(openfile)
-            openfile.close()
-        return json_object
+}
