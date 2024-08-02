@@ -675,6 +675,7 @@ class VideoTask(QtCore.QRunnable):
 
     def apply_zoom(self, frame):
         if self.zoom == 0:
+            self.pan_offset = QtCore.QPoint(0, 0)
             return frame
         center_x, center_y = frame.shape[1] // 2, frame.shape[0] // 2
 
@@ -703,18 +704,10 @@ class VideoTask(QtCore.QRunnable):
 
     def pan(self, delta: QtCore.QPoint):
         self.pan_offset += delta
-        self.pan_offset.setX(
-            min(
-                max(self.pan_offset.x(), -self.width // 4),
-                self.width // 4,
-            )
-        )
-        self.pan_offset.setY(
-            min(
-                max(self.pan_offset.y(), -self.height // 4),
-                self.height // 4,
-            )
-        )
+        if abs(self.pan_offset.x()) > np.floor(self.width / 2 * self.zoom/(self.zoom+1)):
+            self.pan_offset.setX(int(np.floor(self.width / 2 * self.zoom/(self.zoom+1)) * np.sign(self.pan_offset.x())))
+        if abs(self.pan_offset.y()) > np.floor(self.height / 2 * self.zoom/(self.zoom+1)):
+            self.pan_offset.setY(int(np.floor(self.height / 2 * self.zoom/(self.zoom+1)) * np.sign(self.pan_offset.y())))
 
     def stop(self):
         self.running = False
