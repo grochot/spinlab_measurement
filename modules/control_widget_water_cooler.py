@@ -3,14 +3,23 @@ import sys
 import nidaqmx
 import nidaqmx.system
 import nidaqmx.task
+import os
+import json
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class WaterCoolerControl(QtWidgets.QWidget):
     object_name = "water_cooler_control"
+
     def __init__(self):
         super(WaterCoolerControl, self).__init__()
         self.state = False
         self.name = "Water Cooler"
-        self.icon_path = "modules\icons\WaterCooler.ico"
+        self.icon_path = os.path.join("modules", "icons", "WaterColler.ico")
+        self.save_path = os.path.join("WaterCoolerControl_parameters.json")
+
         self.address_list = ["None"]
         self.address = "None"
 
@@ -24,11 +33,13 @@ class WaterCoolerControl(QtWidgets.QWidget):
         self.show()
 
     def _setup_ui(self):
-        
+
         self.setWindowTitle("Water Cooler Control")
         self.setWindowIcon(QtGui.QIcon(self.icon_path))
 
-        self.setStyleSheet("QLabel { font-size: 14pt; } QPushButton { font-size: 14pt; } QComboBox { font-size: 14pt; }")
+        self.setStyleSheet(
+            "QLabel { font-size: 14pt; } QPushButton { font-size: 14pt; } QComboBox { font-size: 14pt; }"
+        )
 
         self.address_cb = QtWidgets.QComboBox()
         for address in self.address_list:
@@ -52,7 +63,7 @@ class WaterCoolerControl(QtWidgets.QWidget):
 
         self.on_indicator = QtWidgets.QPushButton()
         self.on_indicator.setEnabled(False)
-        self.on_indicator.setFixedWidth(40) 
+        self.on_indicator.setFixedWidth(40)
         self.on_indicator.setFixedHeight(33)
         self.on_indicator.setStyleSheet("border: 3px solid gray;")
 
@@ -61,7 +72,7 @@ class WaterCoolerControl(QtWidgets.QWidget):
 
         self.off_indicator = QtWidgets.QPushButton()
         self.off_indicator.setEnabled(False)
-        self.off_indicator.setFixedWidth(40) 
+        self.off_indicator.setFixedWidth(40)
         self.off_indicator.setFixedHeight(33)
         self.off_indicator.setStyleSheet("background: red; border: 3px solid gray;")
 
@@ -80,7 +91,7 @@ class WaterCoolerControl(QtWidgets.QWidget):
 
     def _layout(self):
         self.layout = QtWidgets.QVBoxLayout(self)
-    
+
         self.layout.addWidget(self.address_cb)
         self.layout.addWidget(self.stack)
 
@@ -90,7 +101,7 @@ class WaterCoolerControl(QtWidgets.QWidget):
 
         self.grid_layout = QtWidgets.QGridLayout()
         self.control_layout.addLayout(self.grid_layout)
-        
+
         self.grid_layout.addWidget(self.start_btn, 2, 1)
         self.grid_layout.addWidget(self.stop_btn, 3, 1)
 
@@ -134,7 +145,9 @@ class WaterCoolerControl(QtWidgets.QWidget):
         self.address_cb.setCurrentText(self.address)
         self.address_cb.currentIndexChanged.connect(self.on_address_change)
         if self.state:
-            self.on_indicator.setStyleSheet("background: green; border: 3px solid gray;")
+            self.on_indicator.setStyleSheet(
+                "background: green; border: 3px solid gray;"
+            )
             self.off_indicator.setStyleSheet("border: 3px solid gray;")
             self.start_btn.setEnabled(False)
             self.stop_btn.setEnabled(True)
@@ -145,19 +158,25 @@ class WaterCoolerControl(QtWidgets.QWidget):
             self.stop_btn.setEnabled(False)
 
     def save_params(self):
-        with open('water_cooler_params.txt', 'w') as f:
-            f.write(str(self.state)+"\n")
-            f.write(self.address)
+        dict = {"state": self.state, "address": self.address}
+        try:
+            with open(self.save_path, "w") as f:
+                json.dump(dict, f)
+        except Exception as e:
+            logger.exception(e)
 
     def loadState(self):
         try:
-            with open('water_cooler_params.txt', 'r') as f:
-                state = f.readline()
-                self.state = False if state == "False" else True
-                address = f.readline().strip()
-                self.address = address
+            with open(self.save_path, "r") as f:
+                json_dict = json.load(f)
+                self.state = json_dict["state"]
+                self.address = json_dict["address"]
         except FileNotFoundError as e:
             pass
+        except Exception as e:
+            logger.exception(e)
+            self.state = False
+            self.address = "None"
 
     def pulse(self, state):
         try:
@@ -165,14 +184,16 @@ class WaterCoolerControl(QtWidgets.QWidget):
                 task.ao_channels.add_ao_voltage_chan(self.address, min_val=0, max_val=5)
                 task.write(3.3)
         except Exception as e:
-            print(e)
+            logger.exception(e)
             self.connection_lost()
             return
 
         self.state = state
         self.save_params()
         if state:
-            self.on_indicator.setStyleSheet("background: green; border: 3px solid gray;")
+            self.on_indicator.setStyleSheet(
+                "background: green; border: 3px solid gray;"
+            )
             self.off_indicator.setStyleSheet("border: 3px solid gray;")
             self.start_btn.setEnabled(False)
             self.stop_btn.setEnabled(True)
@@ -191,14 +212,16 @@ class WaterCoolerControl(QtWidgets.QWidget):
                 task.ao_channels.add_ao_voltage_chan(self.address, min_val=0, max_val=5)
                 task.write(0)
         except Exception as e:
-            print(e)
+            logger.exception(e)
             self.connection_lost()
 
     def on_toggle(self):
         self.state = not self.state
         self.save_params()
         if self.state:
-            self.on_indicator.setStyleSheet("background: green; border: 3px solid gray;")
+            self.on_indicator.setStyleSheet(
+                "background: green; border: 3px solid gray;"
+            )
             self.off_indicator.setStyleSheet("border: 3px solid gray;")
             self.start_btn.setEnabled(False)
             self.stop_btn.setEnabled(True)
@@ -224,10 +247,9 @@ class WaterCoolerControl(QtWidgets.QWidget):
         self.updateGUI()
         self.display()
 
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     widget = WaterCoolerControl()
     widget.show()
     sys.exit(app.exec_())
-
-    
