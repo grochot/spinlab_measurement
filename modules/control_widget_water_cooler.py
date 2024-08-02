@@ -17,7 +17,7 @@ class WaterCoolerControl(QtWidgets.QWidget):
         super(WaterCoolerControl, self).__init__()
         self.state = False
         self.name = "Water Cooler"
-        self.icon_path = os.path.join("modules", "icons", "WaterColler.ico")
+        self.icon_path = os.path.join("modules", "icons", "WaterCooler.ico")
         self.save_path = os.path.join("WaterCoolerControl_parameters.json")
 
         self.address_list = ["None"]
