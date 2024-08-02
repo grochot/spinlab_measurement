@@ -5,6 +5,15 @@ from lakeshore import Model336
 import json
 from threading import Lock
 from abc import ABC, abstractmethod
+import logging
+
+log = logging.getLogger(__name__)
+
+
+def check_valid_ip(text: str):
+    ipRegex = QtCore.QRegExp(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
+    ipValidator = QtGui.QRegExpValidator(ipRegex)
+    return ipValidator.validate(text, 0)[0] == QtGui.QValidator.Acceptable
 
 
 def format_time(time):
@@ -27,7 +36,7 @@ class DummyModel336:
 
     def get_all_kelvin_reading(self):
         tmp = self.kelwin_reading
-        if self.kelwin_reading < self.setpoint:
+        if self.kelwin_reading < self.setpoint and any(self.heater.values()):
             self.kelwin_reading += 0.1
         return [tmp]
 
@@ -278,7 +287,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self._setup_ui()
         self._layout()
         self.all_off_btn.setFocus()
-        self.connect_with_device()
+        self.connect_with_device(silent=True)
 
     def _setup_ui(self):
         self.setWindowTitle(self.name)
@@ -422,18 +431,33 @@ class Lakeshore336Control(QtWidgets.QWidget):
     def on_disconnect_btn_clicked(self):
         self.disconnect_from_device()
 
-    def connect_with_device(self):
+    def connect_with_device(self, silent: bool = False):
         try:
-            if self.settings_win.ip_le.text() == "":
-                raise ValueError("IP address is empty")
-            # self.device = Model336(ip_address=self.settings_win.ip_le.text())
-            # self.device.logger.setLevel("WARNING")
-            self.device = DummyModel336()
+            if not check_valid_ip(self.settings_win.ip_le.text()):
+                msg = QtWidgets.QMessageBox()
+                msg.setIcon(QtWidgets.QMessageBox.Critical)
+                msg.setWindowTitle("ERROR")
+                msg.setText("Invalid IP address!")
+                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                msg.exec()
+                return
+            self.device = Model336(ip_address=self.settings_win.ip_le.text())
+            self.device.logger.setLevel("WARNING")
+            # self.device = DummyModel336()
             self.change_state(self.connectedState)
-        except Exception as e:
-            self.change_state(self.notConnectedState)
-            print(e)
             return
+        except TimeoutError:
+            log.error("LakeShore336: Connection timed out!")
+            if not silent:
+                msg = QtWidgets.QMessageBox()
+                msg.setIcon(QtWidgets.QMessageBox.Critical)
+                msg.setWindowTitle("ERROR")
+                msg.setText("Connection timed out!")
+                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                msg.exec()
+        except Exception as e:
+            log.exception(e)
+        self.change_state(self.notConnectedState)
 
     def disconnect_from_device(self):
         if self.device:
@@ -493,8 +517,9 @@ class Lakeshore336Control(QtWidgets.QWidget):
                 heater_output = self.device.get_heater_output(i + 1)
                 self.outputs[i].percent_le.setText(f"{heater_output:.2f}%")
         except Exception as e:
-            print(e)
+            log.exception(e)
             self.change_state(self.notConnectedState)
+            return
 
         if heater_range == 0:
             self.outputs[0].indicator.set_off()
@@ -561,7 +586,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
             try:
                 self.device.set_control_setpoint(1, self.setpoint)
             except Exception as e:
-                print(e)
+                log.exception(e)
                 self.change_state(self.notConnectedState)
 
     def on_output_set_clicked(self, output: int):
@@ -571,7 +596,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
             try:
                 self.device.set_heater_range(output, heater_range)
             except Exception as e:
-                print(e)
+                log.exception(e)
                 self.change_state(self.notConnectedState)
 
     def on_all_off_btn_clicked(self):
@@ -581,7 +606,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
                 for output in self.outputs:
                     output._set_range(0)
             except Exception as e:
-                print(e)
+                log.exception(e)
                 self.change_state(self.notConnectedState)
 
     def closeEvent(self, event):
@@ -593,6 +618,29 @@ class Lakeshore336Control(QtWidgets.QWidget):
 
         self.settings_win.close()
         event.accept()
+
+    def get_curr_temp(self):
+        if self.device:
+            try:
+                return self.device.get_all_kelvin_reading()[0]
+            except Exception as e:
+                log.exception(e)
+                return 0.0
+        return 0.0
+
+    def await_ready(self, abort_signal):
+        log.info("LakeShore336: Checking if temperature is stabilized...")
+        with self.lock:
+            ready = self.ready
+        if not ready:
+            log.info("LakeShore336: temperature not stabilized, waiting...")
+            loop = QtCore.QEventLoop()
+            self.sigReady.connect(loop.quit)
+            abort_signal.connect(loop.quit)
+            loop.exec()
+            self.sigReady.disconnect(loop.quit)
+            abort_signal.disconnect(loop.quit)
+        log.info("LakeShore336: temperature stabilized.")
 
 
 class HeaterWidget(QtWidgets.QWidget):
@@ -1018,7 +1066,7 @@ class SettingsWindow(QtWidgets.QDialog):
             with open(self.save_path, "w") as f:
                 json.dump(settings_dict, f)
         except Exception as e:
-            print(e)
+            log.exception(e)
 
     def load_settings(self):
         try:
@@ -1065,7 +1113,7 @@ class SettingsWindow(QtWidgets.QDialog):
         except FileNotFoundError:
             pass
         except Exception as e:
-            print(e)
+            log.exception(e)
 
     def closeEvent(self, event):
         self.save_settings()
