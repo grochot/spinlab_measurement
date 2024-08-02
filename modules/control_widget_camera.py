@@ -643,7 +643,7 @@ class VideoTask(QtCore.QRunnable):
             )
 
         if self.zoom > 0:
-            zoom_text = f"x{self.zoom+1}"
+            zoom_text = f"{self.zoom+1}x"
             zoom_origin = (10, frame.shape[0] - 10)
             cv2.putText(
                 frame,
