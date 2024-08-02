@@ -436,9 +436,10 @@ class Lakeshore336Control(QtWidgets.QWidget):
             return
 
     def disconnect_from_device(self):
-        self.device.disconnect_tcp()
-        self.device = None
-        self.change_state(self.notConnectedState)
+        if self.device:
+            self.device.disconnect_tcp()
+            self.device = None
+            self.change_state(self.notConnectedState)
 
     def on_timer_btn_clicked(self, timer: str):
         match timer:
@@ -542,6 +543,8 @@ class Lakeshore336Control(QtWidgets.QWidget):
             self.setpoint_btn.setStyleSheet("")
 
     def on_setpoint_set_clicked(self):
+        if self.current_state == self.readyState:
+            self.change_state(self.connectedState)
         with self.lock:
             self.setpoint_btn.setFocus()
             self.is_setpoint_set = True
@@ -583,9 +586,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
             self.tick_timer.stop()
         if self.single_shot_timer.isActive():
             self.single_shot_timer.stop()
-        if self.device is not None:
-            self.device.disconnect_tcp()
-            self.device = None
+        self.disconnect_from_device()
 
         self.settings_win.close()
         event.accept()
@@ -721,16 +722,17 @@ class SettingsWindow(QtWidgets.QDialog):
         super(SettingsWindow, self).__init__(parent)
         self.save_path = os.path.join("LakeShore336_parameters.json")
 
-        self.refresh_interval: int = None
-        self.delay_duration: float = None
-        self.timeout_duration: float = None
         self.lock = lock
 
-        self.ready_condition: str = None
-        self.error_threshold: float = None
+        self.refresh_interval: int = 500
+        self.delay_duration: float = 10
+        self.timeout_duration: float = 30
 
-        self.dT: float = None
-        self.dt: float = None
+        self.ready_condition: str = "absolute error"
+        self.error_threshold: float = "1"
+
+        self.dT: float = 1
+        self.dt: float = 5 * 60
 
         self._setup_ui()
         self._layout()
@@ -751,7 +753,7 @@ class SettingsWindow(QtWidgets.QDialog):
         self.disconnect_btn = QtWidgets.QPushButton("Disconnect")
         self.disconnect_btn.setEnabled(False)
 
-        self.refresh_int_le = QtWidgets.QLineEdit("500")
+        self.refresh_int_le = QtWidgets.QLineEdit(str(self.refresh_interval))
         self.refresh_int_le.setAlignment(QtCore.Qt.AlignCenter)
         validator = QtGui.QIntValidator(bottom=100)
         validator.setLocale(QtCore.QLocale(QtCore.QLocale.English))
@@ -767,7 +769,7 @@ class SettingsWindow(QtWidgets.QDialog):
         self.refresh_int_btn.setFixedWidth(45)
         self.refresh_int_btn.clicked.connect(self.on_refresh_btn_clicked)
 
-        self.delay_le = QtWidgets.QLineEdit("1")
+        self.delay_le = QtWidgets.QLineEdit(str(self.delay_duration))
         self.delay_le.setAlignment(QtCore.Qt.AlignCenter)
         validator = QtGui.QDoubleValidator(bottom=0)
         validator.setLocale(QtCore.QLocale(QtCore.QLocale.English))
@@ -781,7 +783,7 @@ class SettingsWindow(QtWidgets.QDialog):
         self.delay_btn.setFixedWidth(45)
         self.delay_btn.clicked.connect(self.on_delay_btn_clicked)
 
-        self.timeout_le = QtWidgets.QLineEdit("10")
+        self.timeout_le = QtWidgets.QLineEdit(str(self.timeout_duration))
         self.timeout_le.setAlignment(QtCore.Qt.AlignCenter)
         validator = QtGui.QDoubleValidator(bottom=0)
         validator.setLocale(QtCore.QLocale(QtCore.QLocale.English))
@@ -818,7 +820,7 @@ class SettingsWindow(QtWidgets.QDialog):
 
         self.timeout_cond_l = QtWidgets.QLabel("Timeout condition:")
         self.timeout_cond_dT_l = QtWidgets.QLabel("\u0394T <")
-        self.timeout_cond_dT_le = QtWidgets.QLineEdit("0.01")
+        self.timeout_cond_dT_le = QtWidgets.QLineEdit(str(self.dT))
         self.timeout_cond_dT_le.setAlignment(QtCore.Qt.AlignCenter)
         validator = QtGui.QDoubleValidator(bottom=0.001)
         validator.setLocale(QtCore.QLocale(QtCore.QLocale.English))
@@ -828,7 +830,7 @@ class SettingsWindow(QtWidgets.QDialog):
         # self.timeout_cond_dT_le.setFixedWidth(130)
 
         self.timeout_cond_dt_l = QtWidgets.QLabel("[K] /")
-        self.timeout_cond_dt_le = QtWidgets.QLineEdit("10")
+        self.timeout_cond_dt_le = QtWidgets.QLineEdit(str(self.dt))
         self.timeout_cond_dt_le.setAlignment(QtCore.Qt.AlignCenter)
         validator = QtGui.QDoubleValidator(bottom=0.001)
         validator.setLocale(QtCore.QLocale(QtCore.QLocale.English))
@@ -895,6 +897,7 @@ class SettingsWindow(QtWidgets.QDialog):
             self.value_l.setText("[K] <")
         else:
             self.value_l.setText("[%] <")
+
         if (
             self.ready_condition_cb.currentText() != self.ready_condition
             or float(self.value_le.text()) != self.error_threshold
