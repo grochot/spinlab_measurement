@@ -92,6 +92,7 @@ class CameraControl(QtWidgets.QWidget):
     def _setup_ui(self) -> None:
         self.setWindowTitle("Camera Control")
         self.setMinimumSize(1024, 576)
+        self.setStyleSheet("font-size: 12pt;")
 
         self.add_dock_button = QtWidgets.QPushButton("Add dock")
         self.add_dock_button.clicked.connect(self.add_dock)
@@ -482,7 +483,7 @@ class CameraDock(Dock):
 
         if self.image_label.geometry().contains(ev.pos()):
             if ev.angleDelta().y() > 0:
-                self.video_task.zoom = min(6, self.video_task.zoom + 1)
+                self.video_task.zoom = min(7, self.video_task.zoom + 1)
             else:
                 self.video_task.zoom = max(0, self.video_task.zoom - 1)
         super().wheelEvent(ev)
