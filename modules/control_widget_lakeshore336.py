@@ -9,6 +9,8 @@ import logging
 
 log = logging.getLogger(__name__)
 
+USE_DUMMY = True
+
 
 def check_valid_ip(text: str):
     ipRegex = QtCore.QRegExp(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
@@ -434,15 +436,19 @@ class Lakeshore336Control(QtWidgets.QWidget):
     def connect_with_device(self, silent: bool = False):
         try:
             if not check_valid_ip(self.settings_win.ip_le.text()):
-                msg = QtWidgets.QMessageBox()
-                msg.setIcon(QtWidgets.QMessageBox.Critical)
-                msg.setWindowTitle("ERROR")
-                msg.setText("Invalid IP address!")
-                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-                msg.exec()
+                if not silent:
+                    msg = QtWidgets.QMessageBox()
+                    msg.setIcon(QtWidgets.QMessageBox.Critical)
+                    msg.setWindowTitle("ERROR")
+                    msg.setText("Invalid IP address!")
+                    msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                    msg.exec()
                 return
-            self.device = Model336(ip_address=self.settings_win.ip_le.text())
-            self.device.logger.setLevel("WARNING")
+            if USE_DUMMY:
+                self.device = DummyModel336()
+            else:
+                self.device = Model336(ip_address=self.settings_win.ip_le.text())
+                self.device.logger.setLevel("WARNING")
             # self.device = DummyModel336()
             self.change_state(self.connectedState)
             return
@@ -856,7 +862,7 @@ class SettingsWindow(QtWidgets.QDialog):
         self.ready_condition_cb.currentIndexChanged.connect(
             self.on_ready_condition_changed
         )
-        self.value_l = QtWidgets.QLabel("[K] <")
+        self.value_l = QtWidgets.QLabel("<")
         self.value_le = QtWidgets.QLineEdit("0.1")
         self.value_le.setAlignment(QtCore.Qt.AlignCenter)
         validator = QtGui.QDoubleValidator(bottom=0.001)
@@ -864,13 +870,17 @@ class SettingsWindow(QtWidgets.QDialog):
         self.value_le.setValidator(validator)
         self.value_le.textChanged.connect(self.on_value_changed)
         self.value_le.returnPressed.connect(self.on_value_btn_clicked)
+        self.value_unit_l = QtWidgets.QLabel("[K]")
 
         self.value_btn = QtWidgets.QPushButton("SET")
         self.value_btn.setFixedWidth(45)
         self.value_btn.clicked.connect(self.on_value_btn_clicked)
 
         self.timeout_cond_l = QtWidgets.QLabel("Timeout condition:")
-        self.timeout_cond_dT_l = QtWidgets.QLabel("\u0394T <")
+        self.timeout_cond_dT_l = QtWidgets.QLabel("\u0394T")
+        self.timeout_cond_dT_l.setAlignment(QtCore.Qt.AlignCenter)
+        self.timeout_cond_dT_l2 = QtWidgets.QLabel("<")
+        self.timeout_cond_dT_l2.setAlignment(QtCore.Qt.AlignCenter)
         self.timeout_cond_dT_le = QtWidgets.QLineEdit(str(self.dT))
         self.timeout_cond_dT_le.setAlignment(QtCore.Qt.AlignCenter)
         validator = QtGui.QDoubleValidator(bottom=0.001)
@@ -880,7 +890,7 @@ class SettingsWindow(QtWidgets.QDialog):
         self.timeout_cond_dT_le.returnPressed.connect(self.on_timeout_btn_clicked)
         # self.timeout_cond_dT_le.setFixedWidth(130)
 
-        self.timeout_cond_dt_l = QtWidgets.QLabel("[K] /")
+        self.timeout_cond_dt_l = QtWidgets.QLabel("[K]")
         self.timeout_cond_dt_le = QtWidgets.QLineEdit(str(self.dt))
         self.timeout_cond_dt_le.setAlignment(QtCore.Qt.AlignCenter)
         validator = QtGui.QDoubleValidator(bottom=0.001)
@@ -928,26 +938,38 @@ class SettingsWindow(QtWidgets.QDialog):
         ready_cond_layout.addWidget(self.ready_condition_cb, stretch=1)
         ready_cond_layout.addWidget(self.value_l)
         ready_cond_layout.addWidget(self.value_le, stretch=1)
+        ready_cond_layout.addWidget(self.value_unit_l)
         ready_cond_layout.addWidget(self.value_btn)
         layout.addRow(ready_cond_layout)
 
         layout.addRow(self.timeout_cond_l)
-        timeout_cond_layout = QtWidgets.QHBoxLayout()
-        timeout_cond_layout.addWidget(self.timeout_cond_dT_l)
-        timeout_cond_layout.addWidget(self.timeout_cond_dT_le, stretch=1)
-        timeout_cond_layout.addWidget(self.timeout_cond_dt_l)
-        timeout_cond_layout.addWidget(self.timeout_cond_dt_le, stretch=1)
-        timeout_cond_layout.addWidget(self.timeout_cond_unit_l)
-        timeout_cond_layout.addWidget(self.timeout_cond_btn)
-        layout.addRow(timeout_cond_layout)
+        timeout_cond_hlayout = QtWidgets.QHBoxLayout()
+        timeout_cond_hlayout.addStretch(2)
+        timeout_cond_hlayout.addWidget(self.timeout_cond_dT_l, stretch=1)
+        timeout_cond_hlayout.addWidget(self.timeout_cond_dT_l2, stretch=0)
+        timeout_cond_glayout = QtWidgets.QGridLayout() 
+        timeout_cond_glayout.addWidget(self.timeout_cond_dT_le, 0, 0)
+        timeout_cond_glayout.addWidget(self.timeout_cond_dt_l, 0, 1)
+        fraction_line = QtWidgets.QFrame()
+        fraction_line.setFrameShape(QtWidgets.QFrame.HLine)
+        fraction_line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        fraction_line.setLineWidth(2)
+        fraction_line.setStyleSheet("background-color: black;")
+        timeout_cond_glayout.addWidget(fraction_line, 1, 0, 1, 2)
+        timeout_cond_glayout.addWidget(self.timeout_cond_dt_le, 2, 0)
+        timeout_cond_glayout.addWidget(self.timeout_cond_unit_l, 2, 1)
+        timeout_cond_hlayout.addLayout(timeout_cond_glayout, stretch=1)
+        timeout_cond_hlayout.addStretch(2)
+        timeout_cond_hlayout.addWidget(self.timeout_cond_btn)
+        layout.addRow(timeout_cond_hlayout)
 
         self.setLayout(layout)
 
     def on_ready_condition_changed(self, index):
         if index == 0 or self.value_le.text() == "":
-            self.value_l.setText("[K] <")
+            self.value_unit_l.setText("[K]")
         else:
-            self.value_l.setText("[%] <")
+            self.value_unit_l.setText("[%]")
 
         if (
             self.ready_condition_cb.currentText() != self.ready_condition
@@ -1093,6 +1115,8 @@ class SettingsWindow(QtWidgets.QDialog):
 
                 self.ready_condition_cb.setCurrentText(settings_dict["ready_condition"])
                 self.ready_condition = settings_dict["ready_condition"]
+                
+                self.value_unit_l.setText("[K]" if self.ready_condition == "absolute error" else "[%]")
 
                 self.value_le.setText(settings_dict["error_threshold"])
                 self.error_threshold = float(settings_dict["error_threshold"])
