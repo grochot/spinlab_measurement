@@ -89,5 +89,7 @@
     "set_azimuthal_angle": 90.0,
     "remanency_correction_time": 5.0,
     "layout_type": true,
-    "path": "C://"
+    "path": "C://",
+    "set_polar_angle_fmr": 0,
+    "set_azimuthal_angle_fmr": 0
 }
