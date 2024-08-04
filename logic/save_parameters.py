@@ -26,6 +26,7 @@ class SaveParameters():
 
          # Stwórz nazwę pliku logów
         parameters_file_path = os.path.join(executable_path, 'parameters.json')
+        data["path"]="C://"
         json_object = json.dumps(data, indent=4)
         with open(parameters_file_path, "w") as outfile:
             outfile.write(json_object)     

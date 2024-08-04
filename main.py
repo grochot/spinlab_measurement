@@ -264,7 +264,8 @@ class SpinLabMeasurement(Procedure):
             case "CalibrationFieldMode": 
                 self.result = self.calibrationmode.operating()
                 self.emit('results', self.result[0])
-                window.set_calibration_constant(self.result[1])
+                print(self.result[1])  #TODO
+                #MainWindow.set_calibration_constant(self.result[1])
                 self.calibrationmode.end()
 
             case "CIMSMode":
