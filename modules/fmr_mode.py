@@ -49,7 +49,6 @@ class FMRMode():
         lockin_sine_amplitude, 
         lockin_channel1, 
         lockin_channel2,
-        set_field_value,
         field_constant,
         gaussmeter_range, 
         gaussmeter_resolution, 
@@ -75,7 +74,6 @@ class FMRMode():
         self.set_automaticstation = set_automaticstation
         self.set_lockin = set_lockin
         self.set_field = set_field
-        self.set_field_value = set_field_value
         self.set_gaussmeter = set_gaussmeter
         self.set_roationstation = set_roationstation
         self.set_generator = set_generator
@@ -150,7 +148,7 @@ class FMRMode():
         match self.set_gaussmeter: 
             case "Lakeshore": 
                 self.gaussmeter_obj = Lakeshore(self.address_gaussmeter)
-            case _:
+            case "none":
                 self.gaussmeter_obj = DummyGaussmeter(self.address_gaussmeter)
                 log.warning('Used dummy Gaussmeter.')
         
@@ -295,8 +293,11 @@ class FMRMode():
                 #measure field
                 if self.set_gaussmeter == "none":
                     self.tmp_field = point
+                    
                 else: 
+                    
                     self.tmp_field = self.gaussmeter_obj.measure()
+                  
         
                 sleep(self.delay_lockin)
 
@@ -331,8 +332,10 @@ class FMRMode():
 
                 #measure field
                 if self.set_gaussmeter == "none":
+                    
                     self.tmp_field = point
-                else: 
+                else:
+                   
                     self.tmp_field = self.gaussmeter_obj.measure()
         
                 sleep(self.delay_lockin)
