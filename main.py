@@ -161,7 +161,7 @@ class SpinLabMeasurement(Procedure):
     lfgen_freq = FloatParameter("LF Generator Frequency", default = parameters_from_file["lfgen_freq"], units="Hz", group_by = {"mode": lambda v: v == "FMRMode", "set_lfgen": lambda v: v != "none" and  v != "SR830","layout_type": True })
     lfgen_amp = FloatParameter("LF Generator Amplitude", default = parameters_from_file["lfgen_amp"], units="V", group_by = {"mode": lambda v: v == "FMRMode", "set_lfgen": lambda v: v != "none" and  v != "SR830", "layout_type": True})
     
-    #RotationStationParameters 
+    #RotationStationParameter
     rotation_axis = ListParameter("Rotation axis", default = parameters_from_file["rotation_axis"], choices=["Polar", "Azimuthal", "None"], group_by={"set_rotationstation": lambda v: v == True, "layout_type": True, "mode": lambda v: v != "FMRMode"})
     rotation_polar_constant  = FloatParameter("Polar constant angle", default = parameters_from_file["rotation_polar_constant"],  group_by={"set_rotationstation": lambda v: v == True, "rotation_axis": lambda v: v == "Azimuthal", "layout_type": True, "mode": lambda v: v != "FMRMode"})
     rotation_azimuth_constant =  FloatParameter("Azimuthal constant angle", default = parameters_from_file["rotation_azimuth_constant"], group_by={"set_rotationstation": lambda v: v == True, "rotation_axis": lambda v: v == "Polar", "layout_type": True, mode: lambda v: v != "FMRMode"})
