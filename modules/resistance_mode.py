@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler()) 
 
 class ResistanceMode():
-    def __init__(self, vector:str, fourpoints:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool,set_rotationstation_const_angle,return_the_rotationstation:bool, address_sourcemeter:str, address_multimeter:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_lockin:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float, rotation_axis:str, rotation_polar_constant:float, rotation_azimuth_constant:float,set_polar_angle,set_azimuthal_angle) -> None:   
+    def __init__(self, vector:str, fourpoints:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool,return_the_rotationstation:bool, address_sourcemeter:str, address_multimeter:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_lockin:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float, rotation_axis:str, rotation_polar_constant:float, rotation_azimuth_constant:float,set_polar_angle,set_azimuthal_angle) -> None:   
         ## parameter initialization 
         self.sourcemeter = sourcemeter
         self.multimeter = multimeter
@@ -35,7 +35,6 @@ class ResistanceMode():
         self.swich = switch
         self.kriostat = kriostat
         self.rotationstation = rotationstation
-        self.set_rotationstation_const_angle=set_rotationstation_const_angle
         self.return_the_rotationstation=return_the_rotationstation
         self.address_sourcemeter = address_sourcemeter
         self.address_multimeter = address_multimeter
@@ -142,7 +141,7 @@ class ResistanceMode():
                 self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
 
 
-        if self.set_rotationstation_const_angle:
+        if self.rotation_axis=="None":
             try:
                 self.rotationstation_obj = RotationStage(self.rotationstation_port)
                 self.rotationstation_obj.goToAzimuth(self.set_azimuthal_angle)
@@ -270,5 +269,5 @@ class ResistanceMode():
     def idle(self):
         self.sourcemeter_obj.shutdown()
         sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
-        if (self.rotationstation or self.set_rotationstation_const_angle) and self.return_the_rotationstation: 
+        if (self.rotationstation or self.rotation_axis=="None") and self.return_the_rotationstation: 
             self.rotationstation_obj.goToZero()

@@ -116,6 +116,14 @@ class Channel:
         values=[-3.03, 3.03]
     )
 
+    generator_compliance_current = Instrument.control(
+        ":SENS{ch}:CURR:PROT?", ":SENS{ch}:CURR:PROT %g",
+        """ A floating point property that controls the compliance current
+        in Amps. """,
+        validator=truncated_range,
+        values=[-3.03, 3.03]
+    )
+
     def enable_source(self):
         self.write(":OUTP{ch} ON")
     
@@ -150,6 +158,16 @@ class Channel:
         validator=truncated_range,
         values=[-210, 210]
     ) 
+
+    generator_compliance_voltage = Instrument.control(
+        ":SENS{ch}:VOLT:PROT?", ":SENS{ch}:VOLT:PROT %g",
+        """ A floating point property that controls the compliance voltage
+        in Volts. """,
+        validator=truncated_range,
+        values=[-210, 210]
+    )
+
+
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
         """ Configures the measurement of voltage.
 

@@ -2,7 +2,7 @@ import numpy as np
 from time import sleep
 def sweep_field_to_value(start_value, stop_value, field_constant, step, daq):
 
-    if stop_value-start_value>0:
+    if stop_value-start_value>0.0:
         vector = np.arange(start_value*field_constant, stop_value*field_constant, step*field_constant)
     else:
         vector = np.arange(start_value*field_constant, stop_value*field_constant, -1*step*field_constant)

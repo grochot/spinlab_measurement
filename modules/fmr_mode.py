@@ -49,7 +49,6 @@ class FMRMode():
         lockin_sine_amplitude, 
         lockin_channel1, 
         lockin_channel2,
-        set_field_value,
         field_constant,
         gaussmeter_range, 
         gaussmeter_resolution, 
@@ -69,13 +68,14 @@ class FMRMode():
         constant_field_value:float, 
         rotation_axis:str, 
         rotation_polar_constant:float, 
-        rotation_azimuth_constant:float) -> None: 
+        rotation_azimuth_constant:float,
+        hold_the_field_after_measurement:bool,
+        return_the_rotationstation:bool) -> None: 
         
         
         self.set_automaticstation = set_automaticstation
         self.set_lockin = set_lockin
         self.set_field = set_field
-        self.set_field_value = set_field_value
         self.set_gaussmeter = set_gaussmeter
         self.set_roationstation = set_roationstation
         self.set_generator = set_generator
@@ -121,6 +121,8 @@ class FMRMode():
         self.rotation_axis = rotation_axis
         self.rotation_polar_constant = rotation_polar_constant
         self.rotation_azimuth_constant = rotation_azimuth_constant
+        self.hold_the_field_after_measurement=hold_the_field_after_measurement
+        self.return_the_rotationstation = return_the_rotationstation
         ## parameter initialization 
         
         
@@ -150,7 +152,7 @@ class FMRMode():
         match self.set_gaussmeter: 
             case "Lakeshore": 
                 self.gaussmeter_obj = Lakeshore(self.address_gaussmeter)
-            case _:
+            case "none":
                 self.gaussmeter_obj = DummyGaussmeter(self.address_gaussmeter)
                 log.warning('Used dummy Gaussmeter.')
         
@@ -219,11 +221,14 @@ class FMRMode():
         if self.rotationstation: 
             try:
                 self.rotationstation_obj = RotationStage(self.rotationstation_port)
-                match self.rotation_axis:
-                    case "Polar": 
-                        self.rotationstation_obj.goToAzimuth(self.rotation_azimuth_constant)
-                    case "Azimuthal": 
-                        self.rotationstation_obj.goToPolar(self.rotation_polar_constant)
+               
+                self.rotationstation_obj.goToAzimuth(self.rotation_azimuth_constant)
+                while self.rotationstation_obj.checkBusyAzimuth() == 'BUSY;':
+                    sleep(0.01)
+                    
+                self.rotationstation_obj.goToPolar(self.rotation_polar_constant)
+                while self.rotationstation_obj.checkBusyPolar() == 'BUSY;':
+                    sleep(0.01)
             except:
                 log.error("Rotation station is not initialized")
                 self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
@@ -295,8 +300,11 @@ class FMRMode():
                 #measure field
                 if self.set_gaussmeter == "none":
                     self.tmp_field = point
+                    
                 else: 
+                    
                     self.tmp_field = self.gaussmeter_obj.measure()
+                  
         
                 sleep(self.delay_lockin)
 
@@ -331,8 +339,10 @@ class FMRMode():
 
                 #measure field
                 if self.set_gaussmeter == "none":
+                    
                     self.tmp_field = point
-                else: 
+                else:
+                   
                     self.tmp_field = self.gaussmeter_obj.measure()
         
                 sleep(self.delay_lockin)
@@ -366,9 +376,10 @@ class FMRMode():
         FMRMode.idle(self)
 
     def idle(self):
-        sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
+        if self.hold_the_field_after_measurement==False:
+            sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
         self.generator_obj.setOutput(False, True)
-        if self.rotationstation: 
+        if self.return_the_rotationstation and self.rotationstation == True: 
             self.rotationstation_obj.goToZero()
 
 
