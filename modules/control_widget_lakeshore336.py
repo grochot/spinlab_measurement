@@ -8,8 +8,8 @@ from abc import ABC, abstractmethod
 import logging
 
 log = logging.getLogger(__name__)
-log.addHandler(logging.StreamHandler(sys.stdout))
-log.setLevel(logging.DEBUG)
+# log.addHandler(logging.StreamHandler(sys.stdout))
+# log.setLevel(logging.DEBUG)
 
 USE_DUMMY = True
 
@@ -252,10 +252,14 @@ class Lakeshore336Control(QtWidgets.QWidget):
     object_name = "lakeshore336_control"
     sigReady = QtCore.pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, nested=True, parent=None):
         super(Lakeshore336Control, self).__init__(parent)
         self.name = "Lakeshore 336"
         self.icon_path = os.path.join("modules", "icons", "LakeShore336.ico")
+
+        app = QtWidgets.QApplication.instance()
+        app.aboutToQuit.connect(self.shutdown)
+        self.nested = nested
 
         self.lock = Lock()
 
@@ -640,6 +644,11 @@ class Lakeshore336Control(QtWidgets.QWidget):
                 self.change_state(self.notConnectedState)
 
     def closeEvent(self, event):
+        if self.nested:
+            self.settings_win.close()
+        event.accept()
+
+    def shutdown(self):
         if self.tick_timer.isActive():
             self.tick_timer.stop()
         if self.single_shot_timer.isActive():
@@ -647,7 +656,6 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.disconnect_from_device()
 
         self.settings_win.close()
-        event.accept()
 
     def get_curr_temp(self):
         if self.device:
@@ -665,12 +673,22 @@ class Lakeshore336Control(QtWidgets.QWidget):
         if not ready:
             log.info("LakeShore336: temperature not stabilized, waiting...")
             loop = QtCore.QEventLoop()
-            self.sigReady.connect(loop.quit)
-            abort_signal.connect(loop.quit)
+            
+            @QtCore.pyqtSlot()
+            def on_abort():
+                loop.quit()
+                abort_signal.disconnect(on_abort)
+                log.warning("LakeShore336: Temperature stabilization aborted.")
+                
+            @QtCore.pyqtSlot()
+            def on_ready():
+                loop.quit()
+                self.sigReady.disconnect(on_ready)
+                log.info("LakeShore336: temperature stabilized.")
+            
+            self.sigReady.connect(on_ready)
+            abort_signal.connect(on_abort)
             loop.exec()
-            self.sigReady.disconnect(loop.quit)
-            abort_signal.disconnect(loop.quit)
-        log.info("LakeShore336: temperature stabilized.")
 
 
 class HeaterWidget(QtWidgets.QWidget):
@@ -1241,6 +1259,6 @@ class CustomIntValidator(QtGui.QIntValidator):
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    window = Lakeshore336Control()
+    window = Lakeshore336Control(nested=False)
     window.show()
     app.exec()
