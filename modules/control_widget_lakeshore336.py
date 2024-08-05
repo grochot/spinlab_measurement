@@ -261,6 +261,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
 
         self.settings_win = SettingsWindow(self.lock)
         self.settings_win.load_settings()
+        self.settings_win.ip_le.editingFinished.connect(self.on_connect_btn_clicked)
         self.settings_win.connect_btn.clicked.connect(self.on_connect_btn_clicked)
         self.settings_win.disconnect_btn.clicked.connect(self.on_disconnect_btn_clicked)
         self.settings_win.refresh_int_btn.clicked.connect(
@@ -575,7 +576,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
             return False
 
     def on_settings_btn_clicked(self):
-        self.settings_win.exec()
+        self.settings_win.show()
 
     def on_setpoint_changed(self, text):
         self.is_setpoint_set = False
@@ -795,10 +796,11 @@ class Indicator(QtWidgets.QFrame):
         self.set_off()
 
 
-class SettingsWindow(QtWidgets.QDialog):
+class SettingsWindow(QtWidgets.QWidget):
     def __init__(self, lock: Lock, parent=None):
         super(SettingsWindow, self).__init__(parent)
         self.save_path = os.path.join("LakeShore336_parameters.json")
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
 
         self.lock = lock
 
@@ -1202,6 +1204,7 @@ class HorizontalDivider(QtWidgets.QFrame):
         super(HorizontalDivider, self).__init__(parent)
         self.setFrameShape(QtWidgets.QFrame.HLine)
         self.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.setStyleSheet("border: 1px solid gray; background-color: gray;")
 
 
 class VerticalDivider(QtWidgets.QFrame):
