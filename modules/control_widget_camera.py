@@ -78,11 +78,7 @@ class CameraControl(QtWidgets.QWidget):
 
     def on_camera_indexes_ready(self, indexes: list[int]) -> None:
         with QtCore.QMutexLocker(self.free_channels_mutex):
-            self.free_channels = (
-                ["None"]
-                + [str(index) for index in indexes]
-                + self.ip_camera_widget.ip_cameras
-            )
+            self.free_channels = ["None"] + [str(index) for index in indexes] + self.ip_camera_widget.ip_cameras
         self.add_ip_camera_button.setEnabled(True)
         for dock in self.camera_docks:
             dock.channels = self.free_channels
@@ -124,9 +120,7 @@ class CameraControl(QtWidgets.QWidget):
         if len(self.camera_docks) == self.max_docks - 1:
             self.add_dock_button.setEnabled(False)
 
-        dock: CameraDock = CameraDock(
-            self.dock_count, self.free_channels, self.thread_pool
-        )
+        dock: CameraDock = CameraDock(self.dock_count, self.free_channels, self.thread_pool)
         self.dock_count += 1
         dock.sigDockClose.connect(self.on_dock_close)
         dock.sigChannelChange.connect(self.on_channel_change)
@@ -134,9 +128,7 @@ class CameraControl(QtWidgets.QWidget):
         self.camera_docks.append(dock)
         self.dock_area.addDock(dock, "right")
 
-    def on_channel_change(
-        self, prev_channel: str, new_channel: str, dock_id: int
-    ) -> None:
+    def on_channel_change(self, prev_channel: str, new_channel: str, dock_id: int) -> None:
         self.occupy_channel(new_channel, dock_id)
         self.release_channel(prev_channel, dock_id)
 
@@ -218,10 +210,10 @@ class IpCameraWidget(QtWidgets.QWidget):
     sigAddIpCamera = QtCore.pyqtSignal(str)
     sigRemoveIpCamera = QtCore.pyqtSignal(str)
 
-    def __init__(self, icon_path = None, parent=None):
+    def __init__(self, icon_path=None, parent=None):
         super(IpCameraWidget, self).__init__(parent)
         self.icon_path = icon_path
-        
+
         self.save_path = os.path.join("CameraControl_ipCameras.json")
         self.ip_cameras: list[str] = []
 
@@ -247,12 +239,8 @@ class IpCameraWidget(QtWidgets.QWidget):
         self.camera_table = QtWidgets.QTableWidget()
         self.camera_table.setColumnCount(2)
         self.camera_table.setHorizontalHeaderLabels(["IP", ""])
-        self.camera_table.horizontalHeader().setSectionResizeMode(
-            0, QtWidgets.QHeaderView.Stretch
-        )
-        self.camera_table.horizontalHeader().setSectionResizeMode(
-            1, QtWidgets.QHeaderView.ResizeToContents
-        )
+        self.camera_table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        self.camera_table.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
 
     def _layout(self):
         layout = QtWidgets.QVBoxLayout()
@@ -309,9 +297,7 @@ class CameraDock(Dock):
     sigDockClose = QtCore.pyqtSignal(object)
     sigChannelChange = QtCore.pyqtSignal(str, str, int)
 
-    def __init__(
-        self, id, channels: list[str], thread_pool: QtCore.QThreadPool, parent=None
-    ):
+    def __init__(self, id, channels: list[str], thread_pool: QtCore.QThreadPool, parent=None):
         super(CameraDock, self).__init__("Camera", closable=True, autoOrientation=False)
         self.parent = parent
 
@@ -333,9 +319,7 @@ class CameraDock(Dock):
 
         self.image_label = QtWidgets.QLabel()
         self.image_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.image_label.setSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
-        )
+        self.image_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.image_label.setMinimumSize(320, 180)
         self.image_label.setStyleSheet("border: 1px solid black;")
         self.image_label.setText("No camera selected")
@@ -362,9 +346,7 @@ class CameraDock(Dock):
         self.brightness_slider.setValue(50)
         self.brightness_slider.setTickInterval(10)
         self.brightness_slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
-        self.brightness_slider.setSizePolicy(
-            QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum
-        )
+        self.brightness_slider.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         self.brightness_slider.valueChanged.connect(self.on_brightness_change)
 
         self.save_button = QtWidgets.QPushButton("Save Image")
@@ -501,11 +483,7 @@ class CameraDock(Dock):
             if ev.button() == QtCore.Qt.RightButton:
                 self.video_task.zoom = 0
 
-            if (
-                ev.button() == QtCore.Qt.LeftButton
-                and not self.is_dragging
-                and self.video_task.zoom > 0
-            ):
+            if ev.button() == QtCore.Qt.LeftButton and not self.is_dragging and self.video_task.zoom > 0:
                 self.is_dragging = True
                 self.last_mouse_pos = ev.pos()
 
@@ -618,9 +596,7 @@ class VideoTask(QtCore.QRunnable):
         thickness = 2
 
         if self.show_timestamp:
-            timestamp = str(
-                QtCore.QDateTime.currentDateTime().toString("hh:mm:ss dd.MM.yyyy")
-            )
+            timestamp = str(QtCore.QDateTime.currentDateTime().toString("hh:mm:ss dd.MM.yyyy"))
             timestamp_size = cv2.getTextSize(timestamp, font, font_scale, thickness)[0]
             timestamp_origin = (
                 frame.shape[1] - timestamp_size[0] - 10,
@@ -685,9 +661,7 @@ class VideoTask(QtCore.QRunnable):
             return frame
         center_x, center_y = frame.shape[1] // 2, frame.shape[0] // 2
 
-        radius_x, radius_y = int(center_x / (self.zoom + 1)), int(
-            center_y / (self.zoom + 1)
-        )
+        radius_x, radius_y = int(center_x / (self.zoom + 1)), int(center_y / (self.zoom + 1))
 
         min_x, max_x = (
             center_x - radius_x + self.pan_offset.x(),
@@ -710,10 +684,10 @@ class VideoTask(QtCore.QRunnable):
 
     def pan(self, delta: QtCore.QPoint):
         self.pan_offset += delta
-        if abs(self.pan_offset.x()) > np.floor(self.width / 2 * self.zoom/(self.zoom+1)):
-            self.pan_offset.setX(int(np.floor(self.width / 2 * self.zoom/(self.zoom+1)) * np.sign(self.pan_offset.x())))
-        if abs(self.pan_offset.y()) > np.floor(self.height / 2 * self.zoom/(self.zoom+1)):
-            self.pan_offset.setY(int(np.floor(self.height / 2 * self.zoom/(self.zoom+1)) * np.sign(self.pan_offset.y())))
+        if abs(self.pan_offset.x()) > np.floor(self.width / 2 * self.zoom / (self.zoom + 1)):
+            self.pan_offset.setX(int(np.floor(self.width / 2 * self.zoom / (self.zoom + 1)) * np.sign(self.pan_offset.x())))
+        if abs(self.pan_offset.y()) > np.floor(self.height / 2 * self.zoom / (self.zoom + 1)):
+            self.pan_offset.setY(int(np.floor(self.height / 2 * self.zoom / (self.zoom + 1)) * np.sign(self.pan_offset.y())))
 
     def stop(self):
         self.running = False

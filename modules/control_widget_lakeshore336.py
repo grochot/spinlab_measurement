@@ -159,20 +159,14 @@ class DelayState(State):
         if self.delay_duration == 0:
             context.change_state(context.readyState)
             return
-        context.single_shot_timer.timeout.connect(
-            lambda: context.change_state(context.readyState)
-        )
+        context.single_shot_timer.timeout.connect(lambda: context.change_state(context.readyState))
         context.single_shot_timer.start(self.delay_duration)
-        context.delay_timer_label.setText(
-            f"DELAY: {format_time(self.delay_duration // 1000)}"
-        )
+        context.delay_timer_label.setText(f"DELAY: {format_time(self.delay_duration // 1000)}")
         context.delay_timer_indicator.start_blink("green", 500)
 
     def on_tick(self, context):
         self.delay_duration -= context.settings_win.settings["refresh_interval"]
-        context.delay_timer_label.setText(
-            f"DELAY: {format_time(self.delay_duration // 1000)}"
-        )
+        context.delay_timer_label.setText(f"DELAY: {format_time(self.delay_duration // 1000)}")
 
         if not any([heater.is_on for heater in context.outputs]):
             context.change_state(context.connectedState)
@@ -200,21 +194,15 @@ class TimeoutState(State):
         if self.timeout_duration == 0:
             context.change_state(context.timeoutErrorState)
             return
-        context.single_shot_timer.timeout.connect(
-            lambda: context.change_state(context.timeoutErrorState)
-        )
+        context.single_shot_timer.timeout.connect(lambda: context.change_state(context.timeoutErrorState))
 
         context.single_shot_timer.start(self.timeout_duration)
         context.timeout_timer_indicator.start_blink("red", 500)
-        context.timeout_timer_label.setText(
-            f"TIMEOUT: {format_time(self.timeout_duration // 1000)}"
-        )
+        context.timeout_timer_label.setText(f"TIMEOUT: {format_time(self.timeout_duration // 1000)}")
 
     def on_tick(self, context):
         self.timeout_duration -= context.settings_win.settings["refresh_interval"]
-        context.timeout_timer_label.setText(
-            f"TIMEOUT: {format_time(self.timeout_duration // 1000)}"
-        )
+        context.timeout_timer_label.setText(f"TIMEOUT: {format_time(self.timeout_duration // 1000)}")
 
         if not any([heater.is_on for heater in context.outputs]):
             context.change_state(context.connectedState)
@@ -479,9 +467,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
             if USE_DUMMY:
                 self.device = DummyModel336()
             else:
-                self.device = Model336(
-                    ip_address=self.settings_win.settings["ip_address"]
-                )
+                self.device = Model336(ip_address=self.settings_win.settings["ip_address"])
                 self.device.logger.setLevel("WARNING")
             # self.device = DummyModel336()
             self.change_state(self.connectedState)
@@ -606,10 +592,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
 
     def on_setpoint_changed(self, text):
         self.is_setpoint_set = False
-        if (
-            self.setpoint_le.validator().validate(text, 0)[0]
-            != QtGui.QValidator.Acceptable
-        ):
+        if self.setpoint_le.validator().validate(text, 0)[0] != QtGui.QValidator.Acceptable:
             self.setpoint_btn.setStyleSheet("color: RED;")
         else:
             self.setpoint_btn.setStyleSheet("")
@@ -625,17 +608,10 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.setpoint_btn.setFocus()
         if self.current_state in [self.delayState, self.readyState, self.timeoutState]:
             self.change_state(self.connectedState)
-        if (
-            self.setpoint_le.validator().validate(self.setpoint_le.text(), 0)[0]
-            == QtGui.QValidator.Acceptable
-        ):
+        if self.setpoint_le.validator().validate(self.setpoint_le.text(), 0)[0] == QtGui.QValidator.Acceptable:
             with self.lock:
                 self.is_setpoint_set = True
-                setpoint = (
-                    float(self.setpoint_le.text())
-                    if self.setpoint_le.text() != ""
-                    else self.setpoint
-                )
+                setpoint = float(self.setpoint_le.text()) if self.setpoint_le.text() != "" else self.setpoint
                 self.setpoint = setpoint
                 try:
                     self.device.set_control_setpoint(1, self.setpoint)
@@ -786,17 +762,13 @@ class Indicator(QtWidgets.QFrame):
         self.setFixedSize(25, 25)
         self.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.setStyleSheet(
-            "border-radius: 4px; border: 2px solid black; background-color: white;"
-        )
+        self.setStyleSheet("border-radius: 4px; border: 2px solid black; background-color: white;")
 
         self.state = 0
         self.timer = QtCore.QTimer()
 
     def set_color(self, color):
-        self.setStyleSheet(
-            f"background-color: {color}; border-radius: 4px; border: 2px solid black;"
-        )
+        self.setStyleSheet(f"background-color: {color}; border-radius: 4px; border: 2px solid black;")
         self.state = 1
 
     def set_on(self):
@@ -804,9 +776,7 @@ class Indicator(QtWidgets.QFrame):
         self.state = 1
 
     def set_off(self):
-        self.setStyleSheet(
-            "border-radius: 4px; border: 2px solid black; background-color: white;"
-        )
+        self.setStyleSheet("border-radius: 4px; border: 2px solid black; background-color: white;")
         self.state = 0
 
     def set_warning(self):
@@ -889,16 +859,10 @@ class SettingsWindow(QtWidgets.QWidget):
         self.disconnect_btn = QtWidgets.QPushButton("Disconnect")
         self.disconnect_btn.setEnabled(False)
 
-        self.refresh_int_le = QtWidgets.QLineEdit(
-            str(self.settings["refresh_interval"])
-        )
+        self.refresh_int_le = QtWidgets.QLineEdit(str(self.settings["refresh_interval"]))
         self.refresh_int_le.setAlignment(QtCore.Qt.AlignCenter)
         self.refresh_int_le.setValidator(CustomIntValidator(bottom=100))
-        self.refresh_int_le.textEdited.connect(
-            lambda text: self.time_le_changed(
-                text, "refresh_interval", self.refresh_int_le, self.refresh_int_btn
-            )
-        )
+        self.refresh_int_le.textEdited.connect(lambda text: self.time_le_changed(text, "refresh_interval", self.refresh_int_le, self.refresh_int_btn))
         self.refresh_int_le.returnPressed.connect(
             lambda: self.time_set_btn_clicked(
                 "refresh_interval",
@@ -920,60 +884,32 @@ class SettingsWindow(QtWidgets.QWidget):
         self.delay_le = QtWidgets.QLineEdit(str(self.settings["delay_duration"]))
         self.delay_le.setAlignment(QtCore.Qt.AlignCenter)
         self.delay_le.setValidator(CustomDoubleValidator(bottom=0))
-        self.delay_le.textEdited.connect(
-            lambda text: self.time_le_changed(
-                text, "delay_duration", self.delay_le, self.delay_btn
-            )
-        )
-        self.delay_le.returnPressed.connect(
-            lambda: self.time_set_btn_clicked(
-                "delay_duration", self.delay_le, self.delay_btn
-            )
-        )
+        self.delay_le.textEdited.connect(lambda text: self.time_le_changed(text, "delay_duration", self.delay_le, self.delay_btn))
+        self.delay_le.returnPressed.connect(lambda: self.time_set_btn_clicked("delay_duration", self.delay_le, self.delay_btn))
 
         self.delay_btn = QtWidgets.QPushButton("SET")
         self.delay_btn.setFixedWidth(45)
-        self.delay_btn.clicked.connect(
-            lambda: self.time_set_btn_clicked(
-                "delay_duration", self.delay_le, self.delay_btn
-            )
-        )
+        self.delay_btn.clicked.connect(lambda: self.time_set_btn_clicked("delay_duration", self.delay_le, self.delay_btn))
 
         self.timeout_le = QtWidgets.QLineEdit(str(self.settings["timeout_duration"]))
         self.timeout_le.setAlignment(QtCore.Qt.AlignCenter)
         self.timeout_le.setValidator(CustomDoubleValidator(bottom=0))
-        self.timeout_le.textEdited.connect(
-            lambda text: self.time_le_changed(
-                text, "timeout_duration", self.timeout_le, self.timeout_btn
-            )
-        )
-        self.timeout_le.returnPressed.connect(
-            lambda: self.time_set_btn_clicked(
-                "timeout_duration", self.timeout_le, self.timeout_btn
-            )
-        )
+        self.timeout_le.textEdited.connect(lambda text: self.time_le_changed(text, "timeout_duration", self.timeout_le, self.timeout_btn))
+        self.timeout_le.returnPressed.connect(lambda: self.time_set_btn_clicked("timeout_duration", self.timeout_le, self.timeout_btn))
 
         self.timeout_btn = QtWidgets.QPushButton("SET")
         self.timeout_btn.setFixedWidth(45)
-        self.timeout_btn.clicked.connect(
-            lambda: self.time_set_btn_clicked(
-                "timeout_duration", self.timeout_le, self.timeout_btn
-            )
-        )
+        self.timeout_btn.clicked.connect(lambda: self.time_set_btn_clicked("timeout_duration", self.timeout_le, self.timeout_btn))
 
         self.ready_cond_l = QtWidgets.QLabel("Ready condition:")
         self.ready_condition_cb = QtWidgets.QComboBox()
         self.ready_condition_cb.addItems(["absolute error", "relative error"])
-        self.ready_condition_cb.activated.connect(
-            lambda index: self.on_ready_cond_changed(index, "cb")
-        )
+        self.ready_condition_cb.activated.connect(lambda index: self.on_ready_cond_changed(index, "cb"))
         self.error_thr_less_l = QtWidgets.QLabel("<")
         self.error_thr_le = QtWidgets.QLineEdit("0.1")
         self.error_thr_le.setAlignment(QtCore.Qt.AlignCenter)
         self.error_thr_le.setValidator(CustomDoubleValidator(bottom=0.001))
-        self.error_thr_le.textEdited.connect(
-            lambda value: self.on_ready_cond_changed(value, "le")
-        )
+        self.error_thr_le.textEdited.connect(lambda value: self.on_ready_cond_changed(value, "le"))
         self.error_thr_le.returnPressed.connect(self.on_value_btn_clicked)
         self.error_thr_unit_l = QtWidgets.QLabel("[K]")
 
@@ -989,9 +925,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.timeout_cond_dT_le = QtWidgets.QLineEdit(str(self.settings["dT"]))
         self.timeout_cond_dT_le.setAlignment(QtCore.Qt.AlignCenter)
         self.timeout_cond_dT_le.setValidator(CustomDoubleValidator(bottom=0.001))
-        self.timeout_cond_dT_le.textEdited.connect(
-            lambda text: self.on_timeout_cond_changed(text, self.timeout_cond_dT_le)
-        )
+        self.timeout_cond_dT_le.textEdited.connect(lambda text: self.on_timeout_cond_changed(text, self.timeout_cond_dT_le))
         self.timeout_cond_dT_le.returnPressed.connect(self.on_timeout_cond_btn_clicked)
         # self.timeout_cond_dT_le.setFixedWidth(130)
 
@@ -999,9 +933,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.timeout_cond_dt_le = QtWidgets.QLineEdit(str(self.settings["dt"]))
         self.timeout_cond_dt_le.setAlignment(QtCore.Qt.AlignCenter)
         self.timeout_cond_dt_le.setValidator(CustomDoubleValidator(bottom=0.1))
-        self.timeout_cond_dt_le.textEdited.connect(
-            lambda text: self.on_timeout_cond_changed(text, self.timeout_cond_dt_le)
-        )
+        self.timeout_cond_dt_le.textEdited.connect(lambda text: self.on_timeout_cond_changed(text, self.timeout_cond_dt_le))
         self.timeout_cond_dt_le.returnPressed.connect(self.on_timeout_cond_btn_clicked)
         # self.timeout_cond_dt_le.setFixedWidth(130)
 
@@ -1088,24 +1020,18 @@ class SettingsWindow(QtWidgets.QWidget):
         else:
             btn.setStyleSheet("")
 
-    def time_set_btn_clicked(
-        self, param: str, le: QtWidgets.QLineEdit, btn: QtWidgets.QPushButton
-    ) -> None:
+    def time_set_btn_clicked(self, param: str, le: QtWidgets.QLineEdit, btn: QtWidgets.QPushButton) -> None:
         btn.setFocus()
-        btn.setStyleSheet("")    
+        btn.setStyleSheet("")
 
         if le.validator().validate(le.text(), 0)[0] == QtGui.QValidator.Acceptable:
             if float(le.text()) == float(self.settings[param]):
                 return
             with self.lock:
                 if le == self.refresh_int_le:
-                    self.settings[param] = (
-                        int(le.text()) if le.text() != "" else self.settings[param]
-                    )
+                    self.settings[param] = int(le.text()) if le.text() != "" else self.settings[param]
                 else:
-                    self.settings[param] = (
-                        float(le.text()) if le.text() != "" else self.settings[param]
-                    )
+                    self.settings[param] = float(le.text()) if le.text() != "" else self.settings[param]
             self.sigTimerChanged.emit(param, self.settings[param])
 
         le.setText(str(self.settings[param]))
@@ -1115,10 +1041,7 @@ class SettingsWindow(QtWidgets.QWidget):
         if source == "cb":
             self.error_thr_unit_l.setText("[K]" if value == 0 else "[%]")
         if source == "le":
-            if (
-                self.error_thr_le.validator().validate(value, 0)[0]
-                != QtGui.QValidator.Acceptable
-            ):
+            if self.error_thr_le.validator().validate(value, 0)[0] != QtGui.QValidator.Acceptable:
                 self.error_thr_le.setStyleSheet("color: RED;")
             else:
                 self.error_thr_le.setStyleSheet("")
@@ -1137,15 +1060,10 @@ class SettingsWindow(QtWidgets.QWidget):
     def on_value_btn_clicked(self):
         self.error_thr_btn.setFocus()
         self.error_thr_btn.setStyleSheet("")
-        if (
-            self.error_thr_le.validator().validate(self.error_thr_le.text(), 0)[0]
-            == QtGui.QValidator.Acceptable
-        ):
+        if self.error_thr_le.validator().validate(self.error_thr_le.text(), 0)[0] == QtGui.QValidator.Acceptable:
             with self.lock:
                 self.settings["error_threshold"] = (
-                    float(self.error_thr_le.text())
-                    if self.error_thr_le.text() != ""
-                    else self.settings["error_threshold"]
+                    float(self.error_thr_le.text()) if self.error_thr_le.text() != "" else self.settings["error_threshold"]
                 )
         self.error_thr_le.setText(str(self.settings["error_threshold"]))
         self.error_thr_le.setStyleSheet("")
@@ -1161,9 +1079,7 @@ class SettingsWindow(QtWidgets.QWidget):
             self.timeout_cond_btn.setStyleSheet("color: RED;")
             return
 
-        if self.settings["dT"] != float(
-            self.timeout_cond_dT_le.text()
-        ) or self.settings["dt"] != float(self.timeout_cond_dt_le.text()):
+        if self.settings["dT"] != float(self.timeout_cond_dT_le.text()) or self.settings["dt"] != float(self.timeout_cond_dt_le.text()):
             self.timeout_cond_btn.setStyleSheet("color: RED;")
         else:
             self.timeout_cond_btn.setStyleSheet("")
@@ -1171,20 +1087,10 @@ class SettingsWindow(QtWidgets.QWidget):
     def on_timeout_cond_btn_clicked(self):
         self.timeout_cond_btn.setFocus()
         self.timeout_cond_btn.setStyleSheet("")
-        if (
-            self.timeout_cond_dT_le.validator().validate(
-                self.timeout_cond_dT_le.text(), 0
-            )[0]
-            == QtGui.QValidator.Acceptable
-        ):
+        if self.timeout_cond_dT_le.validator().validate(self.timeout_cond_dT_le.text(), 0)[0] == QtGui.QValidator.Acceptable:
             with self.lock:
                 self.settings["dT"] = float(self.timeout_cond_dT_le.text())
-        if (
-            self.timeout_cond_dt_le.validator().validate(
-                self.timeout_cond_dt_le.text(), 0
-            )[0]
-            == QtGui.QValidator.Acceptable
-        ):
+        if self.timeout_cond_dt_le.validator().validate(self.timeout_cond_dt_le.text(), 0)[0] == QtGui.QValidator.Acceptable:
             with self.lock:
                 self.settings["dt"] = float(self.timeout_cond_dt_le.text())
 
@@ -1217,9 +1123,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.delay_le.setText(str(self.settings["delay_duration"]))
         self.timeout_le.setText(str(self.settings["timeout_duration"]))
         self.ready_condition_cb.setCurrentText(self.settings["ready_condition"])
-        self.error_thr_unit_l.setText(
-            "[K]" if self.settings["ready_condition"] == "absolute error" else "[%]"
-        )
+        self.error_thr_unit_l.setText("[K]" if self.settings["ready_condition"] == "absolute error" else "[%]")
         self.error_thr_le.setText(str(self.settings["error_threshold"]))
         self.timeout_cond_dT_le.setText(str(self.settings["dT"]))
         self.timeout_cond_dt_le.setText(str(self.settings["dt"]))
