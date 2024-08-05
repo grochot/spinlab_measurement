@@ -44,7 +44,7 @@ class CameraControl(QtWidgets.QWidget):
         app = QtWidgets.QApplication.instance()
         app.aboutToQuit.connect(self.shutdown)
 
-        self.ip_camera_widget = IpCameraWidget()
+        self.ip_camera_widget = IpCameraWidget(icon_path=self.icon_path)
         self.ip_camera_widget.sigAddIpCamera.connect(self.add_ip_camera)
         self.ip_camera_widget.sigRemoveIpCamera.connect(self.remove_ip_camera)
 
@@ -91,6 +91,7 @@ class CameraControl(QtWidgets.QWidget):
 
     def _setup_ui(self) -> None:
         self.setWindowTitle("Camera Control")
+        self.setWindowIcon(QtGui.QIcon(self.icon_path))
         self.setMinimumSize(1024, 576)
         self.setStyleSheet("font-size: 12pt;")
 
@@ -217,10 +218,10 @@ class IpCameraWidget(QtWidgets.QWidget):
     sigAddIpCamera = QtCore.pyqtSignal(str)
     sigRemoveIpCamera = QtCore.pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, icon_path = None, parent=None):
         super(IpCameraWidget, self).__init__(parent)
-        self.setWindowTitle("IP Cameras")
-
+        self.icon_path = icon_path
+        
         self.save_path = os.path.join("CameraControl_ipCameras.json")
         self.ip_cameras: list[str] = []
 
@@ -229,7 +230,11 @@ class IpCameraWidget(QtWidgets.QWidget):
         self.load_ip_cameras()
 
     def _setup_ui(self):
+        self.setWindowTitle("Camera Control - IP Cameras")
+        if self.icon_path:
+            self.setWindowIcon(QtGui.QIcon(self.icon_path))
         self.setMinimumWidth(400)
+        self.setStyleSheet("font-size: 12pt;")
 
         self.ip_edit = QtWidgets.QLineEdit("rtsp://")
         ip_regex = QtCore.QRegExp(r"^rtsp://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
@@ -609,7 +614,7 @@ class VideoTask(QtCore.QRunnable):
     def add_text(self, frame):
         font = cv2.FONT_HERSHEY_SIMPLEX
         frame_height = frame.shape[0]
-        font_scale = frame_height / 500
+        font_scale = frame_height / 640
         thickness = 2
 
         if self.show_timestamp:
