@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 # log.addHandler(logging.StreamHandler(sys.stdout))
 # log.setLevel(logging.DEBUG)
 
-USE_DUMMY = True
+USE_DUMMY = False
 
 
 def check_valid_ip(text: str):
@@ -80,6 +80,10 @@ class State(ABC):
 
 
 class NotConnectedState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = "NotConnectedState"
+
     def on_entry(self, context):
         context.set_ready(False)
         if context.tick_timer.isActive():
@@ -97,8 +101,11 @@ class NotConnectedState(State):
 
 
 class ConnectedState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = "ConnectedState"
+
     def on_entry(self, context):
-        context.query_device()
         context.tick_timer.start(context.settings_win.settings["refresh_interval"])
 
         context.settings_win.connect_btn.setEnabled(False)
@@ -114,6 +121,10 @@ class ConnectedState(State):
 
 
 class HeaterOnState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = "HeaterOnState"
+
     def on_entry(self, context):
         pass
 
@@ -138,6 +149,10 @@ class HeaterOnState(State):
 
 
 class DelayState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = "DelayState"
+
     def on_entry(self, context):
         self.delay_duration = float(context.settings_win.settings["delay_duration"])
         self.delay_duration = int(self.delay_duration * 60 * 1000)
@@ -175,6 +190,10 @@ class DelayState(State):
 
 
 class TimeoutState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = "TimeoutState"
+
     def on_entry(self, context):
         self.timeout_duration = float(context.settings_win.settings["timeout_duration"])
         self.timeout_duration = int(self.timeout_duration * 60 * 1000)
@@ -223,6 +242,10 @@ class TimeoutState(State):
 
 
 class ReadyState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = "ReadyState"
+
     def on_entry(self, context):
         context.set_ready(True)
         context.ready_label.setText("READY")
@@ -237,6 +260,10 @@ class ReadyState(State):
 
 
 class TimeoutErrorState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = "TimeoutErrorState"
+
     def on_entry(self, context):
         context.timeout_timer_indicator.set_error()
 
@@ -265,18 +292,10 @@ class Lakeshore336Control(QtWidgets.QWidget):
 
         self.settings_win = SettingsWindow(self.lock)
         self.settings_win.load_settings()
-        self.settings_win.ip_le.editingFinished.connect(self.on_connect_btn_clicked)
+        self.settings_win.ip_le.returnPressed.connect(self.on_connect_btn_clicked)
         self.settings_win.connect_btn.clicked.connect(self.on_connect_btn_clicked)
         self.settings_win.disconnect_btn.clicked.connect(self.on_disconnect_btn_clicked)
-        self.settings_win.refresh_int_btn.clicked.connect(
-            lambda: self.on_timer_btn_clicked("refresh")
-        )
-        self.settings_win.delay_btn.clicked.connect(
-            lambda: self.on_timer_btn_clicked("delay")
-        )
-        self.settings_win.timeout_cond_btn.clicked.connect(
-            lambda: self.on_timer_btn_clicked("timeout")
-        )
+        self.settings_win.sigTimerChanged.connect(self.on_timer_int_changed)
 
         self.notConnectedState = NotConnectedState()
         self.connectedState = ConnectedState()
@@ -486,22 +505,24 @@ class Lakeshore336Control(QtWidgets.QWidget):
             self.device = None
             self.change_state(self.notConnectedState)
 
-    def on_timer_btn_clicked(self, timer: str):
-        match timer:
-            case "refresh":
+    def on_timer_int_changed(self, param: str, new_value: float):
+        self.lock.acquire()
+        match param:
+            case "refresh_interval":
                 if self.tick_timer.isActive():
                     self.tick_timer.stop()
-                    self.tick_timer.start(
-                        self.settings_win.settings["refresh_interval"]
-                    )
-            case "delay":
+                    self.tick_timer.start(int(new_value))
+                self.lock.release()
+            case "delay_duration":
                 if self.current_state == self.delayState:
+                    self.lock.release()
                     dialog = RestartTimerDialog()
                     if dialog.exec():
                         self.change_state(self.delayState)
 
-            case "timeout":
+            case "timeout_duration":
                 if self.current_state == self.timeoutState:
+                    self.lock.release()
                     dialog = RestartTimerDialog()
                     if dialog.exec():
                         self.change_state(self.timeoutState)
@@ -520,32 +541,33 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.current_state.on_tick(self)
 
     def query_device(self):
-        try:
-            setpoint = self.device.get_control_setpoint(1)
-            self.setpoint = setpoint
-            if self.is_setpoint_set:
-                self.setpoint_le.setText(f"{setpoint:.3f}")
+        with self.lock:
+            try:
+                setpoint = self.device.get_control_setpoint(1)
+                self.setpoint = setpoint
+                if self.is_setpoint_set:
+                    self.setpoint_le.setText(f"{setpoint:.3f}")
 
-            curr_temp = self.device.get_all_kelvin_reading()
-            self.curr_temp_le.setText(f"{curr_temp[0]:.3f}")
+                curr_temp = self.device.get_all_kelvin_reading()
+                self.curr_temp_le.setText(f"{curr_temp[0]:.3f}")
 
-            for i in range(len(self.outputs)):
-                heater_range = self.device.get_heater_range(i + 1)
+                for i in range(len(self.outputs)):
+                    heater_range = self.device.get_heater_range(i + 1)
 
-                if self.outputs[i].is_heater_set:
-                    self.outputs[i]._set_range(heater_range)
+                    if self.outputs[i].is_heater_set:
+                        self.outputs[i]._set_range(heater_range)
 
-                heater_output = self.device.get_heater_output(i + 1)
-                self.outputs[i].percent_le.setText(f"{heater_output:.2f}%")
-        except Exception as e:
-            log.exception(e)
-            self.change_state(self.notConnectedState)
-            return
+                    heater_output = self.device.get_heater_output(i + 1)
+                    self.outputs[i].percent_le.setText(f"{heater_output:.2f}%")
+            except Exception as e:
+                log.exception(e)
+                self.change_state(self.notConnectedState)
+                return
 
-        if heater_range == 0:
-            self.outputs[0].indicator.set_off()
-        else:
-            self.outputs[0].indicator.set_on()
+            if heater_range == 0:
+                self.outputs[0].indicator.set_off()
+            else:
+                self.outputs[0].indicator.set_on()
 
     def is_setpoint_reached(self):
         with self.lock:
@@ -673,22 +695,24 @@ class Lakeshore336Control(QtWidgets.QWidget):
         if not ready:
             log.info("LakeShore336: temperature not stabilized, waiting...")
             loop = QtCore.QEventLoop()
-            
+
             @QtCore.pyqtSlot()
             def on_abort():
                 loop.quit()
                 abort_signal.disconnect(on_abort)
                 log.warning("LakeShore336: Temperature stabilization aborted.")
-                
+
             @QtCore.pyqtSlot()
             def on_ready():
                 loop.quit()
                 self.sigReady.disconnect(on_ready)
                 log.info("LakeShore336: temperature stabilized.")
-            
+
             self.sigReady.connect(on_ready)
             abort_signal.connect(on_abort)
             loop.exec()
+            return
+        log.info("LakeShore336: temperature stabilized.")
 
 
 class HeaterWidget(QtWidgets.QWidget):
@@ -815,10 +839,12 @@ class Indicator(QtWidgets.QFrame):
 
 
 class SettingsWindow(QtWidgets.QWidget):
+    sigTimerChanged = QtCore.pyqtSignal(str, float)
+
     def __init__(self, lock: Lock, parent=None):
         super(SettingsWindow, self).__init__(parent)
         self.save_path = os.path.join("LakeShore336_parameters.json")
-        self.setWindowModality(QtCore.Qt.ApplicationModal)
+        # self.setWindowModality(QtCore.Qt.ApplicationModal)
 
         self.lock = lock
 
@@ -1062,10 +1088,15 @@ class SettingsWindow(QtWidgets.QWidget):
         else:
             btn.setStyleSheet("")
 
-    def time_set_btn_clicked(self, param, le, btn):
+    def time_set_btn_clicked(
+        self, param: str, le: QtWidgets.QLineEdit, btn: QtWidgets.QPushButton
+    ) -> None:
         btn.setFocus()
-        btn.setStyleSheet("")
+        btn.setStyleSheet("")    
+
         if le.validator().validate(le.text(), 0)[0] == QtGui.QValidator.Acceptable:
+            if float(le.text()) == float(self.settings[param]):
+                return
             with self.lock:
                 if le == self.refresh_int_le:
                     self.settings[param] = (
@@ -1075,6 +1106,8 @@ class SettingsWindow(QtWidgets.QWidget):
                     self.settings[param] = (
                         float(le.text()) if le.text() != "" else self.settings[param]
                     )
+            self.sigTimerChanged.emit(param, self.settings[param])
+
         le.setText(str(self.settings[param]))
         le.setStyleSheet("")
 
