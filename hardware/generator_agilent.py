@@ -63,3 +63,6 @@ class FGenDriver(Instrument):
         # self.write(':LFO:FUNC1:SHAP SINE')
         # self.write(":LFO:FUNC1:FREQ:ALT 287HZ")
         self.write(':LFO:STAT ON')
+
+# dd = FGenDriver("GPIB1::19::INSTR")
+# dd.setFreq(9e6)
