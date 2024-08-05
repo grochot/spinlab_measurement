@@ -1,6 +1,7 @@
 from ..Qt import QtWidgets, QtCore, QtGui
 from .tab_widget import TabWidget
 
+
 class FlowLayout(QtWidgets.QLayout):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -67,12 +68,8 @@ class FlowLayout(QtWidgets.QLayout):
 
         for item in self._item_list:
             style = item.widget().style()
-            layout_spacing_x = style.layoutSpacing(
-                QtWidgets.QSizePolicy.PushButton, QtWidgets.QSizePolicy.PushButton, QtCore.Qt.Horizontal
-            )
-            layout_spacing_y = style.layoutSpacing(
-                QtWidgets.QSizePolicy.PushButton, QtWidgets.QSizePolicy.PushButton, QtCore.Qt.Vertical
-            )
+            layout_spacing_x = style.layoutSpacing(QtWidgets.QSizePolicy.PushButton, QtWidgets.QSizePolicy.PushButton, QtCore.Qt.Horizontal)
+            layout_spacing_y = style.layoutSpacing(QtWidgets.QSizePolicy.PushButton, QtWidgets.QSizePolicy.PushButton, QtCore.Qt.Vertical)
             space_x = spacing + layout_spacing_x
             space_y = spacing + layout_spacing_y
             next_x = x + item.sizeHint().width() + space_x
@@ -90,6 +87,7 @@ class FlowLayout(QtWidgets.QLayout):
 
         return y + line_height - rect.y()
 
+
 class DeviceWidget(QtWidgets.QWidget):
     def __init__(self, device, parent=None):
         super().__init__(parent)
@@ -98,18 +96,17 @@ class DeviceWidget(QtWidgets.QWidget):
         self._setup_ui()
         self._layout()
 
-
     def _setup_ui(self):
         self.button = QtWidgets.QPushButton()
-        
+
         try:
             self.button.setIcon(QtGui.QIcon(self.device.icon_path))
             self.button.setIconSize(QtCore.QSize(75, 75))
         except AttributeError:
             self.button.setText("OPEN")
-        
+
         self.button.setFixedSize(90, 90)
-        
+
         try:
             self.button.clicked.connect(self.device.open_widget)
         except AttributeError:
@@ -126,6 +123,8 @@ class DeviceWidget(QtWidgets.QWidget):
         layout.addWidget(self.button, alignment=QtCore.Qt.AlignCenter)
         layout.addWidget(self.label, alignment=QtCore.Qt.AlignCenter)
         self.setLayout(layout)
+
+
 class DevicesWidget(TabWidget, QtWidgets.QWidget):
     def __init__(self, name, device_classes, parent=None):
         super().__init__(name, parent)
@@ -152,10 +151,9 @@ class DevicesWidget(TabWidget, QtWidgets.QWidget):
         for widget in self.devices_widgets:
             layout.addWidget(widget)
         container.setLayout(layout)
-        
+
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(container)
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(self.scroll_area)
         self.setLayout(main_layout)
-        
