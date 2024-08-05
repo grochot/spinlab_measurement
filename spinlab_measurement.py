@@ -190,6 +190,12 @@ class SpinLabMeasurement(Procedure):
         
         self.save_parameter.WriteFile(self.parameters)
         
+        if self.set_kriostat:
+            try:
+                window.devices_widget.lakeshore336_control.await_ready(window.manager.aborted)
+            except AttributeError as e:
+                logging.error("No kriostat control")
+        
         match self.mode:
             case "ResistanceMode":
                 self.resistancemode = ResistanceMode(self.vector, self.mode_resistance, self.sourcemeter_bias, self.set_sourcemeter, self.set_multimeter, self.set_gaussmeter, self.set_field, self.set_automaticstation, self.set_switch, self.set_kriostat, self.set_rotationstation,self.set_rotationstation_const_angle,self.return_the_rotationstation, self.address_sourcemeter, self.address_multimeter, self.address_gaussmeter, self.address_switch, self.delay_field, self.delay_lockin, self.delay_bias, self.sourcemter_source, self.sourcemeter_compliance, self.sourcemeter_channel, self.sourcemeter_limit, self.sourcemeter_nplc, self.sourcemeter_average, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.multimeter_nplc, self.address_daq, self.field_step, self.address_rotationstation, self.constant_field_value,self.rotation_axis, self.rotation_polar_constant, self.rotation_azimuth_constant,self.set_polar_angle,self.set_azimuthal_angle)
