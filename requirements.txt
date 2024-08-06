@@ -16,3 +16,5 @@ windfreak
 scipy
 pyvisa
 pint
+lakeshore
+opencv-python
