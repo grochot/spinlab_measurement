@@ -154,18 +154,18 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
         
         match device:
             case "Agilent 34400": 
-                device = Agilent34410A(self.address_multimeter)
+                device = Agilent34410A(self.get("address_multimeter"))
             case _:
                 log.error("Device not implemented!")
                 return
             
         device.resolution = self.get("multimeter_resolution")
         device.range_ = self.get("multimeter_range")
-        device.autorange = self.get("self.multimeter_autorange")
+        device.autorange = self.get("multimeter_autorange")
         device.function_ = self.get("multimeter_function")
         device.trigger_delay = "MIN"
         device.trigger_count = self.get("multimeter_average")
-        device.nplc = self.get("self.multimeter_nplc")
+        device.nplc = self.get("multimeter_nplc")
         
         reading = np.average(device.reading)
         
