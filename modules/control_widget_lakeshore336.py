@@ -116,7 +116,7 @@ class ConnectedState(State):
         context.stacked_widget.setCurrentIndex(0)
 
     def on_tick(self, context):
-        if any([heater.is_on for heater in context.outputs]):
+        if context.is_any_heater_on():
             context.change_state(context.heaterOnState)
 
     def on_exit(self, context):
@@ -129,10 +129,10 @@ class HeaterOnState(State):
         self.name = "HeaterOnState"
 
     def on_entry(self, context):
-        pass
+        context.time_delta = context.settings_win.settings["dt"] * 1000
 
     def on_tick(self, context):
-        if not any([heater.is_on for heater in context.outputs]):
+        if not context.is_any_heater_on():
             context.change_state(context.connectedState)
 
         if context.is_ready_condition_met():
@@ -140,6 +140,7 @@ class HeaterOnState(State):
             return
 
         context.time_delta -= context.settings_win.settings["refresh_interval"]
+        log.debug(f"HeaterOn | Time delta: {context.time_delta}")
         if context.time_delta > 0:
             return
 
@@ -148,7 +149,7 @@ class HeaterOnState(State):
             return
 
     def on_exit(self, context):
-        context.time_delta = context.settings_win.settings["dt"] * 1000
+        pass
 
 
 class DelayState(State):
@@ -171,7 +172,7 @@ class DelayState(State):
         self.delay_duration -= context.settings_win.settings["refresh_interval"]
         context.delay_timer_label.setText(f"DELAY: {format_time(self.delay_duration // 1000)}")
 
-        if not any([heater.is_on for heater in context.outputs]):
+        if not context.is_any_heater_on():
             context.change_state(context.connectedState)
             return
 
@@ -207,7 +208,7 @@ class TimeoutState(State):
         self.timeout_duration -= context.settings_win.settings["refresh_interval"]
         context.timeout_timer_label.setText(f"TIMEOUT: {format_time(self.timeout_duration // 1000)}")
 
-        if not any([heater.is_on for heater in context.outputs]):
+        if not context.is_any_heater_on():
             context.change_state(context.connectedState)
             return
 
@@ -216,6 +217,7 @@ class TimeoutState(State):
             return
 
         context.time_delta -= context.settings_win.settings["refresh_interval"]
+        log.debug(f"TimeOut | Time delta: {context.time_delta}")
         if context.time_delta > 0:
             return
 
@@ -242,7 +244,7 @@ class ReadyState(State):
         context.ready_label.setText("READY")
 
     def on_tick(self, context):
-        if not any([heater.is_on for heater in context.outputs]):
+        if not context.is_any_heater_on():
             context.change_state(context.connectedState)
 
     def on_exit(self, context):
@@ -259,7 +261,7 @@ class TimeoutErrorState(State):
         context.timeout_timer_indicator.set_error()
 
     def on_tick(self, context):
-        if not any([heater.is_on for heater in context.outputs]):
+        if not context.is_any_heater_on():
             context.change_state(context.connectedState)
 
     def on_exit(self, context):
@@ -283,10 +285,11 @@ class Lakeshore336Control(QtWidgets.QWidget):
 
         self.settings_win = SettingsWindow(self.lock)
         self.settings_win.load_settings()
-        self.settings_win.ip_le.returnPressed.connect(self.on_connect_btn_clicked)
+        self.settings_win.sigIPSet.connect(self.on_connect_btn_clicked)
         self.settings_win.connect_btn.clicked.connect(self.on_connect_btn_clicked)
         self.settings_win.disconnect_btn.clicked.connect(self.on_disconnect_btn_clicked)
         self.settings_win.sigTimerChanged.connect(self.on_timer_int_changed)
+        self.settings_win.sig_dtChanged.connect(self.on_dt_changed)
 
         self.restart_timer_dialog = RestartTimerDialog()
 
@@ -547,6 +550,14 @@ class Lakeshore336Control(QtWidgets.QWidget):
                     return
         self.lock.release()
 
+    def on_dt_changed(self) -> None:
+        """
+        Slot for dt change signal. Resets the time delta.
+        """
+        self.lock.acquire()
+        self.time_delta = self.settings_win.settings["dt"] * 1000
+        self.lock.release()
+
     def set_ready(self, ready: bool) -> None:
         """
         Set the ready state of the device and emit the ready signal.
@@ -613,6 +624,19 @@ class Lakeshore336Control(QtWidgets.QWidget):
                 return
 
         self.lock.release()
+
+    def is_any_heater_on(self) -> bool:
+        """
+        Check if any heater is on.
+
+        Returns:
+            bool: True if any heater is on, False otherwise
+        """
+        with self.lock:
+            for heater in self.outputs:
+                if heater.is_on:
+                    return True
+            return False
 
     def is_ready_condition_met(self) -> bool:
         """
@@ -1010,6 +1034,8 @@ class Indicator(QtWidgets.QFrame):
 
 class SettingsWindow(QtWidgets.QWidget):
     sigTimerChanged = QtCore.pyqtSignal(str, float)
+    sigIPSet = QtCore.pyqtSignal()
+    sig_dtChanged = QtCore.pyqtSignal()
 
     def __init__(self, lock: Lock, parent=None):
         super(SettingsWindow, self).__init__(parent)
@@ -1043,7 +1069,7 @@ class SettingsWindow(QtWidgets.QWidget):
         ipRegex = QtCore.QRegExp(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
         ipValidator = QtGui.QRegExpValidator(ipRegex)
         self.ip_le.setValidator(ipValidator)
-        self.ip_le.editingFinished.connect(self.on_ip_le_set)
+        self.ip_le.returnPressed.connect(self.on_ip_le_set)
 
         self.connect_btn = QtWidgets.QPushButton("Connect")
         self.disconnect_btn = QtWidgets.QPushButton("Disconnect")
@@ -1197,6 +1223,7 @@ class SettingsWindow(QtWidgets.QWidget):
         Slot for IP address line edit change
         """
         self.settings["ip_address"] = self.ip_le.text()
+        self.sigIPSet.emit()
 
     def time_le_changed(self, text: str, param: str, source_le: QtWidgets.QLineEdit, btn: QtWidgets.QPushButton) -> None:
         """
@@ -1330,6 +1357,7 @@ class SettingsWindow(QtWidgets.QWidget):
         if self.timeout_cond_dt_le.validator().validate(new_dt, 0)[0] == QtGui.QValidator.Acceptable:
             with self.lock:
                 self.settings["dt"] = float(new_dt)
+            self.sig_dtChanged.emit()
 
         self.timeout_cond_dT_le.setText(str(self.settings["dT"]))
         self.timeout_cond_dT_le.setStyleSheet("")
