@@ -405,18 +405,20 @@ class CameraDock(Dock):
     def toggle_utils(self):
         if self.utils_container.isVisible():
             self.animation = QtCore.QPropertyAnimation(self.utils_container, b"maximumWidth")
-            self.animation.setDuration(350)
+            self.animation.setDuration(500)
             self.animation.setStartValue(self.utils_container.width())
             self.animation.setEndValue(0)
+            self.animation.setEasingCurve(QtCore.QEasingCurve.InOutSine)
             self.animation.finished.connect(self.utils_container.hide)
             self.animation.start()
             self.toggle_utils_button.setText(">")
         else:
             self.utils_container.show()
             self.animation = QtCore.QPropertyAnimation(self.utils_container, b"maximumWidth")
-            self.animation.setDuration(350)
+            self.animation.setDuration(500)
             self.animation.setStartValue(0)
             self.animation.setEndValue(200)
+            self.animation.setEasingCurve(QtCore.QEasingCurve.InOutSine)
             self.animation.start()
             self.toggle_utils_button.setText("<")
 
