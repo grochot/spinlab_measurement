@@ -324,6 +324,13 @@ class CameraDock(Dock):
         self.image_label.setStyleSheet("border: 1px solid black;")
         self.image_label.setText("No camera selected")
 
+        self.side_menu = QtWidgets.QFrame()
+        self.side_menu.setFrameStyle(QtWidgets.QFrame.Box | QtWidgets.QFrame.Plain)
+        self.side_menu.setLineWidth(1)
+
+        self.utils_container = QtWidgets.QWidget(self)
+        self.utils_container.setStyleSheet("")
+
         self.channel_label = QtWidgets.QLabel("Source:")
         self.channel_combobox = QtWidgets.QComboBox()
         if len(self.channels) == 1:
@@ -339,7 +346,7 @@ class CameraDock(Dock):
         self.sharpen_checkbox.setChecked(False)
         self.sharpen_checkbox.stateChanged.connect(self.on_sharpen_change)
 
-        self.brightness_label = QtWidgets.QLabel("Brightness")
+        self.brightness_label = QtWidgets.QLabel("Brightness:")
 
         self.brightness_slider = ResetableSlider(QtCore.Qt.Horizontal)
         self.brightness_slider.setRange(0, 100)
@@ -352,9 +359,15 @@ class CameraDock(Dock):
         self.save_button = QtWidgets.QPushButton("Save Image")
         self.save_button.clicked.connect(self.save_image)
 
+        self.toggle_utils_button = QtWidgets.QPushButton(">")
+        self.toggle_utils_button.setFixedWidth(30)
+        self.toggle_utils_button.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
+        self.toggle_utils_button.setStyleSheet("")
+        self.toggle_utils_button.clicked.connect(self.toggle_utils)
+
     def _layout(self) -> None:
         main_layout = QtWidgets.QHBoxLayout()
-        utils_layout = QtWidgets.QVBoxLayout()
+        utils_layout = QtWidgets.QVBoxLayout(self.utils_container)
 
         utils_layout.addWidget(self.channel_label)
         utils_layout.addWidget(self.channel_combobox)
@@ -373,10 +386,41 @@ class CameraDock(Dock):
         utils_layout.addWidget(self.save_button)
 
         utils_layout.addStretch()
-        main_layout.addLayout(utils_layout)
+        self.utils_container.setLayout(utils_layout)
+
+        side_menu_layout = QtWidgets.QHBoxLayout(self.side_menu)
+        side_menu_layout.setContentsMargins(1, 1, 1, 1)
+
+        side_menu_layout.addWidget(self.utils_container)
+        side_menu_layout.addWidget(self.toggle_utils_button)
+        self.side_menu.setLayout(side_menu_layout)
+
+        main_layout.addWidget(self.side_menu)
         main_layout.addWidget(self.image_label)
+
         self.central_widget.setLayout(main_layout)
+        self.utils_container.hide()
         self.addWidget(self.central_widget)
+
+    def toggle_utils(self):
+        if self.utils_container.isVisible():
+            self.animation = QtCore.QPropertyAnimation(self.utils_container, b"maximumWidth")
+            self.animation.setDuration(500)
+            self.animation.setStartValue(self.utils_container.width())
+            self.animation.setEndValue(0)
+            self.animation.setEasingCurve(QtCore.QEasingCurve.InOutSine)
+            self.animation.finished.connect(self.utils_container.hide)
+            self.animation.start()
+            self.toggle_utils_button.setText(">")
+        else:
+            self.utils_container.show()
+            self.animation = QtCore.QPropertyAnimation(self.utils_container, b"maximumWidth")
+            self.animation.setDuration(500)
+            self.animation.setStartValue(0)
+            self.animation.setEndValue(200)
+            self.animation.setEasingCurve(QtCore.QEasingCurve.InOutSine)
+            self.animation.start()
+            self.toggle_utils_button.setText("<")
 
     def on_channel_change(self, channel: str) -> None:
         self.sigChannelChange.emit(self.channel, channel, self.id)
@@ -494,7 +538,8 @@ class CameraDock(Dock):
             if self.image_label.geometry().contains(ev.pos()):
                 if self.is_dragging:
                     delta = self.last_mouse_pos - ev.pos()
-                    self.video_task.pan(delta)
+                    delta_f = QtCore.QPointF(delta.x(), delta.y())
+                    self.video_task.pan(delta_f)
                     self.last_mouse_pos = ev.pos()
 
         super().mouseMoveEvent(ev)
@@ -536,6 +581,7 @@ class VideoTask(QtCore.QRunnable):
 
         self.zoom: int = 0
         self.pan_offset: QtCore.QPoint = QtCore.QPoint(0, 0)
+        self.pan_offset_f = QtCore.QPointF(0, 0)
 
         self.current_frame_mutex = QtCore.QMutex()
 
@@ -658,6 +704,7 @@ class VideoTask(QtCore.QRunnable):
     def apply_zoom(self, frame):
         if self.zoom == 0:
             self.pan_offset = QtCore.QPoint(0, 0)
+            self.pan_offset_f = QtCore.QPointF(0, 0)
             return frame
         center_x, center_y = frame.shape[1] // 2, frame.shape[0] // 2
 
@@ -682,12 +729,13 @@ class VideoTask(QtCore.QRunnable):
         frame = cv2.resize(cropped, frame.shape[1::-1], interpolation=cv2.INTER_LINEAR)
         return frame
 
-    def pan(self, delta: QtCore.QPoint):
-        self.pan_offset += delta
-        if abs(self.pan_offset.x()) > np.floor(self.width / 2 * self.zoom / (self.zoom + 1)):
-            self.pan_offset.setX(int(np.floor(self.width / 2 * self.zoom / (self.zoom + 1)) * np.sign(self.pan_offset.x())))
-        if abs(self.pan_offset.y()) > np.floor(self.height / 2 * self.zoom / (self.zoom + 1)):
-            self.pan_offset.setY(int(np.floor(self.height / 2 * self.zoom / (self.zoom + 1)) * np.sign(self.pan_offset.y())))
+    def pan(self, delta: QtCore.QPointF):
+        self.pan_offset_f += delta / (self.zoom + 1)
+        if abs(self.pan_offset_f.x()) > np.floor(self.width / 2 * self.zoom / (self.zoom + 1)):
+            self.pan_offset_f.setX(np.floor(self.width / 2 * self.zoom / (self.zoom + 1) * np.sign(self.pan_offset_f.x())))
+        if abs(self.pan_offset_f.y()) > np.floor(self.height / 2 * self.zoom / (self.zoom + 1)):
+            self.pan_offset_f.setY(np.floor(self.height / 2 * self.zoom / (self.zoom + 1) * np.sign(self.pan_offset_f.y())))
+        self.pan_offset = QtCore.QPoint(int(self.pan_offset_f.x()), int(self.pan_offset_f.y()))
 
     def stop(self):
         self.running = False
