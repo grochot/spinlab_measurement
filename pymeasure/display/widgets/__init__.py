@@ -35,3 +35,6 @@ from .results_dialog import ResultsDialog
 from .sequencer_widget import SequencerWidget
 from .tab_widget import TabWidget
 from .table_widget import TableWidget
+
+from .devices_widget import DevicesWidget
+from .quick_measure_widget import QuickMeasureWidget
