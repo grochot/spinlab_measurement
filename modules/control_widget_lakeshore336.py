@@ -140,7 +140,6 @@ class HeaterOnState(State):
             return
 
         context.time_delta -= context.settings_win.settings["refresh_interval"]
-        log.debug(f"HeaterOn | Time delta: {context.time_delta}")
         if context.time_delta > 0:
             return
 
@@ -217,7 +216,6 @@ class TimeoutState(State):
             return
 
         context.time_delta -= context.settings_win.settings["refresh_interval"]
-        log.debug(f"TimeOut | Time delta: {context.time_delta}")
         if context.time_delta > 0:
             return
 
@@ -669,7 +667,6 @@ class Lakeshore336Control(QtWidgets.QWidget):
         Returns:
             bool: True if met, False otherwise
         """
-        log.debug("Checking timeout condition...")
         with self.lock:
             self.time_delta = self.settings_win.settings["dt"] * 1000
 
@@ -678,8 +675,6 @@ class Lakeshore336Control(QtWidgets.QWidget):
             prev_temp = self.prev_temp
             self.prev_temp = curr_temp
             dT = abs(curr_temp - prev_temp)
-            log.debug(f"dT: {dT}")
-            log.debug(f"Set dT: {self.settings_win.settings['dT']}")
 
             if dT < self.settings_win.settings["dT"]:
                 return True
