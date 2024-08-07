@@ -536,7 +536,8 @@ class CameraDock(Dock):
             if self.image_label.geometry().contains(ev.pos()):
                 if self.is_dragging:
                     delta = self.last_mouse_pos - ev.pos()
-                    self.video_task.pan(delta)
+                    delta_f = QtCore.QPointF(delta.x(), delta.y())
+                    self.video_task.pan(delta_f)
                     self.last_mouse_pos = ev.pos()
 
         super().mouseMoveEvent(ev)
@@ -578,6 +579,7 @@ class VideoTask(QtCore.QRunnable):
 
         self.zoom: int = 0
         self.pan_offset: QtCore.QPoint = QtCore.QPoint(0, 0)
+        self.pan_offset_f = QtCore.QPointF(0, 0)
 
         self.current_frame_mutex = QtCore.QMutex()
 
@@ -700,6 +702,7 @@ class VideoTask(QtCore.QRunnable):
     def apply_zoom(self, frame):
         if self.zoom == 0:
             self.pan_offset = QtCore.QPoint(0, 0)
+            self.pan_offset_f = QtCore.QPointF(0, 0)
             return frame
         center_x, center_y = frame.shape[1] // 2, frame.shape[0] // 2
 
@@ -724,12 +727,13 @@ class VideoTask(QtCore.QRunnable):
         frame = cv2.resize(cropped, frame.shape[1::-1], interpolation=cv2.INTER_LINEAR)
         return frame
 
-    def pan(self, delta: QtCore.QPoint):
-        self.pan_offset += delta
-        if abs(self.pan_offset.x()) > np.floor(self.width / 2 * self.zoom / (self.zoom + 1)):
-            self.pan_offset.setX(int(np.floor(self.width / 2 * self.zoom / (self.zoom + 1)) * np.sign(self.pan_offset.x())))
-        if abs(self.pan_offset.y()) > np.floor(self.height / 2 * self.zoom / (self.zoom + 1)):
-            self.pan_offset.setY(int(np.floor(self.height / 2 * self.zoom / (self.zoom + 1)) * np.sign(self.pan_offset.y())))
+    def pan(self, delta: QtCore.QPointF):
+        self.pan_offset_f += delta / (self.zoom + 1)
+        if abs(self.pan_offset_f.x()) > np.floor(self.width / 2 * self.zoom / (self.zoom + 1)):
+            self.pan_offset_f.setX(np.floor(self.width / 2 * self.zoom / (self.zoom + 1) * np.sign(self.pan_offset_f.x())))
+        if abs(self.pan_offset_f.y()) > np.floor(self.height / 2 * self.zoom / (self.zoom + 1)):
+            self.pan_offset_f.setY(np.floor(self.height / 2 * self.zoom / (self.zoom + 1) * np.sign(self.pan_offset_f.y())))
+        self.pan_offset = QtCore.QPoint(int(self.pan_offset_f.x()), int(self.pan_offset_f.y()))
 
     def stop(self):
         self.running = False
