@@ -48,7 +48,7 @@ class SpinLabMeasurement(Procedure):
     used_parameters_list=['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'set_measdevice', 'set_sourcemeter', 'set_multimeter','set_pulsegenerator', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','set_switch', 'set_kriostat', 'set_lfgen', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','address_pulsegenerator','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias', 'rotation_axis', 'rotation_polar_constant', 'rotation_azimuth_constant', 'constant_field_value', 'address_rotationstation', 'mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','delay_measurement','pulsegenerator_compliance','pulsegenerator_source_range','return_the_rotationstation','field_bias_value','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','remanency_correction','set_polar_angle','set_azimuthal_angle','set_polar_angle_fmr','set_azimuthal_angle_fmr','remanency_correction_time', 'layout_type', 'kriostat_temperature']
     parameters_from_file = save_parameter.ReadFile()
 #################################################################### PARAMETERS #####################################################################
-    mode = ListParameter("Mode", default = parameters_from_file["mode"] , choices=['ResistanceMode', 'FMRMode', 'VSMMode', 'HarmonicMode', 'CalibrationFieldMode', 'PulseMode','CIMSMode'], vis_cond=lambda layout_type: layout_type == True)
+    mode = ListParameter("Mode", default = parameters_from_file["mode"] , choices=['QuickMeasurement', 'ResistanceMode', 'FMRMode', 'VSMMode', 'HarmonicMode', 'CalibrationFieldMode', 'PulseMode','CIMSMode'], vis_cond=lambda layout_type: layout_type == True)
     mode_resistance = BooleanParameter("Use 4-points measurement", default = parameters_from_file["mode_resistance"], vis_cond=lambda layout_type, mode: layout_type == True and mode == "ResistanceMode")
     mode_fmr = ListParameter("FMR Mode", default = parameters_from_file["mode_fmr"], choices = ["V-FMR", "ST-FMR"], vis_cond=lambda layout_type, mode: layout_type == False and mode == "FMRMode")
     mode_cims_relays = BooleanParameter("Use relays", default = parameters_from_file["mode_cims_relays"], vis_cond=lambda layout_type, mode: layout_type == False and mode == "CIMSMode")
@@ -110,6 +110,13 @@ class SpinLabMeasurement(Procedure):
 
     #########  SETTINGS PARAMETERS ##############
     #SourcemeterParameters 
+    sourcemter_source = ListParameter("Sourcemeter Source", default = parameters_from_file["sourcemter_source"], choices=["VOLT", "CURR"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode" or v == 'QuickMeasurement', "set_sourcemeter": lambda v: v != "none", "layout_type": False})
+    sourcemeter_compliance = FloatParameter("Sourcemeter compliance", default = parameters_from_file["sourcemeter_compliance"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode" or v == 'QuickMeasurement', "set_sourcemeter": lambda v: v != "none", "layout_type": False})
+    sourcemeter_channel = ListParameter("Sourcemeter CH", default = parameters_from_file["sourcemeter_channel"], choices = ["Channel A", "Channel B"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode" or v == 'QuickMeasurement', "set_sourcemeter": lambda v: v != "none", "layout_type": False})
+    sourcemeter_limit = FloatParameter("Sourcemeter limit", default = parameters_from_file["sourcemeter_limit"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode" or v == 'QuickMeasurement', "set_sourcemeter": lambda v: v != "none", "layout_type": False})
+    sourcemeter_nplc = FloatParameter("Sourcemeter NPLC", default = parameters_from_file["sourcemeter_nplc"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode" or v == 'QuickMeasurement', "set_sourcemeter": lambda v: v != "none", "layout_type": False})
+    sourcemeter_average = IntegerParameter("Sourcemeter average", default = parameters_from_file["sourcemeter_average"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode" or v == 'QuickMeasurement', "set_sourcemeter": lambda v: v != "none", "layout_type": False})
+    sourcemeter_bias = FloatParameter("Sourcemeter bias", default = parameters_from_file["sourcemeter_bias"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode" or v == 'QuickMeasurement', "set_sourcemeter": lambda v: v != "none", "layout_type": False})
     sourcemeter_params_vis_cond = lambda layout_type, mode, set_sourcemeter: layout_type == False and (mode == "ResistanceMode" or mode == "CIMSMode") and set_sourcemeter != "none"
     sourcemter_source = ListParameter("Sourcemeter Source", default = parameters_from_file["sourcemter_source"], choices=["VOLT", "CURR"],  vis_cond=sourcemeter_params_vis_cond)
     sourcemeter_compliance = FloatParameter("Sourcemeter compliance", default = parameters_from_file["sourcemeter_compliance"],  vis_cond=sourcemeter_params_vis_cond)
@@ -302,7 +309,9 @@ class MainWindow(ManagedDockWindow):
         self.filename = self.procedure_class.parameters_from_file["sample_name"]
         self.store_measurement = False                              # Controls the 'Save data' toggle
         self.file_input.extensions = ["csv", "txt", "data"]         # Sets recognized extensions, first entry is the default extension
-        self.file_input.filename_fixed = False    
+        self.file_input.filename_fixed = False 
+        
+        self.tabs.currentChanged.connect(self.on_tab_change)
     
     def set_calibration_constant(self, value):
         self.inputs.field_constant.setValue(value)
@@ -335,6 +344,11 @@ class MainWindow(ManagedDockWindow):
     
     def set_sample_name(self, value):
         self.inputs.sample_name.setValue(value)
+        
+    def on_tab_change(self, index:int):
+        # !!! based on assumption that quick measurement has index 3
+        self.quick_measure_widget.on_tab_change(index)
+        self.change_input_type(False)
     
     def filename_getter(self):
         return self.file_input.filename
