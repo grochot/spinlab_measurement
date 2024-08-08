@@ -95,6 +95,7 @@ class ManagedDockWindow(ManagedWindowBase):
         super().__init__(procedure_class, **kwargs)
         
         self.quick_measure_widget.inputs = self.inputs
+        self.quick_measure_widget.tab_index = self.tabs.indexOf(self.quick_measure_widget)
 
         self.browser_widget.browser.measured_quantities.update(measure_quantities)
 

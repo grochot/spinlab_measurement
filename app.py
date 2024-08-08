@@ -372,7 +372,6 @@ class MainWindow(ManagedDockWindow):
         self.inputs.sample_name.setValue(value)
         
     def on_tab_change(self, index:int):
-        # !!! based on assumption that quick measurement has index 3
         self.quick_measure_widget.on_tab_change(index)
         self.change_input_type(False)
     
