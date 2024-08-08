@@ -14,18 +14,50 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+def to_prefix(value):
+    prefixes = {
+        24: "Y",  # yotta
+        21: "Z",  # zetta
+        18: "E",  # exa
+        15: "P",  # peta
+        12: "T",  # tera
+        9: "G",  # giga
+        6: "M",  # mega
+        3: "k",  # kilo
+        0: "",  # no prefix
+        -3: "m",  # milli
+        -6: "µ",  # micro
+        -9: "n",  # nano
+        -12: "p",  # pico
+        -15: "f",  # femto
+        -18: "a",  # atto
+        -21: "z",  # zepto
+        -24: "y",  # yocto
+    }
+
+    if value == 0:
+        return "0 "
+
+    exponent = int("{:.0e}".format(value).split("e")[1])
+    exponent = 3 * (exponent // 3)
+
+    exponent = max(min(exponent, 24), -24)
+
+    value_scaled = value / (10**exponent)
+
+    prefix = prefixes[exponent]
+
+    return f"{value_scaled} [{prefix}"
+
+
 class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
     def __init__(self, name, parent=None):
         super().__init__(name, parent)
 
+        self.tab_index = None
+
         self.inputs: InputsWidget = None
         self.prev_mode: str = ""
-
-        # self.devices: Dict[int, str] = {
-        #     0: "Keithley 2400",
-        #     1: "Keithley 2636",
-        #     2: "Agilent 2912"
-        # }
 
         self._setup_ui()
         self._layout()
@@ -72,8 +104,21 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
 
         self.setLayout(main_layout)
 
+    def set_le(self, value, unit: str):
+        text_to_set = to_prefix(value) + f"{unit}]"
+        match unit:
+            case "V":
+                self.volt_le.setText(text_to_set)
+            case "A":
+                self.curr_le.setText(text_to_set)
+            case "Ω":
+                self.res_le.setText(text_to_set)
+
     def on_tab_change(self, index: int):
-        if index != 3:
+        if self.tab_index is None:
+            return
+
+        if index != self.tab_index:
             self.inputs.mode.setValue(self.prev_mode)
             return
 
@@ -149,28 +194,32 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
         #     else:
         #         tmp_current = 1e-9
         #     tmp_resistance = tmp_voltage / tmp_current
-        
+
         device = self.get("set_multimeter")
-        
+
         match device:
-            case "Agilent 34400": 
+            case "Agilent 34400":
                 device = Agilent34410A(self.get("address_multimeter"))
             case _:
                 log.error("Device not implemented!")
                 return
-            
+
         device.resolution = self.get("multimeter_resolution")
         device.range_ = self.get("multimeter_range")
         device.autorange = self.get("multimeter_autorange")
-        device.function_ = self.get("multimeter_function")
+        multimeter_function = self.get("multimeter_function")
+        device.function_ = multimeter_function
         device.trigger_delay = "MIN"
         device.trigger_count = self.get("multimeter_average")
         device.nplc = self.get("multimeter_nplc")
-        
+
         reading = np.average(device.reading)
-        
-        
-        self.volt_le.setText(str(reading))
+
+        if multimeter_function in []:
+            self.volt_le.setText(str(reading))
+        else:
+            self.volt_le.setText("-")
+
         self.curr_le.setText(str(reading))
         self.res_le.setText(str(reading))
 
