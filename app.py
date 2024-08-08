@@ -234,6 +234,7 @@ class SpinLabMeasurement(Procedure):
 
 #################################### PROCEDURE##############################################
     def execute(self):
+        
         match self.mode:
             case "ResistanceMode":
                 self.counter = 0
@@ -241,6 +242,7 @@ class SpinLabMeasurement(Procedure):
                    self.result = self.resistancemode.operating(point)
                    self.emit('results', self.result) 
                    self.emit('progress', 100 * self.counter / len(self.points))
+                   self.emit('current_point', point)
                    self.counter = self.counter + 1
                    if self.should_stop():
                     log.warning("Caught the stop flag in the procedure")
@@ -252,6 +254,7 @@ class SpinLabMeasurement(Procedure):
                    self.result = self.harmonicmode.operating(point)
                    self.emit('results', self.result) 
                    self.emit('progress', 100 * self.counter / len(self.points))
+                   self.emit('current_point', point)
                    self.counter = self.counter + 1
                    if self.should_stop():
                     log.warning("Caught the stop flag in the procedure")
@@ -263,6 +266,7 @@ class SpinLabMeasurement(Procedure):
                    self.result = self.fmrmode.operating(point)
                    self.emit('results', self.result) 
                    self.emit('progress', 100 * self.counter / len(self.points))
+                   self.emit('current_point', point)
                    self.counter = self.counter + 1
                    if self.should_stop():
                     log.warning("Caught the stop flag in the procedure")
@@ -282,6 +286,7 @@ class SpinLabMeasurement(Procedure):
                    self.result = self.CIMSmode.operating(point)
                    self.emit('results', self.result) 
                    self.emit('progress', 100 * self.counter / len(self.points))
+                   self.emit('current_point', point)
                    self.counter = self.counter + 1
                    if self.should_stop():
                     log.warning("Caught the stop flag in the procedure")

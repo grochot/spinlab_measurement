@@ -93,6 +93,7 @@ class Monitor(QtCore.QThread):
 
     status = QtCore.Signal(int)
     progress = QtCore.Signal(float)
+    current_point = QtCore.Signal(float)
     log = QtCore.Signal(object)
     worker_running = QtCore.Signal()
     worker_failed = QtCore.Signal()
@@ -123,5 +124,7 @@ class Monitor(QtCore.QThread):
                 self.progress.emit(data)
             elif topic == 'log':
                 self.log.emit(data)
+            elif topic == 'current_point':
+                self.current_point.emit(data)
 
         log.info("Monitor caught stop command")

@@ -130,6 +130,8 @@ class BaseManager(QtCore.QObject):
     aborted = QtCore.Signal(object)
     abort_returned = QtCore.Signal(object)
     log = QtCore.Signal(object)
+    
+    update_point = QtCore.Signal(float)
 
     def __init__(self, port=5888, log_level=logging.INFO, parent=None):
         super().__init__(parent)
@@ -161,6 +163,9 @@ class BaseManager(QtCore.QObject):
         if self.is_running():
             self._running_experiment.procedure.status = status
             self._running_experiment.browser_item.setStatus(status)
+            
+    def _update_current_point(self, point):
+        self.update_point.emit(point)
 
     def _update_log(self, record):
         self.log.emit(record)
@@ -211,6 +216,7 @@ class BaseManager(QtCore.QObject):
                 self._monitor.worker_finished.connect(self._finish)
                 self._monitor.progress.connect(self._update_progress)
                 self._monitor.status.connect(self._update_status)
+                self._monitor.current_point.connect(self._update_current_point)
                 self._monitor.log.connect(self._update_log)
 
                 self._monitor.start()
