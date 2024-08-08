@@ -44,6 +44,7 @@ from ..widgets import (
     SequencerWidget,
     FileInputWidget,
     EstimatorWidget,
+    CurrentPointWidget,
 )
 from ...experiment import Results, Procedure, unique_filename
 
@@ -197,6 +198,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.browser.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.browser.customContextMenuRequested.connect(self.browser_item_menu)
         self.browser.itemChanged.connect(self.browser_item_changed)
+        
+        self.current_point = CurrentPointWidget(parent=self)
 
         self.inputs = InputsWidget(
             self.procedure_class,
@@ -217,6 +220,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.manager.running.connect(self.running)
         self.manager.finished.connect(self.finished)
         self.manager.log.connect(self.log.handle)
+        self.manager.update_point.connect(self.current_point.set_current_point)
 
         if self.use_sequencer:
             self.sequencer = SequencerWidget(
@@ -232,6 +236,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
     def _layout(self):
         self.main = QtWidgets.QWidget(self)
+        
+        current_pt_dock = QtWidgets.QDockWidget('Current Point')
+        current_pt_dock.setWidget(self.current_point)
+        current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, current_pt_dock)
 
         inputs_dock = QtWidgets.QWidget(self)
         inputs_vbox = QtWidgets.QVBoxLayout(self.main)
@@ -247,7 +256,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         parameters_buttons_layout.addWidget(self.settings_button)
         parameters_buttons_layout.addWidget(self.parameters_button)
         inputs_vbox.addLayout(parameters_buttons_layout)
-        inputs_vbox.addWidget(self.inputs)
+        inputs_vbox.addWidget(self.inputs, stretch=1)
         inputs_vbox.addSpacing(15)
         if self.enable_file_input:
             inputs_vbox.addWidget(self.file_input)
