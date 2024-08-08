@@ -38,8 +38,6 @@ from modules.control_widget_camera import CameraControl
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
 
-window = None
-
 class SpinLabMeasurement(Procedure):
     # licznik = 1 # licznik
     parameters = {}
