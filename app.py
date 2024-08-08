@@ -185,8 +185,8 @@ class SpinLabMeasurement(Procedure):
     DATA_COLUMNS = ['Voltage (V)', 'Current (A)', 'Resistance (ohm)', 'Field (Oe)', 'Frequency (Hz)', 'X (V)', 'Y (V)', 'Phase', 'Polar angle (deg)', 'Azimuthal angle (deg)','Applied Voltage (V)' ]
     path_file = SaveFilePath()
     
-    single_meas_duration = FloatParameter("Single measurement duration", default = 0, units="s")
-    number_of_points = IntegerParameter("Number of points", default = 0)
+    single_meas_duration = FloatParameter("Single measurement duration", default = 0, units="s", group_by={"layout_type": False})
+    number_of_points = IntegerParameter("Number of points", default = 0, group_by={"layout_type": False})
    
     
     ################ STARTUP ################## 
@@ -312,12 +312,10 @@ class SpinLabMeasurement(Procedure):
     
     def get_estimates(self, sequence_length=None, sequence=None):
         duration = self.single_meas_duration * self.number_of_points
-        all_duration = duration * (sequence_length if sequence_length > 0 else 1)
+        total_duration = round(duration * (sequence_length if sequence_length > 0 else 1))
         estimates = [
-            ("Duration", "%d s" % int(duration)),
-            ("Number of lines", "%d" % int(self.number_of_points)),
-            ("Sequence length", str(sequence_length)),
-            ('Measurement finished at', str(datetime.now() + timedelta(seconds=all_duration))),
+            ("Total duration", str(timedelta(seconds=total_duration))),
+            ('Measurement finished at', str((datetime.now() + timedelta(seconds=total_duration)).strftime("%Y-%m-%d %H:%M:%S"))),
         ]
         return estimates
         
