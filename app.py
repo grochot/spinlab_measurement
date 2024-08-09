@@ -345,6 +345,9 @@ class MainWindow(ManagedDockWindow):
         self.store_measurement = False                              # Controls the 'Save data' toggle
         self.file_input.extensions = ["csv", "txt", "data"]         # Sets recognized extensions, first entry is the default extension
         self.file_input.filename_fixed = False    
+        
+        self.inputs.single_meas_duration.setEnabled(False)
+        self.inputs.number_of_points.setEnabled(False)
     
     def set_calibration_constant(self, value):
         self.inputs.field_constant.setValue(value)
