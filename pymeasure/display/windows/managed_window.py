@@ -174,8 +174,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.settings_button = QtWidgets.QPushButton('Settings', self)
         self.parameters_button = QtWidgets.QPushButton('Parameters', self)
         self.abort_button.setEnabled(False)
-        self.settings_button.setEnabled(False)
-        self.parameters_button.setEnabled(True)
         self.abort_button.clicked.connect(self.abort)
         self.settings_button.clicked.connect(self.settings_function)
         self.parameters_button.clicked.connect(self.parameters_function)
@@ -208,6 +206,15 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             hide_groups=self.hide_groups,
             inputs_in_scrollarea=self.inputs_in_scrollarea,
         )
+        
+        if self.inputs.layout_type.value():
+            self.parameters_button.setEnabled(False)
+            self.settings_button.setEnabled(True)
+        else:
+            self.parameters_button.setEnabled(True)
+            self.settings_button.setEnabled(False)
+        
+        
         if self.enable_file_input:
             self.file_input = FileInputWidget(parent=self)
 
@@ -521,6 +528,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
     def refresh(self):
         raise NotImplementedError("Refresh method must be overwritten by the child class.")
+    
+    def change_input_type(self):
+        raise NotImplementedError("Change input type method must be overwritten by the child class.")
 
     def _queue(self, checked):
         """ This method is a wrapper for the `self.queue` method to be connected
@@ -609,12 +619,12 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     def settings_function(self): 
         self.settings_button.setEnabled(False)
         self.parameters_button.setEnabled(True)
-        self.procedure_class.change_input_type(self)
+        self.change_input_type()
 
     def parameters_function(self):
         self.settings_button.setEnabled(True)
         self.parameters_button.setEnabled(False)
-        self.procedure_class.change_input_type(self)
+        self.change_input_type()
 
 
     def resume(self):
