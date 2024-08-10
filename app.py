@@ -180,14 +180,12 @@ class SpinLabMeasurement(Procedure):
 
     # Other parameters 
     layout_type = BooleanParameter("Layout type", default=True, group_by={"mode": lambda v: v == "default"})
+    single_meas_duration = FloatParameter("Single measurement duration", default = 0, units="s", group_by={"mode": lambda v: v == "default"})
+    number_of_points = IntegerParameter("Number of points", default = 0, group_by={"mode": lambda v: v == "default"})
 
     DEBUG = 1
     DATA_COLUMNS = ['Voltage (V)', 'Current (A)', 'Resistance (ohm)', 'Field (Oe)', 'Frequency (Hz)', 'X (V)', 'Y (V)', 'Phase', 'Polar angle (deg)', 'Azimuthal angle (deg)','Applied Voltage (V)' ]
     path_file = SaveFilePath()
-    
-    single_meas_duration = FloatParameter("Single measurement duration", default = 0, units="s", group_by={"layout_type": False})
-    number_of_points = IntegerParameter("Number of points", default = 0, group_by={"layout_type": False})
-   
     
     ################ STARTUP ################## 
     def startup(self):
@@ -345,9 +343,6 @@ class MainWindow(ManagedDockWindow):
         self.store_measurement = False                              # Controls the 'Save data' toggle
         self.file_input.extensions = ["csv", "txt", "data"]         # Sets recognized extensions, first entry is the default extension
         self.file_input.filename_fixed = False    
-        
-        self.inputs.single_meas_duration.setEnabled(False)
-        self.inputs.number_of_points.setEnabled(False)
     
     def set_calibration_constant(self, value):
         self.inputs.field_constant.setValue(value)
