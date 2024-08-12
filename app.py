@@ -217,8 +217,7 @@ class SpinLabMeasurement(Procedure):
                 self.harmonicmode.initializing()
             case "FMRMode":
                 self.fmrmode = FMRMode(self.set_automaticstation, self.set_lockin, self.set_field, self.set_gaussmeter, self.set_generator, self.set_rotationstation, self.address_lockin, self.address_gaussmeter, self.vector, self.delay_field, self.delay_lockin, self.delay_bias, self.lockin_average, self.lockin_input_coupling, self.lockin_reference_source,self.lockin_dynamic_reserve, self.lockin_input_connection, self.lockin_sensitivity, self.lockin_timeconstant, self.lockin_autophase, self.lockin_frequency, self.lockin_harmonic, self.lockin_sine_amplitude, self.lockin_channel1, self.lockin_channel2, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.address_generator, self.set_field_value_fmr, self.generator_frequency, self.generator_power,  self.mode_fmr, self.address_daq, self.set_lfgen, self.address_lfgen, self.lfgen_freq, self.lfgen_amp, self.field_step, self.set_rotationstation, self.address_rotationstation, self.constant_field_value, self.rotation_axis, self.set_polar_angle_fmr, self.set_azimuthal_angle_fmr, self.hold_the_field_after_measurement, self.return_the_rotationstation) 
-                self.points = self.fmrmode.generate_points()
-                window.inputs.number_of_points.setValue(len(self.points))
+                self.points = self.fmrmode.generate_points()  
                 self.fmrmode.initializing()
                 self.fmrmode.begin()
             case "CalibrationFieldMode": 
@@ -230,7 +229,7 @@ class SpinLabMeasurement(Procedure):
                 self.points = self.CIMSmode.generate_points()
                 self.CIMSmode.initializing()
 
-                
+        window.inputs.number_of_points.setValue(len(self.points))        
 
 #################################### PROCEDURE##############################################
     def execute(self):
