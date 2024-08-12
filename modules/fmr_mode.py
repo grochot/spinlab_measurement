@@ -2,11 +2,10 @@ from time import sleep
 import math
 import numpy as np
 import logging
-from hardware.daq import DAQ
 
+from hardware.daq import DAQ
 from hardware.lakeshore import Lakeshore
 from hardware.windfreak import Windfreak
-
 from hardware.sr830 import SR830
 from hardware.generator_agilent import FGenDriver
 from hardware.hp_33120a import LFGenDriver
@@ -15,15 +14,21 @@ from hardware.dummy_lfgen import DummyLFGenDriver
 from hardware.dummy_lockin import DummyLockin
 from hardware.dummy_gaussmeter import DummyGaussmeter
 from hardware.dummy_field import DummyField
+from hardware.agilent_34410a import Agilent34410A
+from hardware.dummy_multimeter import DummyMultimeter
+from hardware.rotation_stage import RotationStage
+from hardware.rotation_stage_dummy import RotationStageDummy
+
 from logic.vector import Vector
 from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity 
 from logic.sweep_field_to_zero import sweep_field_to_zero 
 from logic.sweep_field_to_value import sweep_field_to_value
+
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
 
 class FMRMode():
-    def __init__(self, 
+    def __init__(self,
         set_automaticstation:bool, 
         set_lockin:str, 
         set_field:str, 
@@ -70,7 +75,16 @@ class FMRMode():
         rotation_polar_constant:float, 
         rotation_azimuth_constant:float,
         hold_the_field_after_measurement:bool,
-        return_the_rotationstation:bool) -> None: 
+        return_the_rotationstation:bool,
+        set_multimeter:str,
+        address_multimeter:str,
+        multimeter_function:str,
+        multimeter_resolution:float,
+        multimeter_autorange:bool,
+        multimeter_range:int,
+        multimeter_average:int,
+        multimeter_nplc:str,
+        measdevice:str) -> None: 
         
         
         self.set_automaticstation = set_automaticstation
@@ -123,6 +137,19 @@ class FMRMode():
         self.rotation_azimuth_constant = rotation_azimuth_constant
         self.hold_the_field_after_measurement=hold_the_field_after_measurement
         self.return_the_rotationstation = return_the_rotationstation
+
+        self.set_multimeter = set_multimeter
+        self.address_multimeter = address_multimeter
+        self.multimeter_function = multimeter_function
+        self.multimeter_resolution = multimeter_resolution
+        self.multimeter_autorange = multimeter_autorange
+        self.multimeter_range = multimeter_range
+        self.multimeter_average = multimeter_average
+        self.multimeter_nplc = multimeter_nplc
+
+        self.measdevice = measdevice
+
+
         ## parameter initialization 
         
         
@@ -140,19 +167,32 @@ class FMRMode():
 
     def initializing(self):
         # Hardware objects initialization
-        match self.set_lockin:
-            case "SR830":
-                self.lockin_obj = SR830(self.address_lockin)
-            case "Zurich":
-                pass
-            case _: 
-                self.lockin_obj = DummyLockin()
-                log.warning('Used dummy Lockin.')
+        if self.measdevice == "LockIn":
+            match self.set_lockin:
+                case "SR830":
+                    self.lockin_obj = SR830(self.address_lockin)
+                case "Zurich":
+                    pass
+                case _: 
+                    self.lockin_obj = DummyLockin()
+                    log.warning('Used dummy Lockin.')
+
+            self.multimeter_obj = DummyMultimeter(self.address_multimeter)
+        else:
+            match self.set_multimeter:
+                case "Agilent 34400":
+                    self.multimeter_obj = Agilent34410A(self.address_multimeter)
+                case _:
+                    self.multimeter_obj = DummyMultimeter(self.address_multimeter)
+                    log.warning('Used dummy Multimeter.')
+
+            self.lockin_obj = DummyLockin()
+            self.set_lfgen = "none"
         
         match self.set_gaussmeter: 
             case "Lakeshore": 
                 self.gaussmeter_obj = Lakeshore(self.address_gaussmeter)
-            case "none":
+            case _:
                 self.gaussmeter_obj = DummyGaussmeter(self.address_gaussmeter)
                 log.warning('Used dummy Gaussmeter.')
         
@@ -203,6 +243,15 @@ class FMRMode():
         self.lockin_obj.input_config = self.lockin_input_connection
         self.lockin_obj.input_coupling = self.lockin_input_coupling
         self.lockin_obj.reference_source = self.lockin_reference_source
+
+        #Multimeter initialization 
+        self.multimeter_obj.resolution = self.multimeter_resolution
+        self.multimeter_obj.range_ = self.multimeter_range
+        self.multimeter_obj.autorange = self.multimeter_autorange
+        self.multimeter_obj.function_ = self.multimeter_function
+        self.multimeter_obj.trigger_delay = "MIN"
+        self.multimeter_obj.trigger_count = self.multimeter_average
+        self.multimeter_obj.nplc = self.multimeter_nplc
         
         #Modulation initalization
         if self.set_lfgen == "SR830":
@@ -255,8 +304,9 @@ class FMRMode():
                     sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
                 else:
                     sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
+
         self.generator_obj.set_lf_signal()
-        self.generator_obj.setOutput(True, True)
+        self.generator_obj.setOutput(True, True if (self.set_lfgen == "none" and self.measdevice == "LockIn") else False)
 
 
         #set lockin phase: 
@@ -300,22 +350,9 @@ class FMRMode():
                 #measure field
                 if self.set_gaussmeter == "none":
                     self.tmp_field = point
-                    
                 else: 
-                    
                     self.tmp_field = self.gaussmeter_obj.measure()
-                  
-        
-                sleep(self.delay_lockin)
-
-                #measure_lockin 
-                for i in range(self.lockin_average):
-                    self.result = self.lockin_obj.snap("{}".format(self.lockin_channel1), "{}".format(self.lockin_channel2))
-                    self.result_list.append(self.result)
-        
-                #calculate average:
-                self.result1 = np.average([i[0] for i in self.result_list])
-                self.result2 = np.average([i[1] for i in self.result_list])
+                
             
             case "ST-FMR":
                 if self.rotationstation:
@@ -339,25 +376,33 @@ class FMRMode():
 
                 #measure field
                 if self.set_gaussmeter == "none":
-                    
                     self.tmp_field = point
                 else:
-                   
                     self.tmp_field = self.gaussmeter_obj.measure()
-        
-                sleep(self.delay_lockin)
+                    
+        sleep(self.delay_lockin)
 
+        self.result1 = math.nan
+        self.result2 = math.nan
+
+        if self.measdevice == "LockIn":
+            #measure_lockin 
                 #measure_lockin 
-                for i in range(self.lockin_average):
-                    self.result = self.lockin_obj.snap("{}".format(self.lockin_channel1), "{}".format(self.lockin_channel2))
-                    self.result_list.append(self.result)
-        
-                #calculate average:
-                self.result1 = np.average([i[0] for i in self.result_list])
-                self.result2 = np.average([i[1] for i in self.result_list])
+            #measure_lockin 
+            for i in range(self.lockin_average):
+                result = self.lockin_obj.snap("{}".format(self.lockin_channel1), "{}".format(self.lockin_channel2))
+                self.result_list.append(result)
+    
+            #calculate average:
+            self.result1 = np.average([i[0] for i in self.result_list])
+            self.result2 = np.average([i[1] for i in self.result_list])
+        else:
+            #measure_multimeter
+            result = np.average(self.multimeter_obj.reading)
+            
 
         data = {
-            'Voltage (V)': math.nan,
+            'Voltage (V)': result if self.measdevice == "Multimeter" else math.nan,
             'Current (A)': math.nan,
             'Resistance (ohm)': self.result1 if self.lockin_channel1 == "R" else (self.result2 if self.lockin_channel2 == "R" else math.nan), 
             'Field (Oe)': self.tmp_field,

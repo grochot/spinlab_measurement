@@ -1,1 +1,1 @@
-{"ip_address": "-", "refresh_interval": 500, "delay_duration": 10, "timeout_duration": 30, "ready_condition": "absolute error", "error_threshold": 1, "dT": 1, "dt": 300}
+{"ip_address": "192.168.0.12", "refresh_interval": 500, "delay_duration": 5, "timeout_duration": 30, "ready_condition": "absolute error", "error_threshold": 2.0, "dT": 1, "dt": 300}

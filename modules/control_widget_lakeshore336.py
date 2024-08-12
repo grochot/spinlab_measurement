@@ -6,6 +6,7 @@ import json
 from threading import Lock
 from abc import ABC, abstractmethod
 import logging
+from time import sleep
 
 log = logging.getLogger(__name__)
 
@@ -269,6 +270,7 @@ class TimeoutErrorState(State):
 class Lakeshore336Control(QtWidgets.QWidget):
     object_name = "lakeshore336_control"
     sigReady = QtCore.pyqtSignal()
+    sigChangeState = QtCore.pyqtSignal(State)
 
     def __init__(self, nested=True, parent=None):
         super(Lakeshore336Control, self).__init__(parent)
@@ -280,6 +282,8 @@ class Lakeshore336Control(QtWidgets.QWidget):
         self.nested = nested
 
         self.lock = Lock()
+
+        self.sigChangeState.connect(lambda state: self.change_state(state))
 
         self.settings_win = SettingsWindow(self.lock)
         self.settings_win.load_settings()
@@ -823,6 +827,13 @@ class Lakeshore336Control(QtWidgets.QWidget):
         except Exception as e:
             log.exception(e)
 
+        if (setpoint != self.setpoint) and (self.current_state in [self.delayState, self.readyState, self.timeoutState]):
+            self.sigChangeState.emit(self.connectedState)
+
+        
+
+        
+
     def set_setpoint_wait(self, setpoint: str | float, abort_signal: QtCore.pyqtSignal) -> None:
         """
         Set the setpoint and wait for the temperature to stabilize or the abort signal to be emitted.
@@ -832,6 +843,7 @@ class Lakeshore336Control(QtWidgets.QWidget):
             abort_signal (pyqtSignal): signal to abort the waiting process (manager.aborted)
         """
         self.set_setpoint(setpoint)
+        sleep(1)
         self.await_ready(abort_signal)
 
     def get_curr_temp(self, channel: int = 0) -> float:
