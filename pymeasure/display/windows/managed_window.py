@@ -230,7 +230,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         
         self.manager.update_point.connect(self.current_point.set_current_point)
         self.manager.finished.connect(self.current_point.reset)
-        self.manager.aborted.connect(self.current_point.reset)
+        self.manager.abort_returned.connect(self.current_point.reset)
 
         if self.use_sequencer:
             self.sequencer = SequencerWidget(

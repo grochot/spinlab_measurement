@@ -22,7 +22,7 @@ class CurrentPointWidget(QtWidgets.QWidget):
         self.line_edit.setAlignment(QtCore.Qt.AlignCenter)
 
     def _layout(self):
-        vbox = QtWidgets.QVBoxLayout(self, text="-")
+        vbox = QtWidgets.QVBoxLayout(self)
         vbox.addWidget(self.line_edit)
         vbox.setContentsMargins(0, 0, 0, 0)
         self.setLayout(vbox)
