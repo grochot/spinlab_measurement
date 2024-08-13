@@ -245,7 +245,8 @@ class FMRMode():
         self.lockin_obj.reference_source = self.lockin_reference_source
 
         #Multimeter initialization 
-        self.multimeter_obj.resolution = self.multimeter_resolution
+        if not self.multimeter_autorange:
+            self.multimeter_obj.resolution = self.multimeter_resolution
         self.multimeter_obj.range_ = self.multimeter_range
         self.multimeter_obj.autorange = self.multimeter_autorange
         self.multimeter_obj.function_ = self.multimeter_function

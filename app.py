@@ -64,7 +64,8 @@ class SpinLabMeasurement(Procedure):
 
     #Hardware
     set_sourcemeter=ListParameter("Sourcemeter", choices=["Keithley 2400", "Keithley 2636", "Agilent 2912", "none"], default = parameters_from_file["set_sourcemeter"], group_by={"mode": lambda v: v == "ResistanceMode" or v=="CIMSMode", "layout_type": False})
-    set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"],default = parameters_from_file["set_multimeter"], group_by={"mode": lambda v: v=="ResistanceMode" or v == "FMRMode", "mode_resistance": lambda v: v=="4-points", "layout_type": False})
+    # set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"],default = parameters_from_file["set_multimeter"], group_by={"mode": lambda v: v=="ResistanceMode" or v == "FMRMode", "mode_resistance": lambda v: v=="4-points", "layout_type": False})
+    set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"], default = parameters_from_file["set_multimeter"], group_by={"mode": lambda v: v=="ResistanceMode" or v == "FMRMode", "layout_type": False})
     set_gaussmeter = ListParameter("Gaussmeter", default = parameters_from_file["set_gaussmeter"], choices=["Lakeshore", "none"], group_by={"mode":lambda v: v == "ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" or v=="CIMSMode", "layout_type": False })
     set_field = ListParameter("Magnetic Field", default = parameters_from_file["set_field"], choices = ["DAQ", "Lockin", "none"], group_by = {"mode": lambda v: v == "ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" or v=="CIMSMode", "layout_type": False })
     set_lockin = ListParameter("Lockin", default = parameters_from_file["set_lockin"], choices = ["Zurich", "SR830", "none"], group_by = {"mode": lambda v: v == "HarmonicMode" or v == "FMRMode", "layout_type": False})
@@ -80,7 +81,8 @@ class SpinLabMeasurement(Procedure):
 
     #Hardware address
     address_sourcemeter=ListParameter("Sourcemeter address", default = parameters_from_file["address_sourcemeter"] if parameters_from_file["address_sourcemeter"] in finded_instruments else 'None', choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode" or v=="CIMSMode", "set_sourcemeter": lambda v: v != "none", "layout_type": False})
-    address_multimeter=ListParameter("Multimeter address", default = parameters_from_file["address_multimeter"] if parameters_from_file["address_multimeter"] in finded_instruments else 'None', choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode", "mode_resistance": lambda v: v == "4-points", "layout_type": False})
+    # address_multimeter=ListParameter("Multimeter address", default = parameters_from_file["address_multimeter"] if parameters_from_file["address_multimeter"] in finded_instruments else 'None', choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode", "mode_resistance": lambda v: v == "4-points", "layout_type": False})
+    address_multimeter=ListParameter("Multimeter address", default = parameters_from_file["address_multimeter"] if parameters_from_file["address_multimeter"] in finded_instruments else 'None', choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode" or v == "FMRMode", "layout_type": False, "set_multimeter": lambda v: v != "none"})
     address_gaussmeter=ListParameter("Gaussmeter address",default = parameters_from_file["address_gaussmeter"] if parameters_from_file["address_gaussmeter"] in finded_instruments else 'None',   choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode" or v == "HarmonicMode" or v == "FMRMode" or v == "CalibrationFieldMode" or v=="CIMSMode" , "set_gaussmeter": lambda v: v != "none", "layout_type": False})
     address_lockin=ListParameter("Lockin address", default = parameters_from_file["address_lockin"] if parameters_from_file["address_lockin"] in finded_instruments else 'None',  choices=finded_instruments, group_by = {"mode": lambda v: v=="HarmonicMode" or v == "FMRMode", "set_lockin": lambda v: v!="none", "layout_type": False})
     address_switch=ListParameter("Switch address",default = parameters_from_file["address_switch"] if parameters_from_file["address_switch"] in finded_instruments else 'None',  choices=finded_instruments, group_by = {"mode": lambda v: v=="ResistanceMode", "layout_type": False})
@@ -116,7 +118,7 @@ class SpinLabMeasurement(Procedure):
     sourcemeter_bias = FloatParameter("Sourcemeter bias", default = parameters_from_file["sourcemeter_bias"], group_by={"mode": lambda v: v == "ResistanceMode" or "CIMSMode", "set_sourcemeter": lambda v: v != "none", "layout_type": False})
 
     #MultimeterParameters
-    multimeter_params_visibility = {"mode": lambda v: v == "ResistanceMode" or v == "FMRMode", "layout_type": False}
+    multimeter_params_visibility = {"mode": lambda v: v == "ResistanceMode" or v == "FMRMode", "layout_type": False, "set_multimeter": lambda v: v != "none"}
     # multimeter_params_visibility = {"mode": lambda v: v == "ResistanceMode" or v == "FMRMode", "mode_resistance": lambda v: v == "4-points", "layout_type": False} 
     multimeter_function = ListParameter("Multimeter function", default = parameters_from_file["multimeter_function"], choices=[ "DCV", "DCV_RATIO", "ACV", "DCI", "ACI", "R2W", "R4W", "FREQ", "PERIOD", "CONTINUITY", "DIODE"], group_by=multimeter_params_visibility)
     multimeter_resolution = FloatParameter("Multimeter resolution",default = parameters_from_file["multimeter_resolution"], group_by=multimeter_params_visibility)
