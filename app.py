@@ -297,15 +297,6 @@ class SpinLabMeasurement(Procedure):
     
     def shutdown(self):
         pass
-
-    def change_input_type(self): 
-        if SpinLabMeasurement.layout_type == True:
-            SpinLabMeasurement.layout_type = False 
-            MainWindow.change_input_type(self,False)
-        else: 
-            SpinLabMeasurement.layout_type = True 
-            MainWindow.change_input_type(self,True)
-        print(SpinLabMeasurement.layout_type)
     
     def get_estimates(self, sequence_length=None, sequence=None):
         duration = self.point_meas_duration * self.number_of_points
@@ -367,8 +358,11 @@ class MainWindow(ManagedDockWindow):
                 continue
             input_widget.setValue("None")
     
-    def change_input_type(self, value): 
-        self.inputs.layout_type.setCheckState(value)
+    def change_input_type(self): 
+        if self.inputs.layout_type.value():
+            self.inputs.layout_type.setValue(False)
+        else:
+            self.inputs.layout_type.setValue(True)
     
     def set_sample_name(self, value):
         self.inputs.sample_name.setValue(value)
