@@ -276,6 +276,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             sequencer_dock = QtWidgets.QDockWidget('Sequencer')
             sequencer_dock.setWidget(self.sequencer)
             sequencer_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+            sequencer_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
+            sequencer_dock.setVisible(False)
             self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, sequencer_dock)
 
         if self.use_estimator:
