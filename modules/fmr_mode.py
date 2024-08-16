@@ -232,6 +232,8 @@ class FMRMode():
             except:
                 log.error("Rotation station is not initialized")
                 self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
+                
+        self.begin()
 
 
 
