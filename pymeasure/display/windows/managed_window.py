@@ -286,12 +286,16 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             sequencer_dock = QtWidgets.QDockWidget('Sequencer')
             sequencer_dock.setWidget(self.sequencer)
             sequencer_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+            sequencer_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
+            sequencer_dock.setVisible(False)
             self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, sequencer_dock)
 
         if self.use_estimator:
             estimator_dock = QtWidgets.QDockWidget('Estimator')
             estimator_dock.setWidget(self.estimator)
             estimator_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+            estimator_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
+            estimator_dock.setVisible(False)
             self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, estimator_dock)
 
         self.tabs = QtWidgets.QTabWidget(self.main)
