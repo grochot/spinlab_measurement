@@ -830,10 +830,6 @@ class Lakeshore336Control(QtWidgets.QWidget):
         if (setpoint != self.setpoint) and (self.current_state in [self.delayState, self.readyState, self.timeoutState]):
             self.sigChangeState.emit(self.connectedState)
 
-        
-
-        
-
     def set_setpoint_wait(self, setpoint: str | float, abort_signal: QtCore.pyqtSignal) -> None:
         """
         Set the setpoint and wait for the temperature to stabilize or the abort signal to be emitted.
