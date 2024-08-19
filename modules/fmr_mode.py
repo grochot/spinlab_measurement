@@ -279,6 +279,8 @@ class FMRMode:
             except:
                 log.error("Rotation station is not initialized")
                 self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
+                
+        self.begin()
 
     def begin(self):
         match self.generator_measurement_mode:

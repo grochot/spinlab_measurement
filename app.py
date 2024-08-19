@@ -187,19 +187,20 @@ class SpinLabMeasurement(Procedure):
 
     # Other parameters 
     layout_type = BooleanParameter("Layout type", default=True, group_by={"mode": lambda v: v == "default"})
+    point_meas_duration = FloatParameter("Single measurement duration", default = 0, units="s", group_by={"mode": lambda v: v == "default"})
+    number_of_points = IntegerParameter("Number of points", default = 0, group_by={"mode": lambda v: v == "default"})
 
     DEBUG = 1
     DATA_COLUMNS = ['Voltage (V)', 'Current (A)', 'Resistance (ohm)', 'Field (Oe)', 'Frequency (Hz)', 'X (V)', 'Y (V)', 'Phase', 'Polar angle (deg)', 'Azimuthal angle (deg)','Applied Voltage (V)' ]
-    path_file = SaveFilePath() 
-   
+    path_file = SaveFilePath()
     
     ################ STARTUP ################## 
     def startup(self):
         #self.sample_name = window.filename_getter()
 
-        for i in self.used_parameters_list:
-            self.param = eval("self."+i)
-            self.parameters[i] = self.param
+        for param_name in self.used_parameters_list:
+            param = getattr(self, param_name)
+            self.parameters[param_name] = param
         
         self.save_parameter.WriteFile(self.parameters)
 
@@ -207,112 +208,72 @@ class SpinLabMeasurement(Procedure):
             try:
                 window.devices_widget.lakeshore336_control.set_setpoint_wait(self.kriostat_temperature, window.manager.aborted)
             except AttributeError as e:
-                log.error("No kriostat control")
+                logging.error("No kriostat control")
+                
+        self.selected_mode = None
         
         match self.mode:
             case "ResistanceMode":
-                self.resistancemode = ResistanceMode(self.vector, self.mode_resistance, self.sourcemeter_bias, self.set_sourcemeter, self.set_multimeter, self.set_gaussmeter, self.set_field, self.set_automaticstation, self.set_switch, self.set_kriostat, self.set_rotationstation,self.return_the_rotationstation, self.address_sourcemeter, self.address_multimeter, self.address_gaussmeter, self.address_switch, self.delay_field, self.delay_lockin, self.delay_bias, self.sourcemter_source, self.sourcemeter_compliance, self.sourcemeter_channel, self.sourcemeter_limit, self.sourcemeter_nplc, self.sourcemeter_average, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.multimeter_nplc, self.address_daq, self.field_step, self.address_rotationstation, self.constant_field_value,self.rotation_axis, self.rotation_polar_constant, self.rotation_azimuth_constant,self.set_polar_angle,self.set_azimuthal_angle)
-
-                self.points = self.resistancemode.generate_points()
-                self.resistancemode.initializing()
+                self.selected_mode = ResistanceMode(self.vector, self.mode_resistance, self.sourcemeter_bias, self.set_sourcemeter, self.set_multimeter, self.set_gaussmeter, self.set_field, self.set_automaticstation, self.set_switch, self.set_kriostat, self.set_rotationstation,self.return_the_rotationstation, self.address_sourcemeter, self.address_multimeter, self.address_gaussmeter, self.address_switch, self.delay_field, self.delay_lockin, self.delay_bias, self.sourcemter_source, self.sourcemeter_compliance, self.sourcemeter_channel, self.sourcemeter_limit, self.sourcemeter_nplc, self.sourcemeter_average, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.multimeter_nplc, self.address_daq, self.field_step, self.address_rotationstation, self.constant_field_value,self.rotation_axis, self.rotation_polar_constant, self.rotation_azimuth_constant,self.set_polar_angle,self.set_azimuthal_angle)
             case "HarmonicMode":
-                self.harmonicmode = HarmonicMode(self.set_automaticstation, 
-                 self.set_lockin, self.set_field, self.set_gaussmeter,  self.set_rotationstation, self.address_lockin, self.address_gaussmeter, self.vector, self.delay_field, self.delay_lockin, self.delay_bias, self.lockin_average, self.lockin_input_coupling, self.lockin_reference_source, self.lockin_dynamic_reserve, self.lockin_input_connection, self.lockin_sensitivity, self.lockin_timeconstant, self.lockin_autophase, self.lockin_frequency, self.lockin_harmonic, self.lockin_sine_amplitude,  self.lockin_channel1, self.lockin_channel2, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.address_daq, self.field_step, self.set_rotationstation, self.address_rotationstation, self.constant_field_value, self.rotation_axis, self.rotation_polar_constant, self.rotation_azimuth_constant, self.set_polar_angle,self.set_azimuthal_angle, self.hold_the_field_after_measurement, self.return_the_rotationstation) 
-
-                self.points = self.harmonicmode.generate_points()
-                self.harmonicmode.initializing()
+                self.selected_mode = HarmonicMode(self.set_automaticstation, self.set_lockin, self.set_field, self.set_gaussmeter,  self.set_rotationstation, self.address_lockin, self.address_gaussmeter, self.vector, self.delay_field, self.delay_lockin, self.delay_bias, self.lockin_average, self.lockin_input_coupling, self.lockin_reference_source, self.lockin_dynamic_reserve, self.lockin_input_connection, self.lockin_sensitivity, self.lockin_timeconstant, self.lockin_autophase, self.lockin_frequency, self.lockin_harmonic, self.lockin_sine_amplitude,  self.lockin_channel1, self.lockin_channel2, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.address_daq, self.field_step, self.set_rotationstation, self.address_rotationstation, self.constant_field_value, self.rotation_axis, self.rotation_polar_constant, self.rotation_azimuth_constant, self.set_polar_angle,self.set_azimuthal_angle, self.hold_the_field_after_measurement, self.return_the_rotationstation)
             case "FMRMode":
-                self.fmrmode = FMRMode(self.set_automaticstation, self.set_lockin, self.set_field, self.set_gaussmeter, self.set_generator, self.set_rotationstation, self.address_lockin, self.address_gaussmeter, self.vector, self.delay_field, self.delay_lockin, self.delay_bias, self.lockin_average, self.lockin_input_coupling, self.lockin_reference_source,self.lockin_dynamic_reserve, self.lockin_input_connection, self.lockin_sensitivity, self.lockin_timeconstant, self.lockin_autophase, self.lockin_frequency, self.lockin_harmonic, self.lockin_sine_amplitude, self.lockin_channel1, self.lockin_channel2, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.address_generator, self.set_field_value_fmr, self.generator_frequency, self.generator_power,  self.mode_fmr, self.address_daq, self.set_lfgen, self.address_lfgen, self.lfgen_freq, self.lfgen_amp, self.field_step, self.set_rotationstation, self.address_rotationstation, self.constant_field_value, self.rotation_axis, self.set_polar_angle_fmr, self.set_azimuthal_angle_fmr, self.hold_the_field_after_measurement, self.return_the_rotationstation, self.set_multimeter, self.address_multimeter, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.multimeter_nplc, self.set_measdevice) 
-                self.points = self.fmrmode.generate_points()
-                self.fmrmode.initializing()
-                self.fmrmode.begin()
+                self.selected_mode = FMRMode(self.set_automaticstation, self.set_lockin, self.set_field, self.set_gaussmeter, self.set_generator, self.set_rotationstation, self.address_lockin, self.address_gaussmeter, self.vector, self.delay_field, self.delay_lockin, self.delay_bias, self.lockin_average, self.lockin_input_coupling, self.lockin_reference_source,self.lockin_dynamic_reserve, self.lockin_input_connection, self.lockin_sensitivity, self.lockin_timeconstant, self.lockin_autophase, self.lockin_frequency, self.lockin_harmonic, self.lockin_sine_amplitude, self.lockin_channel1, self.lockin_channel2, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.address_generator, self.set_field_value_fmr, self.generator_frequency, self.generator_power,  self.mode_fmr, self.address_daq, self.set_lfgen, self.address_lfgen, self.lfgen_freq, self.lfgen_amp, self.field_step, self.set_rotationstation, self.address_rotationstation, self.constant_field_value, self.rotation_axis, self.set_polar_angle_fmr, self.set_azimuthal_angle_fmr, self.hold_the_field_after_measurement, self.return_the_rotationstation)
             case "CalibrationFieldMode": 
-                self.calibrationmode = FieldCalibrationMode(self.set_field, self.set_gaussmeter, self.address_daq, self.address_gaussmeter, self.vector, self.delay_field)
-                self.calibrationmode.initializing()
-
+                self.selected_mode = FieldCalibrationMode(self.set_field, self.set_gaussmeter, self.address_daq, self.address_gaussmeter, self.vector, self.delay_field)
             case "CIMSMode":
                 self.CIMSmode = CIMSMode(self.vector, self.mode_cims_relays, self.sourcemeter_bias, self.set_sourcemeter, self.set_multimeter,self.set_pulsegenerator, self.set_gaussmeter, self.set_field, self.set_automaticstation, self.set_switch, self.set_kriostat, self.set_rotationstation,self.return_the_rotationstation, self.address_sourcemeter, self.address_multimeter,self.address_pulsegenerator, self.address_gaussmeter, self.address_switch, self.delay_field, self.delay_measurement, self.delay_bias, self.sourcemter_source, self.sourcemeter_compliance, self.sourcemeter_channel, self.sourcemeter_limit, self.sourcemeter_nplc, self.sourcemeter_average, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.multimeter_nplc, self.address_daq, self.field_step, self.address_rotationstation, self.constant_field_value,self.rotation_axis, self.rotation_polar_constant, self.rotation_azimuth_constant,self.pulsegenerator_duration,self.pulsegenerator_offset,self.pulsegenerator_pulsetype,self.pulsegenerator_channel,self.pulsegenerator_compliance,self.pulsegenerator_source_range,self.field_bias_value,self.remagnetization,self. remagnetization_value,self.remagnetization_time,self.hold_the_field_after_measurement,self.remanency_correction,self.remanency_correction_time,self.set_polar_angle,self.set_azimuthal_angle)
-                self.points = self.CIMSmode.generate_points()
-                self.CIMSmode.initializing()
+            case _:
+                raise NotImplementedError(f"Mode: '{self.mode}' is not implemented!")
+             
+        self.points = self.selected_mode.generate_points()
+        self.selected_mode.initializing()
 
-                
+        window.inputs.number_of_points.setValue(len(self.points))        
 
 #################################### PROCEDURE##############################################
     def execute(self):
         
-        match self.mode:
-            case "ResistanceMode":
-                self.counter = 0
-                for point in self.points:
-                   self.result = self.resistancemode.operating(point)
-                   self.emit('results', self.result) 
-                   self.emit('progress', 100 * self.counter / len(self.points))
-                   self.emit('current_point', point)
-                   self.counter = self.counter + 1
-                   if self.should_stop():
-                    log.warning("Caught the stop flag in the procedure")
-                    break
-                self.resistancemode.end()
-            case "HarmonicMode":
-                self.counter = 0
-                for point in self.points:
-                   self.result = self.harmonicmode.operating(point)
-                   self.emit('results', self.result) 
-                   self.emit('progress', 100 * self.counter / len(self.points))
-                   self.emit('current_point', point)
-                   self.counter = self.counter + 1
-                   if self.should_stop():
-                    log.warning("Caught the stop flag in the procedure")
-                    break
-                self.harmonicmode.end()
-            case "FMRMode":
-                self.counter = 0
-                for point in self.points:
-                   self.result = self.fmrmode.operating(point)
-                   self.emit('results', self.result) 
-                   self.emit('progress', 100 * self.counter / len(self.points))
-                   self.emit('current_point', point)
-                   self.counter = self.counter + 1
-                   if self.should_stop():
-                    log.warning("Caught the stop flag in the procedure")
-                    break
-                self.fmrmode.end()
-                #    self.set_calibration_constant(self.result[1])
-            case "CalibrationFieldMode": 
-                self.result = self.calibrationmode.operating()
-                self.emit('results', self.result[0])
-                window.set_calibration_constant(self.result[1])
-
-                self.calibrationmode.end()
-
-            case "CIMSMode":
-                self.counter = 0
-                for point in self.points:
-                   self.result = self.CIMSmode.operating(point)
-                   self.emit('results', self.result) 
-                   self.emit('progress', 100 * self.counter / len(self.points))
-                   self.emit('current_point', point)
-                   self.counter = self.counter + 1
-                   if self.should_stop():
-                    log.warning("Caught the stop flag in the procedure")
-                    break
-                self.CIMSmode.end()
-
+        if isinstance(self.selected_mode, FieldCalibrationMode):
+            self.result = self.selected_mode.operating()
+            self.emit('results', self.result[0])
+            window.set_calibration_constant(self.result[1])
+            self.selected_mode.end()
+            return
+        
+        self.counter = 0
+        
+        for point in self.points:
+            start_time = time()
+            
+            self.result = self.selected_mode.operating(point)
+            
+            self.emit('results', self.result)
+            self.emit('progress', 100 * self.counter / len(self.points))
+            self.emit('current_point', point)
+            
+            self.counter = self.counter + 1
+            
+            window.inputs.point_meas_duration.setValue(time()-start_time)
+            
+            if self.should_stop():
+                log.warning("Caught the stop flag in the procedure")
+                break
+            
+        self.selected_mode.end()
     
     def shutdown(self):
         pass
     
-    # def get_estimates(self, sequence_length=None, sequence=None):
-    #                 self.iterations = self.points
-    #                 self.delay = self.delay_field + self.delay_lockin + self.delay_bias
-    #                 duration = self.iterations * self.delay
-    #                 estimates = [
-    #                     ("Duration", "%d s" % int(duration)),
-    #                     ("Number of lines", "%d" % int(self.iterations)),
-    #                     ("Sequence length", str(sequence_length)),
-    #                     ('Measurement finished at', str(datetime.now() + timedelta(seconds=duration))),
-    #                 ]
-    #                 return estimates
+    def get_estimates(self, sequence_length=None, sequence=None):
+        duration = self.point_meas_duration * self.number_of_points
+        total_duration = round(duration * (sequence_length if sequence_length > 0 else 1))
+        estimates = [
+            ("Single:", str(timedelta(seconds=round(duration)))),
+            ("Total:", str(timedelta(seconds=total_duration))),
+            ('Measurement finished at', str((datetime.now() + timedelta(seconds=total_duration)).strftime("%Y-%m-%d %H:%M:%S"))),
+        ]
+        return estimates
         
 
 class MainWindow(ManagedDockWindow):
@@ -322,7 +283,7 @@ class MainWindow(ManagedDockWindow):
     def __init__(self):
         super().__init__(
             procedure_class= SpinLabMeasurement,
-            inputs = ['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'set_sourcemeter','set_pulsegenerator', 'set_measdevice', 'set_multimeter', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','address_rotationstation','rotation_axis', 'set_polar_angle','set_azimuthal_angle','set_polar_angle_fmr','set_azimuthal_angle_fmr', 'rotation_polar_constant', 'rotation_azimuth_constant','set_switch', 'set_kriostat', "kriostat_temperature", 'set_lfgen', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','address_pulsegenerator','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'constant_field_value', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias','mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','pulsegenerator_compliance','pulsegenerator_source_range','delay_measurement','field_bias_value','remanency_correction','remanency_correction_time','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','return_the_rotationstation', 'layout_type'],
+            inputs = ['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'set_sourcemeter','set_pulsegenerator', 'set_measdevice', 'set_multimeter', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','address_rotationstation','rotation_axis', 'set_polar_angle','set_azimuthal_angle','set_polar_angle_fmr','set_azimuthal_angle_fmr', 'rotation_polar_constant', 'rotation_azimuth_constant','set_switch', 'set_kriostat', "kriostat_temperature", 'set_lfgen', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','address_pulsegenerator','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'constant_field_value', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias','mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','pulsegenerator_compliance','pulsegenerator_source_range','delay_measurement','field_bias_value','remanency_correction','remanency_correction_time','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','return_the_rotationstation', 'layout_type', 'point_meas_duration', 'number_of_points'],
             x_axis=['Field (Oe)', 'Voltage (V)'],
             y_axis=['Field (Oe)', 'Resistance (ohm)'],
             # directory_input=True,  
