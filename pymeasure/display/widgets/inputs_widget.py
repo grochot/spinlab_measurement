@@ -25,6 +25,7 @@
 import logging
 
 from functools import partial
+from inspect import signature
 
 from ..inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
 from ..Qt import QtWidgets, QtCore
@@ -42,8 +43,7 @@ class InputsWidget(QtWidgets.QWidget):
     # tuple of Input classes that do not need an external label
     NO_LABEL_INPUTS = (BooleanInput,)
 
-    def __init__(self, procedure_class, inputs=(), parent=None, hide_groups=True,
-                 inputs_in_scrollarea=False):
+    def __init__(self, procedure_class, inputs=(), parent=None, hide_groups=True, inputs_in_scrollarea=False):
         super().__init__(parent)
         self._procedure_class = procedure_class
         self._procedure = procedure_class()
@@ -101,8 +101,7 @@ class InputsWidget(QtWidgets.QWidget):
 
             inputs = QtWidgets.QWidget(self)
             inputs.setLayout(vbox)
-            inputs.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum,
-                                 QtWidgets.QSizePolicy.Policy.Fixed)
+            inputs.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Fixed)
             scroll_area.setWidget(inputs)
 
             vbox = QtWidgets.QVBoxLayout(self)
@@ -117,20 +116,23 @@ class InputsWidget(QtWidgets.QWidget):
         for name in self._inputs:
             parameter = parameters[name]
 
-            group_state = {g: True for g in parameter.group_by}
+            if not parameter.vis_cond:
+                continue
 
-            for group_name, condition in parameter.group_by.items():
-                if group_name not in self._inputs or group_name == name:
+            group_state = {}
+
+            depends_on = [arg.name for arg in signature(parameter.vis_cond).parameters.values()]
+
+            for param_name in depends_on:
+                if getattr(self, param_name) is None or param_name == name:
                     continue
 
-                if isinstance(getattr(self, group_name), BooleanInput):
-                    # Adjust the boolean condition to a condition suitable for a checkbox
-                    condition = bool(condition)
+                group_state[param_name] = getattr(self, param_name).value()
 
-                if group_name not in groups:
-                    groups[group_name] = []
+                if param_name not in groups:
+                    groups[param_name] = []
 
-                groups[group_name].append((name, condition, group_state))
+                groups[param_name].append((name, parameter.vis_cond, group_state))
 
         for group_name, group in groups.items():
             toggle = partial(self.toggle_group, group_name=group_name, group=group)
@@ -148,17 +150,14 @@ class InputsWidget(QtWidgets.QWidget):
                 group_el.currentTextChanged.connect(toggle)
                 toggle(group_el.currentText())
             else:
-                raise NotImplementedError(
-                    f"Grouping based on {group_name} ({group_el}) is not implemented.")
+                raise NotImplementedError(f"Grouping based on {group_name} ({group_el}) is not implemented.")
 
     def toggle_group(self, state, group_name, group):
-        for (name, condition, group_state) in group:
-            if callable(condition):
-                group_state[group_name] = condition(state)
-            else:
-                group_state[group_name] = (state == condition)
+        for name, condition, group_state in group:
 
-            visible = all(group_state.values())
+            group_state[group_name] = state
+
+            visible = condition(*group_state.values())
 
             if self._hide_groups:
                 getattr(self, name).setHidden(not visible)
@@ -177,7 +176,7 @@ class InputsWidget(QtWidgets.QWidget):
             element.set_parameter(parameter_objects[name])
 
     def get_procedure(self):
-        """ Returns the current procedure """
+        """Returns the current procedure"""
         self._procedure = self._procedure_class()
         parameter_values = {}
         for name in self._inputs:
