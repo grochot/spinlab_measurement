@@ -154,8 +154,8 @@ class SpinLabMeasurement(Procedure):
 
     
     #GeneratorParameters 
-    generator_frequency = FloatParameter("Generator Frequency", default = parameters_from_file["generator_frequency"], units="Hz", maximum=31.8e9, vis_cond=lambda layout_type, mode, set_generator: layout_type == False and mode == "FMRMode" and set_generator != "none")
-    generator_power = FloatParameter("Generator Power", default = parameters_from_file["generator_power"], units="dBm", vis_cond=lambda layout_type, mode, set_generator: layout_type == False and mode == "FMRMode" and set_generator != "none")
+    generator_frequency = FloatParameter("RF Generator Frequency", default = parameters_from_file["generator_frequency"], units="Hz", maximum=31.8e9, vis_cond=lambda layout_type, mode, set_generator: layout_type == True and mode == "FMRMode" and set_generator != "none")
+    generator_power = FloatParameter("RF Generator Power", default = parameters_from_file["generator_power"], units="dBm", vis_cond=lambda layout_type, mode, set_generator: layout_type == True and mode == "FMRMode" and set_generator != "none")
     
     #Analyzer Parameters 
 
