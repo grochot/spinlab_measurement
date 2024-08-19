@@ -35,21 +35,38 @@ class FGenDriver(Instrument):
 
         if mod:
             outpMod = 'ON'
+            self.write(":AM:SOUR INT")
+            self.write(":AM:INT:FUNC:SHAP SINE")
+            self.write(":AM:INT:FREQ 300 HZ")
+            self.write(":AM:INT:FREQ:ALT 300 HZ")
+            self.write(":AM:STAT ON")
+            self.write(":AM:MODE NORM")
+            self.write(":AM:TYPE LIN")
+            self.write(":AM:TRAC ON")
+            self.write(":AM:DEPTH 90 PCT")
         else:
-            outpMod = 'OFF'
-        #print("fgen_output = "+outp)
-        #print("fgen_modulation = " + outpMod)
+            outpMod = 'Off'
+
         self.write(':OUTP '+outp+';:OUTP:MOD '+outpMod+';:OUTP:BLAN:AUTO ON;:OUTP:BLAN:STAT ON;:OUTP:PROT ON;')
 
-        self.write(":AM:SOUR INT")
-        self.write(":AM:INT:FUNC:SHAP SINE")
-        self.write(":AM:INT:FREQ 300 HZ")
-        self.write(":AM:INT:FREQ:ALT 300 HZ")
-        self.write(":AM:STAT ON")
-        self.write(":AM:MODE NORM")
-        self.write(":AM:TYPE LIN")
-        self.write(":AM:TRAC ON")
-        self.write(":AM:DEPTH 90 PCT")
+
+        # if mod:
+        #     outpMod = 'ON'
+        # else:
+        #     outpMod = 'OFF'
+        # #print("fgen_output = "+outp)
+        # #print("fgen_modulation = " + outpMod)
+        # self.write(':OUTP '+outp+';:OUTP:MOD '+outpMod+';:OUTP:BLAN:AUTO ON;:OUTP:BLAN:STAT ON;:OUTP:PROT ON;')
+
+        # self.write(":AM:SOUR INT")
+        # self.write(":AM:INT:FUNC:SHAP SINE")
+        # self.write(":AM:INT:FREQ 300 HZ")
+        # self.write(":AM:INT:FREQ:ALT 300 HZ")
+        # self.write(":AM:STAT ON")
+        # self.write(":AM:MODE NORM")
+        # self.write(":AM:TYPE LIN")
+        # self.write(":AM:TRAC ON")
+        # self.write(":AM:DEPTH 90 PCT")
 
     
     def initialization(self):

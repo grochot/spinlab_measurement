@@ -37,4 +37,4 @@ class CurrentPointWidget(QtWidgets.QWidget):
         self.line_edit.clear()
 
     def set_current_point(self, point: float):
-        self.line_edit.setText(str(round_sig(point, 4)))
+        self.line_edit.setText(str(round_sig(point, 6)))
