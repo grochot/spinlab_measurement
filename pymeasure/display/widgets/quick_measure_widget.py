@@ -47,8 +47,12 @@ def to_prefix(value):
 
     prefix = prefixes[exponent]
 
-    return f"{value_scaled} [{prefix}"
+    return f"{round_sig(value_scaled)} [{prefix}"
 
+def round_sig(x: float, sig: int = 6):
+    if x == 0:
+        return 0
+    return round(x, sig - int(np.floor(np.log10(abs(x)))) - 1)
 
 class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
     def __init__(self, name, parent=None):
@@ -217,10 +221,13 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
                 case _:
                     log.error("Device not implemented!")
                     return
+                
+            autorange = self.get("multimeter_autorange")
 
-            device.resolution = self.get("multimeter_resolution")
+            if not autorange:
+                device.resolution = self.get("multimeter_resolution")
             device.range_ = self.get("multimeter_range")
-            device.autorange = self.get("multimeter_autorange")
+            device.autorange = autorange
             multimeter_function = self.get("multimeter_function")
             device.function_ = multimeter_function
             device.trigger_delay = "MIN"
