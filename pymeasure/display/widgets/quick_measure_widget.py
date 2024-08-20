@@ -49,10 +49,12 @@ def to_prefix(value):
 
     return f"{round_sig(value_scaled)} [{prefix}"
 
+
 def round_sig(x: float, sig: int = 6):
     if x == 0:
         return 0
     return round(x, sig - int(np.floor(np.log10(abs(x)))) - 1)
+
 
 class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
     def __init__(self, name, parent=None):
@@ -206,7 +208,7 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
                 else:
                     tmp_current = 1e-9
                 tmp_resistance = tmp_voltage / tmp_current
-                
+
                 self.clear_le()
                 self.set_le(tmp_voltage, "V")
                 self.set_le(tmp_current, "A")
@@ -221,7 +223,7 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
                 case _:
                     log.error("Device not implemented!")
                     return
-                
+
             autorange = self.get("multimeter_autorange")
 
             if not autorange:
@@ -235,7 +237,7 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
             device.nplc = self.get("multimeter_nplc")
 
             reading = np.average(device.reading)
-            
+
             self.clear_le()
 
             if multimeter_function in ["ACV", "DCV", "DCV_RATIO"]:
