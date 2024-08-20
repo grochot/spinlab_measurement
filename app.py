@@ -312,6 +312,9 @@ class MainWindow(ManagedDockWindow):
         self.file_input.filename_fixed = False 
         
         self.tabs.currentChanged.connect(self.on_tab_change)
+        self.file_input.filename_fixed = False 
+        
+        self.tabs.currentChanged.connect(self.on_tab_change)
     
     def set_calibration_constant(self, value):
         self.inputs.field_constant.setValue(value)
@@ -344,6 +347,10 @@ class MainWindow(ManagedDockWindow):
     
     def set_sample_name(self, value):
         self.inputs.sample_name.setValue(value)
+        
+    def on_tab_change(self, index:int):
+        self.quick_measure_widget.on_tab_change(index)
+        self.change_input_type(False)
         
     def on_tab_change(self, index:int):
         self.quick_measure_widget.on_tab_change(index)
