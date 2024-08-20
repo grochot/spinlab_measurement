@@ -104,6 +104,11 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
 
         self.setLayout(main_layout)
 
+    def clear_le(self):
+        self.volt_le.setText("- [V]")
+        self.curr_le.setText("- [A]")
+        self.res_le.setText("- [Ω]")
+
     def set_le(self, value, unit: str):
         text_to_set = to_prefix(value) + f"{unit}]"
         match unit:
@@ -129,100 +134,109 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
         return getattr(self.inputs, attr).value()
 
     def measure(self):
-        # device = self.get("set_sourcemeter")
-        # if device in ["None", "none", None]:
-        #     log.error("QuickMeasure: device not selected!")
-        #     return
+        meas_device = self.get("set_measdevice_qm")
 
-        # sourcemeter_address = self.get("address_sourcemeter")
-        # if sourcemeter_address in ["None", "none", None]:
-        #     log.error("QuickMeasure: device address not selected!")
-        #     return
-
-        # sourcemeter_channel = self.get("sourcemeter_channel")
-
-        # match device:
-        #     case "Keithley 2400":
-        #         device = Keithley2400(sourcemeter_address)
-        #         device.config_average(self.get("sourcemeter_average"))
-        #     case "Keithley 2636":
-        #         if sourcemeter_channel == "Channel A":
-        #             device = Keithley2636(sourcemeter_address).ChA
-        #         else:
-        #             device = Keithley2636(sourcemeter_address).ChB
-        #     case "Agilent 2912":
-        #         if sourcemeter_channel == "Channel A":
-        #             device = Agilent2912(sourcemeter_address).ChA
-        #         else:
-        #             device = Agilent2912(sourcemeter_address).ChB
-        #     case _:
-        #         log.error("Device not implemented!")
-        #         return
-
-        # sourcemeter_source = self.get("sourcemter_source")
-        # device.source_mode = sourcemeter_source
-        # if sourcemeter_source == "VOLT":
-        #     device.current_range = self.get("sourcemeter_limit")
-        #     device.compliance_current = self.get("sourcemeter_compliance")
-        #     device.source_voltage = self.get("sourcemeter_bias")
-        #     device.enable_source()
-        #     device.measure_current(self.get("sourcemeter_nplc"), self.get("sourcemeter_limit)"))
-        # else:
-        #     device.voltage_range = self.get("sourcemeter_limit")
-        #     device.compliance_voltage = self.get("sourcemeter_compliance")
-        #     device.source_current = self.get("sourcemeter_bias")
-        #     device.enable_source()
-        #     device.measure_voltage(self.get("sourcemeter_nplc"), self.get("sourcemeter_limit)"))
-
-        # if sourcemeter_source == "VOLT":
-        #     if self.get("sourcemeter_bias") != 0:
-        #         tmp_voltage = self.get("sourcemeter_bias")
-        #     else:
-        #         tmp_voltage = 1e-9
-        #     tmp_current = device.current
-        #     if type(tmp_current) == list:
-        #         tmp_current = np.average(tmp_current)
-        #     print(tmp_current)
-        #     tmp_resistance = tmp_voltage / tmp_current
-        # else:
-        #     tmp_voltage = device.voltage
-        #     if type(tmp_voltage) == list:
-        #         tmp_voltage = np.average(tmp_voltage)
-        #     print(tmp_voltage)
-        #     if self.get("sourcemeter_bias") != 0:
-        #         tmp_current = self.get("sourcemeter_bias")
-        #     else:
-        #         tmp_current = 1e-9
-        #     tmp_resistance = tmp_voltage / tmp_current
-
-        device = self.get("set_multimeter")
-
-        match device:
-            case "Agilent 34400":
-                device = Agilent34410A(self.get("address_multimeter"))
-            case _:
-                log.error("Device not implemented!")
+        if meas_device == "Sourcemeter":
+            device = self.get("set_sourcemeter")
+            if device in ["None", "none", None]:
+                log.error("QuickMeasure: device not selected!")
                 return
 
-        device.resolution = self.get("multimeter_resolution")
-        device.range_ = self.get("multimeter_range")
-        device.autorange = self.get("multimeter_autorange")
-        multimeter_function = self.get("multimeter_function")
-        device.function_ = multimeter_function
-        device.trigger_delay = "MIN"
-        device.trigger_count = self.get("multimeter_average")
-        device.nplc = self.get("multimeter_nplc")
+            sourcemeter_address = self.get("address_sourcemeter")
+            if sourcemeter_address in ["None", "none", None]:
+                log.error("QuickMeasure: device address not selected!")
+                return
 
-        reading = np.average(device.reading)
+            sourcemeter_channel = self.get("sourcemeter_channel")
 
-        if multimeter_function in []:
-            self.volt_le.setText(str(reading))
+            match device:
+                case "Keithley 2400":
+                    device = Keithley2400(sourcemeter_address)
+                    device.config_average(self.get("sourcemeter_average"))
+                case "Keithley 2636":
+                    if sourcemeter_channel == "Channel A":
+                        device = Keithley2636(sourcemeter_address).ChA
+                    else:
+                        device = Keithley2636(sourcemeter_address).ChB
+                case "Agilent 2912":
+                    if sourcemeter_channel == "Channel A":
+                        device = Agilent2912(sourcemeter_address).ChA
+                    else:
+                        device = Agilent2912(sourcemeter_address).ChB
+                case _:
+                    log.error("Device not implemented!")
+                    return
+
+            sourcemeter_source = self.get("sourcemter_source")
+            device.source_mode = sourcemeter_source
+            if sourcemeter_source == "VOLT":
+                device.current_range = self.get("sourcemeter_limit")
+                device.compliance_current = self.get("sourcemeter_compliance")
+                device.source_voltage = self.get("sourcemeter_bias")
+                device.enable_source()
+                device.measure_current(self.get("sourcemeter_nplc"), self.get("sourcemeter_limit)"))
+            else:
+                device.voltage_range = self.get("sourcemeter_limit")
+                device.compliance_voltage = self.get("sourcemeter_compliance")
+                device.source_current = self.get("sourcemeter_bias")
+                device.enable_source()
+                device.measure_voltage(self.get("sourcemeter_nplc"), self.get("sourcemeter_limit)"))
+
+            if sourcemeter_source == "VOLT":
+                if self.get("sourcemeter_bias") != 0:
+                    tmp_voltage = self.get("sourcemeter_bias")
+                else:
+                    tmp_voltage = 1e-9
+                tmp_current = device.current
+                if type(tmp_current) == list:
+                    tmp_current = np.average(tmp_current)
+                print(tmp_current)
+                tmp_resistance = tmp_voltage / tmp_current
+            else:
+                tmp_voltage = device.voltage
+                if type(tmp_voltage) == list:
+                    tmp_voltage = np.average(tmp_voltage)
+                print(tmp_voltage)
+                if self.get("sourcemeter_bias") != 0:
+                    tmp_current = self.get("sourcemeter_bias")
+                else:
+                    tmp_current = 1e-9
+                tmp_resistance = tmp_voltage / tmp_current
+                
+                self.clear_le()
+                self.set_le(tmp_voltage, "V")
+                self.set_le(tmp_current, "A")
+                self.set_le(tmp_resistance, "Ω")
+
         else:
-            self.volt_le.setText("-")
+            device = self.get("set_multimeter")
 
-        self.curr_le.setText(str(reading))
-        self.res_le.setText(str(reading))
+            match device:
+                case "Agilent 34400":
+                    device = Agilent34410A(self.get("address_multimeter"))
+                case _:
+                    log.error("Device not implemented!")
+                    return
 
-        # self.volt_le.setText(str(tmp_voltage))
-        # self.curr_le.setText(str(tmp_current))
-        # self.res_le.setText(str(tmp_resistance))
+            device.resolution = self.get("multimeter_resolution")
+            device.range_ = self.get("multimeter_range")
+            device.autorange = self.get("multimeter_autorange")
+            multimeter_function = self.get("multimeter_function")
+            device.function_ = multimeter_function
+            device.trigger_delay = "MIN"
+            device.trigger_count = self.get("multimeter_average")
+            device.nplc = self.get("multimeter_nplc")
+
+            reading = np.average(device.reading)
+            
+            self.clear_le()
+
+            if multimeter_function in ["ACV", "DCV", "DCV_RATIO"]:
+                self.set_le(reading, "V")
+            elif multimeter_function in ["ACI", "DCI"]:
+                self.set_le(reading, "A")
+            elif multimeter_function in ["R2W", "R4W"]:
+                self.set_le(reading, "Ω")
+            else:
+                log.error("Function not implemented!")
+                return
