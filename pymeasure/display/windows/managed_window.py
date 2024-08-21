@@ -441,18 +441,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         
         delete_files_checkbox = QtWidgets.QCheckBox("Delete Data Files", dialog)
         vbox.addWidget(delete_files_checkbox)
-        
-        hbox = QtWidgets.QHBoxLayout()
-        
-        cancel_button = QtWidgets.QPushButton("Cancel", dialog)
-        cancel_button.clicked.connect(dialog.reject)
-        
+
         clear_button = QtWidgets.QPushButton("Clear", dialog)
         clear_button.clicked.connect(lambda: self.clear_filtered(status_combobox.currentText(), delete_files_checkbox.isChecked()))
         
-        hbox.addWidget(clear_button)
-        hbox.addWidget(cancel_button)
-        vbox.addLayout(hbox)
+        vbox.addLayout(clear_button)
         
         dialog.setLayout(vbox)
         dialog.exec()
