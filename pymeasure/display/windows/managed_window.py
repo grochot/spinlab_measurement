@@ -254,7 +254,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         inputs_dock = QtWidgets.QWidget(self)
         inputs_vbox = QtWidgets.QVBoxLayout(self.main)
-        parameters_buttons_layout = QtWidgets.QHBoxLayout(self)
+        parameters_buttons_layout = QtWidgets.QHBoxLayout()
 
         queue_abort_hbox = QtWidgets.QHBoxLayout()
         queue_abort_hbox.setSpacing(10)
