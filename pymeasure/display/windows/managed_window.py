@@ -428,30 +428,21 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.browser_widget.clear_filtered_button.setEnabled(False)
         
     def clear_filtered_experiments(self):
-
-        # open dialog to select experiment status
         dialog = QtWidgets.QDialog()
+        dialog.setFixedSize(350, 150)
         dialog.setWindowTitle("Select Experiments to Clear")
         dialog.setModal(True)
         dialog.setWindowModality(QtCore.Qt.WindowModal)
         dialog.setWindowFlags(QtCore.Qt.WindowCloseButtonHint)
-        dialog.setFixedSize(200, 100)
         
         vbox = QtWidgets.QVBoxLayout(dialog)
-        vbox.setSpacing(10)
-        vbox.setContentsMargins(10, 10, 10, 10)
         
         status_combobox = QtWidgets.QComboBox(dialog)
-        status_combobox.addItem("Queued")
-        status_combobox.addItem("Finished")
-        status_combobox.addItem("Aborted")
-        status_combobox.addItem("Failed")
+        status_combobox.addItems(["Running", "Finished", "Aborted", "Failed"])
         status_combobox.setCurrentIndex(0)
         vbox.addWidget(status_combobox)
         
         hbox = QtWidgets.QHBoxLayout()
-        hbox.setSpacing(10)
-        hbox.setContentsMargins(10, 10, 10, 10)
         
         cancel_button = QtWidgets.QPushButton("Cancel", dialog)
         cancel_button.clicked.connect(dialog.reject)
