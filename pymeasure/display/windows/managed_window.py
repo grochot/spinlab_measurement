@@ -690,7 +690,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.abort_button.setEnabled(True)
         self.browser_widget.show_button.setEnabled(True)
         self.browser_widget.hide_button.setEnabled(True)
-        self.browser_widget.clear_button.setEnabled(True)
+        
+        if not self.manager.is_running():
+            self.browser_widget.clear_button.setEnabled(True)
+            
         self.browser_widget.clear_filtered_button.setEnabled(True)
 
     def running(self, experiment):
@@ -700,7 +703,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if self.manager.experiments.has_next():
             self.abort_button.setText("Resume")
             self.abort_button.setEnabled(True)
-        else:
             self.browser_widget.clear_button.setEnabled(True)
             self.browser_widget.clear_filtered_button.setEnabled(True)
 
