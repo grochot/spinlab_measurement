@@ -46,6 +46,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self.clear_button = QtWidgets.QPushButton('Clear all', self)
         self.clear_button.setEnabled(False)
         self.clear_by_status_button = QtWidgets.QPushButton('Clear by status', self)
+        self.clear_by_status_button.setMinimumWidth(120)
         self.clear_by_status_button.setEnabled(False)
         self.hide_button = QtWidgets.QPushButton('Hide all', self)
         self.hide_button.setEnabled(False)

@@ -3,19 +3,19 @@ from PyQt5 import QtWidgets, QtCore
 class ClearDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedSize(350, 200)
+        self.setFixedSize(300, 150)
         self.setWindowTitle("Clear")
         
         # Create main layout
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(15, 15, 15, 15)
-        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(5)
         
-        group_box = QtWidgets.QGroupBox("Select status to clear")
+        group_box = QtWidgets.QGroupBox("Select statuses")
         
         # Create grid layout for checkboxes
         grid_layout = QtWidgets.QGridLayout()
-        grid_layout.setSpacing(10)
+        grid_layout.setSpacing(5)
         
         # Add status checkboxes to grid
         self.queued_checkbox = QtWidgets.QCheckBox("Queued")
