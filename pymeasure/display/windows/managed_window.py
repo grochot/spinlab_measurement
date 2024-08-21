@@ -190,7 +190,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.browser_widget.show_button.clicked.connect(self.show_experiments)
         self.browser_widget.hide_button.clicked.connect(self.hide_experiments)
         self.browser_widget.clear_button.clicked.connect(self.clear_experiments)
-        self.browser_widget.clear_queued_button.clicked.connect(self.clear_queued_experiments)
+        self.browser_widget.clear_filtered_button.clicked.connect(self.clear_filtered_experiments)
         self.browser_widget.open_button.clicked.connect(self.open_experiment)
         self.browser = self.browser_widget.browser
 
@@ -425,13 +425,52 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.manager.clear()
         if not self.manager.experiments.has_next():
             self.browser_widget.clear_button.setEnabled(False)
-            self.browser_widget.clear_queued_button.setEnabled(False)
+            self.browser_widget.clear_filtered_button.setEnabled(False)
         
-    def clear_queued_experiments(self):
-        self.manager.clear_queued()
+    def clear_filtered_experiments(self):
+
+        # open dialog to select experiment status
+        dialog = QtWidgets.QDialog()
+        dialog.setWindowTitle("Select Experiments to Clear")
+        dialog.setModal(True)
+        dialog.setWindowModality(QtCore.Qt.WindowModal)
+        dialog.setWindowFlags(QtCore.Qt.WindowCloseButtonHint)
+        dialog.setFixedSize(200, 100)
+        
+        vbox = QtWidgets.QVBoxLayout(dialog)
+        vbox.setSpacing(10)
+        vbox.setContentsMargins(10, 10, 10, 10)
+        
+        status_combobox = QtWidgets.QComboBox(dialog)
+        status_combobox.addItem("Queued")
+        status_combobox.addItem("Finished")
+        status_combobox.addItem("Aborted")
+        status_combobox.addItem("Failed")
+        status_combobox.setCurrentIndex(0)
+        vbox.addWidget(status_combobox)
+        
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.setSpacing(10)
+        hbox.setContentsMargins(10, 10, 10, 10)
+        
+        cancel_button = QtWidgets.QPushButton("Cancel", dialog)
+        cancel_button.clicked.connect(dialog.reject)
+        
+        clear_button = QtWidgets.QPushButton("Clear", dialog)
+        clear_button.clicked.connect(lambda: self.clear_filtered(status_combobox.currentText()))
+        
+        hbox.addWidget(clear_button)
+        hbox.addWidget(cancel_button)
+        vbox.addLayout(hbox)
+        
+        dialog.setLayout(vbox)
+        dialog.exec()
+        
+    def clear_filtered(self, status):
+        self.manager.clear_filtered(status)
         if not self.manager.experiments.has_next():
             self.browser_widget.clear_button.setEnabled(False)
-            self.browser_widget.clear_queued_button.setEnabled(False)
+            self.browser_widget.clear_filtered_button.setEnabled(False)
 
     def open_experiment(self):
         dialog = ResultsDialog(self.procedure_class,
@@ -658,7 +697,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.browser_widget.show_button.setEnabled(True)
         self.browser_widget.hide_button.setEnabled(True)
         self.browser_widget.clear_button.setEnabled(True)
-        self.browser_widget.clear_queued_button.setEnabled(True)
+        self.browser_widget.clear_filtered_button.setEnabled(True)
 
     def running(self, experiment):
         self.browser_widget.clear_button.setEnabled(False)
@@ -669,13 +708,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.abort_button.setEnabled(True)
         else:
             self.browser_widget.clear_button.setEnabled(True)
-            self.browser_widget.clear_queued_button.setEnabled(True)
+            self.browser_widget.clear_filtered_button.setEnabled(True)
 
     def finished(self, experiment):
         if not self.manager.experiments.has_next():
             self.abort_button.setEnabled(False)
             self.browser_widget.clear_button.setEnabled(True)
-            self.browser_widget.clear_queued_button.setEnabled(True)
+            self.browser_widget.clear_filtered_button.setEnabled(True)
 
     @property
     def directory(self):

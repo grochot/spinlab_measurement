@@ -194,12 +194,24 @@ class BaseManager(QtCore.QObject):
         for experiment in self.experiments[:]:
             self.remove(experiment)
             
-    def clear_queued(self):
-        """ Remove all queued Experiments that have not started and are not finished
+    def clear_filtered(self, status):
+        """ Remove all Experiments that match the status
         """
+        status_to_clear = None
+        match status:
+            case "Queued":
+                status_to_clear = Procedure.QUEUED
+            case "Finished":
+                status_to_clear = Procedure.FINISHED
+            case "Aborted":
+                status_to_clear = Procedure.ABORTED
+            case "Failed":
+                status_to_clear = Procedure.FAILED
+                
         for experiment in self.experiments[:]:
-            if experiment.procedure.status == Procedure.QUEUED:
+            if experiment.procedure.status == status_to_clear:
                 self.remove(experiment)
+                
 
     def next(self):
         """ Initiates the start of the next experiment in the queue as long
