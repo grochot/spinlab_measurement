@@ -445,7 +445,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         clear_button = QtWidgets.QPushButton("Clear", dialog)
         clear_button.clicked.connect(lambda: self.clear_filtered(status_combobox.currentText(), delete_files_checkbox.isChecked()))
         
-        vbox.addLayout(clear_button)
+        vbox.addWidget(clear_button)
         
         dialog.setLayout(vbox)
         dialog.exec()
