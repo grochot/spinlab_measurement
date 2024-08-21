@@ -190,6 +190,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.browser_widget.show_button.clicked.connect(self.show_experiments)
         self.browser_widget.hide_button.clicked.connect(self.hide_experiments)
         self.browser_widget.clear_button.clicked.connect(self.clear_experiments)
+        self.browser_widget.clear_queued_button.clicked.connect(self.clear_queued_experiments)
         self.browser_widget.open_button.clicked.connect(self.open_experiment)
         self.browser = self.browser_widget.browser
 
@@ -422,6 +423,15 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
     def clear_experiments(self):
         self.manager.clear()
+        if not self.manager.experiments.has_next():
+            self.browser_widget.clear_button.setEnabled(False)
+            self.browser_widget.clear_queued_button.setEnabled(False)
+        
+    def clear_queued_experiments(self):
+        self.manager.clear_queued()
+        if not self.manager.experiments.has_next():
+            self.browser_widget.clear_button.setEnabled(False)
+            self.browser_widget.clear_queued_button.setEnabled(False)
 
     def open_experiment(self):
         dialog = ResultsDialog(self.procedure_class,
@@ -648,6 +658,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.browser_widget.show_button.setEnabled(True)
         self.browser_widget.hide_button.setEnabled(True)
         self.browser_widget.clear_button.setEnabled(True)
+        self.browser_widget.clear_queued_button.setEnabled(True)
 
     def running(self, experiment):
         self.browser_widget.clear_button.setEnabled(False)
@@ -658,11 +669,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.abort_button.setEnabled(True)
         else:
             self.browser_widget.clear_button.setEnabled(True)
+            self.browser_widget.clear_queued_button.setEnabled(True)
 
     def finished(self, experiment):
         if not self.manager.experiments.has_next():
             self.abort_button.setEnabled(False)
             self.browser_widget.clear_button.setEnabled(True)
+            self.browser_widget.clear_queued_button.setEnabled(True)
 
     @property
     def directory(self):

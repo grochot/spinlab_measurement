@@ -193,6 +193,13 @@ class BaseManager(QtCore.QObject):
         """
         for experiment in self.experiments[:]:
             self.remove(experiment)
+            
+    def clear_queued(self):
+        """ Remove all queued Experiments that have not started and are not finished
+        """
+        for experiment in self.experiments[:]:
+            if experiment.procedure.status == Procedure.QUEUED:
+                self.remove(experiment)
 
     def next(self):
         """ Initiates the start of the next experiment in the queue as long
