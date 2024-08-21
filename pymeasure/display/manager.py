@@ -198,19 +198,9 @@ class BaseManager(QtCore.QObject):
     def clear_filtered(self, status, delete=False):
         """ Remove all Experiments that match the status
         """
-        status_to_clear = None
-        match status:
-            case "Queued":
-                status_to_clear = Procedure.QUEUED
-            case "Finished":
-                status_to_clear = Procedure.FINISHED
-            case "Aborted":
-                status_to_clear = Procedure.ABORTED
-            case "Failed":
-                status_to_clear = Procedure.FAILED
-                
+
         for experiment in self.experiments[:]:
-            if experiment.procedure.status == status_to_clear:
+            if experiment.procedure.status in status:
                 self.remove(experiment)
                 if delete:
                     unlink(experiment.data_filename)
