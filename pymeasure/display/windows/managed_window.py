@@ -431,16 +431,16 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         dialog = QtWidgets.QDialog()
         dialog.setFixedSize(350, 150)
         dialog.setWindowTitle("Select Experiments to Clear")
-        dialog.setModal(True)
-        dialog.setWindowModality(QtCore.Qt.WindowModal)
-        dialog.setWindowFlags(QtCore.Qt.WindowCloseButtonHint)
         
         vbox = QtWidgets.QVBoxLayout(dialog)
         
         status_combobox = QtWidgets.QComboBox(dialog)
-        status_combobox.addItems(["Running", "Finished", "Aborted", "Failed"])
+        status_combobox.addItems(["Queued", "Finished", "Aborted", "Failed"])
         status_combobox.setCurrentIndex(0)
         vbox.addWidget(status_combobox)
+        
+        delete_files_checkbox = QtWidgets.QCheckBox("Delete Data Files", dialog)
+        vbox.addWidget(delete_files_checkbox)
         
         hbox = QtWidgets.QHBoxLayout()
         
@@ -448,7 +448,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         cancel_button.clicked.connect(dialog.reject)
         
         clear_button = QtWidgets.QPushButton("Clear", dialog)
-        clear_button.clicked.connect(lambda: self.clear_filtered(status_combobox.currentText()))
+        clear_button.clicked.connect(lambda: self.clear_filtered(status_combobox.currentText(), delete_files_checkbox.isChecked()))
         
         hbox.addWidget(clear_button)
         hbox.addWidget(cancel_button)
@@ -457,8 +457,18 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         dialog.setLayout(vbox)
         dialog.exec()
         
-    def clear_filtered(self, status):
-        self.manager.clear_filtered(status)
+    def clear_filtered(self, status:str, delete_files:bool):
+        if delete_files:
+            reply = QtWidgets.QMessageBox.question(self, 'Delete Data',
+                                                   "Are you sure you want to delete the data files?",
+                                                   QtWidgets.QMessageBox.StandardButton.Yes |
+                                                   QtWidgets.QMessageBox.StandardButton.No,
+                                                   QtWidgets.QMessageBox.StandardButton.No)
+            if reply == QtWidgets.QMessageBox.StandardButton.No:
+                return
+        
+        self.manager.clear_filtered(status, delete_files)
+        
         if not self.manager.experiments.has_next():
             self.browser_widget.clear_button.setEnabled(False)
             self.browser_widget.clear_filtered_button.setEnabled(False)
