@@ -116,15 +116,23 @@ class InputsWidget(QtWidgets.QWidget):
         for name in self._inputs:
             parameter = parameters[name]
 
-            if not parameter.vis_cond:
+            if parameter.vis_cond is None:
                 continue
+            
+            depends_on = ["layout_type"]
 
+            if isinstance(parameter.vis_cond, tuple):
+                if len(parameter.vis_cond) == 2:
+                    if callable(parameter.vis_cond[1]):
+                        depends_on += [arg.name for arg in signature(parameter.vis_cond[1]).parameters.values()]
+                    else:
+                        raise TypeError(f"Invalid visiblity condition for '{name}'. Expected a callable as the second element.")
+                elif len(parameter.vis_cond) > 2:
+                    raise TypeError(f"Invalid visiblity condition for '{name}'. Expected a tuple with 2 elements.")
+            
             group_state = {}
-
-            depends_on = [arg.name for arg in signature(parameter.vis_cond).parameters.values()]
-
             for param_name in depends_on:
-                if getattr(self, param_name) is None or param_name == name:
+                if getattr(self, param_name) is None or (param_name == name and name != "layout_type"):
                     continue
 
                 group_state[param_name] = getattr(self, param_name).value()
@@ -154,10 +162,14 @@ class InputsWidget(QtWidgets.QWidget):
 
     def toggle_group(self, state, group_name, group):
         for name, condition, group_state in group:
-
             group_state[group_name] = state
-
-            visible = condition(*group_state.values())
+            
+            layout_type_condition = condition[0] if isinstance(condition, tuple) else condition
+            
+            layout_type_condition = layout_type_condition == group_state["layout_type"]
+            condition = condition[1](*[state for param_name, state in group_state.items() if param_name != "layout_type"]) if isinstance(condition, tuple) and len(condition) == 2 else True
+            
+            visible = layout_type_condition and condition
 
             if self._hide_groups:
                 getattr(self, name).setHidden(not visible)
