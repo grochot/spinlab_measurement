@@ -259,7 +259,86 @@ class ExpressionValidator(QtGui.QValidator):
         except SequenceEvaluationError:
             return_value = QtGui.QValidator.State.Intermediate
         return (return_value, input_string, pos)
+    
+class CreatorWindow(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Creator Window")
+        self.setGeometry(100, 100, 400, 250)
 
+        layout = QtWidgets.QVBoxLayout()
+
+        # Starting point input
+        self.start_label = QtWidgets.QLabel("Start:")
+        self.start_input = QtWidgets.QLineEdit(self)
+        layout.addWidget(self.start_label)
+        layout.addWidget(self.start_input)
+
+        # Ending point input
+        self.end_label = QtWidgets.QLabel("End:")
+        self.end_input = QtWidgets.QLineEdit(self)
+        layout.addWidget(self.end_label)
+        layout.addWidget(self.end_input)
+
+        # Step or number of points input
+        self.step_label = QtWidgets.QLabel("Step / Number of Points:")
+        self.step_input = QtWidgets.QLineEdit(self)
+        layout.addWidget(self.step_label)
+        layout.addWidget(self.step_input)
+
+        # Radio buttons to choose between step or number of points
+        self.step_radio = QtWidgets.QRadioButton("Use Step")
+        self.points_radio = QtWidgets.QRadioButton("Use Number of Points")
+        self.step_radio.setChecked(True)  # Default selection
+        layout.addWidget(self.step_radio)
+        layout.addWidget(self.points_radio)
+
+        # OK button
+        self.ok_button = QtWidgets.QPushButton("OK", self)
+        self.ok_button.clicked.connect(self.on_ok_clicked)
+        layout.addWidget(self.ok_button)
+
+        self.setLayout(layout)
+
+    def on_ok_clicked(self):
+        # Validate input
+        if self.validate_input():
+            self.accept()
+
+    def validate_input(self):
+        try:
+            start = float(self.start_input.text())
+            end = float(self.end_input.text())
+            step_or_points = float(self.step_input.text())
+
+            if self.step_radio.isChecked():
+                if step_or_points <= 0:
+                    raise ValueError("Step must be a positive number.")
+                if start >= end:
+                    raise ValueError("Start must be less than End when using Step.")
+                if step_or_points > (end - start):
+                    raise ValueError("Step must be less than End - Start.")
+            else:
+                if step_or_points <= 0 or not step_or_points.is_integer():
+                    raise ValueError("Number of Points must be a positive integer.")
+            
+            return True
+        except ValueError as e:
+            QtWidgets.QMessageBox.warning(self, "Invalid Input", str(e))
+            return False
+
+    def getInput(self):
+        start = float(self.start_input.text())
+        end = float(self.end_input.text())
+        step_or_points = float(self.step_input.text())
+
+        if self.step_radio.isChecked():
+            numpy_command = f"arange({start}, {end}, {step_or_points})"
+        else:
+            step_or_points = int(step_or_points)
+            numpy_command = f"linspace({start}, {end}, {step_or_points})"
+
+        return numpy_command
 
 class LineEditDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
@@ -277,6 +356,28 @@ class LineEditDelegate(QtWidgets.QStyledItemDelegate):
 
     def updateEditorGeometry(self, editor, option, index):
         editor.setGeometry(option.rect)
+
+    def editorEvent(self, event, model, option, index):
+        if event.type() == QtCore.QEvent.Type.MouseButtonPress and event.button() == QtCore.Qt.MouseButton.RightButton:
+            self.show_context_menu(event, model, index)
+            return True
+        return super().editorEvent(event, model, option, index)
+
+    def show_context_menu(self, event, model, index):
+        menu = QtWidgets.QMenu()
+
+        edit_action = menu.addAction("Use Creator")
+
+        action = menu.exec_(event.globalPos())
+
+        if action == edit_action:
+            self.open_creator_window(model, index)
+
+    def open_creator_window(self, model, index):
+        creator_window = CreatorWindow()
+        if creator_window.exec_() == QtWidgets.QDialog.Accepted:
+            numpy_command = creator_window.getInput()
+            model.setData(index, numpy_command, QtCore.Qt.ItemDataRole.EditRole)
 
 
 class SequencerTreeView(QtWidgets.QTreeView):
