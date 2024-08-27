@@ -16,7 +16,7 @@ from pymeasure.experiment.results import Results
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows.managed_dock_window import ManagedDockWindow
 from pymeasure.experiment import (
-    Procedure, FloatParameter, BooleanParameter, IntegerParameter, Parameter,ListParameter, Results, VectorParameter
+    Procedure, FloatParameter, BooleanParameter, IntegerParameter, Parameter,ListParameter, Results, VectorParameter, Metadata
 )
 from logic.unique_name import unique_name
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QMessageBox
@@ -48,6 +48,9 @@ class SpinLabMeasurement(Procedure):
     daq_channels = [addr for addr in finded_instruments if "Dev" in addr]
     used_parameters_list=['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'set_measdevice', 'set_sourcemeter', 'set_multimeter','set_pulsegenerator', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','set_switch', 'set_kriostat', 'set_lfgen', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','address_pulsegenerator','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias', 'rotation_axis', 'rotation_polar_constant', 'rotation_azimuth_constant', 'constant_field_value', 'address_rotationstation', 'mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','delay_measurement','pulsegenerator_compliance','pulsegenerator_source_range','return_the_rotationstation','field_bias_value','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','remanency_correction','set_polar_angle','set_azimuthal_angle','set_polar_angle_fmr','set_azimuthal_angle_fmr','remanency_correction_time', 'layout_type', 'kriostat_temperature']
     parameters_from_file = save_parameter.ReadFile()
+#################################################################### METADATA #####################################################################  
+    time_of_measurement = Metadata("Measurement start time", default=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    
 #################################################################### PARAMETERS #####################################################################
     mode = ListParameter("Mode", default = parameters_from_file["mode"] , choices=['ResistanceMode', 'FMRMode', 'VSMMode', 'HarmonicMode', 'CalibrationFieldMode', 'PulseMode','CIMSMode'], group_by = {"layout_type":True})
     mode_resistance = BooleanParameter("Use 4-points measurement", default = parameters_from_file["mode_resistance"], group_by={"mode": lambda v: v=="ResistanceMode", "layout_type": False})
@@ -195,9 +198,28 @@ class SpinLabMeasurement(Procedure):
     DATA_COLUMNS = ['Voltage (V)', 'Current (A)', 'Resistance (ohm)', 'Field (Oe)', 'Frequency (Hz)', 'X (V)', 'Y (V)', 'Phase', 'Polar angle (deg)', 'Azimuthal angle (deg)','Applied Voltage (V)' ]
     path_file = SaveFilePath()
     
+    def refresh_parameters(self):
+        """ Enforces that all the parameters are re-cast and updated in the meta
+        dictionary (from parents function of the same name). Additionally checks if the address is available and if not sets the parameter to None.
+        """
+        
+        for name, parameter in self._parameters.items():
+            value = getattr(self, name)
+            try:
+                parameter.value = value
+            except ValueError as e:
+                if name in self.address_list:
+                    parameter.value = "None"
+                    log.warning(f"Address: '{value}' not available! Setting parameter: '{name}' to 'None'")
+                else:
+                    raise e
+            setattr(self, name, parameter.value)
+    
     ################ STARTUP ################## 
     def startup(self):
         #self.sample_name = window.filename_getter()
+        
+        self.time_of_measurement = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         for param_name in self.used_parameters_list:
             param = getattr(self, param_name)
