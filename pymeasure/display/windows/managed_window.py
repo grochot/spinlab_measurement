@@ -531,6 +531,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if not isinstance(self.inputs, InputsWidget):
             raise Exception("ManagedWindow can not set parameters"
                             " without a InputsWidget")
+        self.change_layout_type(parameters["layout_type"].value)
         self.inputs.set_parameters(parameters)
 
     def refresh(self):

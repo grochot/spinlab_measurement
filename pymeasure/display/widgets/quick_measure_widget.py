@@ -130,7 +130,9 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
             return
 
         if index != self.tab_index:
-            self.inputs.mode.setValue(self.prev_mode)
+            if self.prev_mode:
+                self.inputs.mode.setValue(self.prev_mode)
+                self.prev_mode = ""
             return
 
         self.prev_mode = self.inputs.mode.value()
