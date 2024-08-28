@@ -1,5 +1,6 @@
 from ..Qt import QtCore, QtWidgets, QtGui
 
+
 class CreatorWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -61,16 +62,16 @@ class CreatorWindow(QtWidgets.QDialog):
             else:
                 if step_or_points <= 0 or not step_or_points.is_integer():
                     raise ValueError("Number of Points must be a positive integer.")
-            
+
             return True
         except ValueError as e:
             QtWidgets.QMessageBox.warning(self, "Invalid Input", str(e))
             return False
 
     def getInput(self):
-        start = float(self.start_input.text())
-        end = float(self.end_input.text())
-        step_or_points = float(self.step_input.text())
+        start = format(float(self.start_input.text()))
+        end = format(float(self.end_input.text()))
+        step_or_points = format(float(self.step_input.text()))
 
         if self.step_radio.isChecked():
             numpy_command = f"arange({start}, {end}, {step_or_points})"
@@ -79,3 +80,10 @@ class CreatorWindow(QtWidgets.QDialog):
             numpy_command = f"linspace({start}, {end}, {step_or_points})"
 
         return numpy_command
+
+
+def format(x):
+    if x > 1e-3 and x < 1e3:
+        return f"{x}"
+    else:
+        return f"{x:.2e}"
