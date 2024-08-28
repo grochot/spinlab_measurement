@@ -264,7 +264,7 @@ class CreatorWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Creator Window")
-        self.setGeometry(100, 100, 400, 250)
+        self.setFixedSize(300, 300)
 
         layout = QtWidgets.QVBoxLayout()
 
