@@ -105,16 +105,26 @@ class CreatorWindow(QtWidgets.QDialog):
 
     def validate_step_input(self, start: float, end: float, step: float):
         if step <= 0:
+            self.show_error("Step must be a positive number.")
             raise ValueError("Step must be a positive number.")
         if step > (end - start):
+            self.show_error("Step must be less than End - Start.")
             raise ValueError("Step must be less than End - Start.")
         if (end - start) / step > self.MAX_VECTOR_LENGTH:
+            self.show_error(f"Vector length exceeds maximum of {self.MAX_VECTOR_LENGTH}.")
             raise ValueError(f"Vector length exceeds maximum of {self.MAX_VECTOR_LENGTH}.")
 
     def validate_points_input(self, points: float):
-        if points <= 0 or not points.is_integer():
+        try:
+            points = int(points)
+        except ValueError:
+            self.show_error("Number of Points must be an integer.")
+            raise ValueError("Number of Points must be an integer.")
+        if points <= 0:
+            self.show_error("Number of Points must be a positive integer.")
             raise ValueError("Number of Points must be a positive integer.")
         if points > self.MAX_VECTOR_LENGTH:
+            self.show_error(f"Vector length exceeds maximum of {self.MAX_VECTOR_LENGTH}.")
             raise ValueError(f"Vector length exceeds maximum of {self.MAX_VECTOR_LENGTH}.")
 
     def update_preview(self):
@@ -124,6 +134,7 @@ class CreatorWindow(QtWidgets.QDialog):
             step_or_points = float(self.step_input.text())
 
             if start >= end:
+                self.show_error("Start must be less than End.")
                 raise ValueError("Start must be less than End.")
 
             if self.step_radio.isChecked():
@@ -136,10 +147,10 @@ class CreatorWindow(QtWidgets.QDialog):
                 numpy_command = f"linspace({format_number(start)}, {format_number(end)}, {step_or_points})"
                 vector = np.linspace(start, end, step_or_points)
 
+            self.preview_text.setStyleSheet("color: blue;")
             self.preview_text.setText(numpy_command)
             self.vector_preview_text.setText(self.format_vector_preview(vector))
         except ValueError:
-            self.preview_text.setText("")
             self.vector_preview_text.clear()
 
     def format_vector_preview(self, vector: np.ndarray) -> str:
@@ -171,6 +182,9 @@ class CreatorWindow(QtWidgets.QDialog):
             flicker = not flicker
         return f"{first_half[:-1]}, ..., {second_half[1:]}"
 
+    def show_error(self, message: str):
+        self.preview_text.setStyleSheet("color: red;")
+        self.preview_text.setText(message)
 
     def get_command(self) -> str:
         return self.preview_text.text()
