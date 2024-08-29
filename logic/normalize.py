@@ -1,5 +1,6 @@
 import numpy as np
 from threading import Lock
+from pymeasure.experiment.results import Results
 
 
 class Normalize:
@@ -12,7 +13,7 @@ class Normalize:
         for arg in self.to_normalize:
             self._args[arg] = [None, None]
 
-        self._result_object = result_object
+        self._result_object: Results = result_object
         self._lock = Lock()
 
     def __call__(self, results: dict):
@@ -39,10 +40,10 @@ class Normalize:
 
                     with open(self._result_object.data_filename, "w") as f:
                         f.write(self._result_object.header())
-                        f.write(self._result_object.metadata())
                         f.write(self._result_object.labels())
                         for _, row in data.iterrows():
-                            f.write(self._result_object.format(row.to_dict()) + "\n")
+                            f.write(self._result_object.format(row.to_dict()) + self._result_object.LINE_BREAK)
+                    self._result_object.store_metadata()
 
             with self._lock:
                 min_val, max_val = self._args[arg]
