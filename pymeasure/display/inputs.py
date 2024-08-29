@@ -78,6 +78,9 @@ class Input:
         """
         self.update_parameter()
         return self._parameter
+    
+    def wheelEvent(self, event):
+        event.ignore()
 
 
 class StringInput(Input, QtWidgets.QLineEdit):
