@@ -298,7 +298,7 @@ class LineEditDelegate(QtWidgets.QStyledItemDelegate):
     def open_creator_window(self, model, index):
         creator_window = CreatorWindow()
         if creator_window.exec_() == QtWidgets.QDialog.Accepted:
-            numpy_command = creator_window.getInput()
+            numpy_command = creator_window.get_command()
             model.setData(index, numpy_command, QtCore.Qt.ItemDataRole.EditRole)
 
 
