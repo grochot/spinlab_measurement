@@ -68,7 +68,7 @@ class CreatorWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Creator Window")
-        # self.setFixedSize(400, 350)
+        self.setFixedSize(425, 475)
 
         self.vector = None
 
@@ -297,9 +297,10 @@ class CreatorWindow(QtWidgets.QDialog):
         filler = ", ..., "
         est1 = len(np.array2string(vector[0:1], precision=2, separator=""))
         est2 = len(np.array2string(vector[-1:], precision=2, separator=""))
-        amount1 = int(np.ceil((self.VECTOR_PREVIEW_LIMIT - 4) / (est1 + est2)))
+        est3 = len(np.array2string(vector[len(vector)//2:len(vector)//2+1], precision=2, separator=""))
+        amount1 = int(np.ceil((self.VECTOR_PREVIEW_LIMIT - 4) * 2 / (est1 + est2 + est3*2)))
         amount2 = amount1
-        if amount1 * 2 >= len(vector):
+        if len(np.array2string(vector, precision=2, separator=", ")) <= self.VECTOR_PREVIEW_LIMIT:
             return np.array2string(vector, precision=2, separator=", ")
         flicker = True
         while amount1 * est1 + amount2 * est2 > self.VECTOR_PREVIEW_LIMIT:
@@ -307,7 +308,6 @@ class CreatorWindow(QtWidgets.QDialog):
                 amount2 -= 1
             else:
                 amount1 -= 1
-
             flicker = not flicker
         first_half = np.array2string(vector[:amount1], precision=2, separator=sep)
         second_half = np.array2string(vector[-amount2:], precision=2, separator=sep)
