@@ -3,6 +3,57 @@ import numpy as np
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 
+class VectorTableWidget(QtWidgets.QTableWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setColumnCount(2)
+        self.setHorizontalHeaderLabels(["Index", "Value"])
+        self.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.verticalHeader().hide()
+        self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
+        self.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.setAlternatingRowColors(True)
+
+    def set_vector(self, vector: np.ndarray):
+        self.setRowCount(len(vector))
+        for i, value in enumerate(vector):
+            index = QtWidgets.QTableWidgetItem(str(i))
+            index.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.setItem(i, 0, index)
+
+            item = QtWidgets.QTableWidgetItem(format_number(value))
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.setItem(i, 1, item)
+
+    def clear(self):
+        self.setRowCount(0)
+
+
+class VectorPreviewDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Vector Preview")
+        # self.setFixedSize(200, 300)
+
+        main_layout = QtWidgets.QVBoxLayout()
+
+        self.vector_table = VectorTableWidget()
+        main_layout.addWidget(self.vector_table)
+
+        self.ok_button = QtWidgets.QPushButton("OK", self)
+        self.ok_button.clicked.connect(self.accept)
+        main_layout.addWidget(self.ok_button)
+
+        self.setLayout(main_layout)
+
+    def set_vector(self, vector: np.ndarray):
+        self.vector_table.set_vector(vector)
+
+    def clear(self):
+        self.vector_table.clear()
+
+
 class HorizontalLine(QtWidgets.QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -17,8 +68,8 @@ class CreatorWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Creator Window")
-        self.setFixedSize(400, 380)
-        
+        self.setFixedSize(400, 350)
+
         self.setStyleSheet("font-size: 11pt;")
 
         main_layout = QtWidgets.QVBoxLayout()
@@ -29,12 +80,14 @@ class CreatorWindow(QtWidgets.QDialog):
         self.start_label = QtWidgets.QLabel("Start")
         self.start_input = QtWidgets.QLineEdit(self)
         self.start_input.setValidator(QtGui.QDoubleValidator())
+        self.start_input.setAlignment(QtCore.Qt.AlignCenter)
         input_layout.addWidget(self.start_label, 0, 0)
         input_layout.addWidget(self.start_input, 0, 1)
 
         self.end_label = QtWidgets.QLabel("End")
         self.end_input = QtWidgets.QLineEdit(self)
         self.end_input.setValidator(QtGui.QDoubleValidator())
+        self.end_input.setAlignment(QtCore.Qt.AlignCenter)
         input_layout.addWidget(self.end_label, 1, 0)
         input_layout.addWidget(self.end_input, 1, 1)
 
@@ -49,6 +102,7 @@ class CreatorWindow(QtWidgets.QDialog):
 
         self.step_input = QtWidgets.QLineEdit(self)
         self.step_input.setValidator(QtGui.QDoubleValidator())
+        self.step_input.setAlignment(QtCore.Qt.AlignCenter)
         input_layout.addWidget(self.step_input, 3, 1, 2, 1)
 
         input_group.setLayout(input_layout)
@@ -62,12 +116,20 @@ class CreatorWindow(QtWidgets.QDialog):
         main_layout.addWidget(self.preview_label)
         main_layout.addWidget(self.preview_text)
 
+        h_layout = QtWidgets.QHBoxLayout()
         self.vector_preview_label = QtWidgets.QLabel("Vector Preview:")
-        self.vector_preview_text = QtWidgets.QLineEdit()
-        self.vector_preview_text.setReadOnly(True)
-        self.vector_preview_text.setAlignment(QtCore.Qt.AlignCenter)
-        main_layout.addWidget(self.vector_preview_label)
+        h_layout.addWidget(self.vector_preview_label)
+
+        self.vector_length_label = QtWidgets.QLabel("Vector Length: X")
+        self.vector_length_label.setAlignment(QtCore.Qt.AlignRight)
+        h_layout.addWidget(self.vector_length_label)
+        main_layout.addLayout(h_layout)
+
+        self.vector_preview_text = QtWidgets.QPushButton()
+        self.vector_preview_text.setEnabled(False)
         main_layout.addWidget(self.vector_preview_text)
+
+        main_layout.addStretch()
 
         self.ok_button = QtWidgets.QPushButton("OK", self)
         self.ok_button.clicked.connect(self.on_ok_clicked)
@@ -81,6 +143,20 @@ class CreatorWindow(QtWidgets.QDialog):
         self.step_input.textChanged.connect(self.update_preview)
         self.step_radio.toggled.connect(self.update_preview)
         self.points_radio.toggled.connect(self.update_preview)
+        self.vector_preview_text.clicked.connect(self.show_vector_preview)
+
+    def show_vector_preview(self):
+        dialog = VectorPreviewDialog(self)
+        dialog.set_vector(self.get_vector())
+        dialog.exec_()
+
+    def get_vector(self) -> np.ndarray:
+        command = self.get_command()
+        try:
+            return eval(f"np.{command}")
+        except Exception as e:
+            QtWidgets.QMessageBox.warning(self, "Error", str(e))
+            return np.array([])
 
     def on_ok_clicked(self):
         if self.validate_input():
@@ -107,26 +183,20 @@ class CreatorWindow(QtWidgets.QDialog):
 
     def validate_step_input(self, start: float, end: float, step: float):
         if step <= 0:
-            self.show_error("Step must be a positive number.")
             raise ValueError("Step must be a positive number.")
         if step > (end - start):
-            self.show_error("Step must be less than End - Start.")
             raise ValueError("Step must be less than End - Start.")
         if (end - start) / step > self.MAX_VECTOR_LENGTH:
-            self.show_error(f"Vector length exceeds maximum of {self.MAX_VECTOR_LENGTH}.")
             raise ValueError(f"Vector length exceeds maximum of {self.MAX_VECTOR_LENGTH}.")
 
     def validate_points_input(self, points: float):
         try:
             points = int(points)
         except ValueError:
-            self.show_error("Number of Points must be an integer.")
             raise ValueError("Number of Points must be an integer.")
         if points <= 0:
-            self.show_error("Number of Points must be a positive integer.")
             raise ValueError("Number of Points must be a positive integer.")
         if points > self.MAX_VECTOR_LENGTH:
-            self.show_error(f"Vector length exceeds maximum of {self.MAX_VECTOR_LENGTH}.")
             raise ValueError(f"Vector length exceeds maximum of {self.MAX_VECTOR_LENGTH}.")
 
     def update_preview(self):
@@ -134,9 +204,16 @@ class CreatorWindow(QtWidgets.QDialog):
             start = float(self.start_input.text())
             end = float(self.end_input.text())
             step_or_points = float(self.step_input.text())
+        except ValueError:
+            self.preview_text.setStyleSheet("color: red;")
+            self.preview_text.setText("Invalid input")
+            self.vector_preview_text.setText("")
+            self.vector_preview_text.setEnabled(False)
+            self.vector_length_label.setText("Vector Length: X")
+            return
 
+        try:
             if start >= end:
-                self.show_error("Start must be less than End.")
                 raise ValueError("Start must be less than End.")
 
             if self.step_radio.isChecked():
@@ -151,9 +228,17 @@ class CreatorWindow(QtWidgets.QDialog):
 
             self.preview_text.setStyleSheet("color: blue;")
             self.preview_text.setText(numpy_command)
+
             self.vector_preview_text.setText(self.format_vector_preview(vector))
-        except ValueError:
-            self.vector_preview_text.clear()
+            self.vector_preview_text.setEnabled(True)
+
+            self.vector_length_label.setText(f"Vector Length: {len(vector)}")
+        except ValueError as e:
+            self.preview_text.setStyleSheet("color: red;")
+            self.preview_text.setText(str(e))
+            self.vector_preview_text.setText("")
+            self.vector_preview_text.setEnabled(False)
+            self.vector_length_label.setText("Vector Length: X")
 
     def format_vector_preview(self, vector: np.ndarray) -> str:
         sep = ", "
@@ -183,10 +268,6 @@ class CreatorWindow(QtWidgets.QDialog):
                 first_half = np.array2string(vector[:amount1], precision=2, separator=sep)
             flicker = not flicker
         return f"{first_half[:-1]}, ..., {second_half[1:]}"
-
-    def show_error(self, message: str):
-        self.preview_text.setStyleSheet("color: red;")
-        self.preview_text.setText(message)
 
     def get_command(self) -> str:
         return self.preview_text.text()
