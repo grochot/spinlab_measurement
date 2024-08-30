@@ -282,4 +282,4 @@ if __name__ == "__main__":
     window = CreatorWindow()
     window.show()
     app.exec_()
-    print(window.get_command_input())
+    print(window.get_command())
