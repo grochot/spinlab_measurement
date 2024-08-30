@@ -1,6 +1,6 @@
-# from ..Qt import QtCore, QtWidgets, QtGui
+from ..Qt import QtCore, QtWidgets, QtGui
 import numpy as np
-from PyQt5 import QtWidgets, QtCore, QtGui
+from logic.vector import Vector
 
 
 class VectorTableWidget(QtWidgets.QTableWidget):
@@ -68,11 +68,21 @@ class CreatorWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Creator Window")
-        self.setFixedSize(400, 350)
+        # self.setFixedSize(400, 350)
+
+        self.vector = None
 
         self.setStyleSheet("font-size: 11pt;")
 
         main_layout = QtWidgets.QVBoxLayout()
+
+        self.tab_widget = QtWidgets.QTabWidget()
+        main_layout.addWidget(self.tab_widget)
+
+        self.numpy_tab = QtWidgets.QWidget()
+        self.tab_widget.addTab(self.numpy_tab, "NumPy")
+
+        numpy_layout = QtWidgets.QVBoxLayout()
 
         input_group = QtWidgets.QGroupBox("Input Parameters")
         input_layout = QtWidgets.QGridLayout()
@@ -106,15 +116,30 @@ class CreatorWindow(QtWidgets.QDialog):
         input_layout.addWidget(self.step_input, 3, 1, 2, 1)
 
         input_group.setLayout(input_layout)
-        main_layout.addWidget(input_group)
+        numpy_layout.addWidget(input_group)
 
         self.preview_label = QtWidgets.QLabel("Command Preview:")
         self.preview_text = QtWidgets.QLineEdit("")
         self.preview_text.setAlignment(QtCore.Qt.AlignCenter)
         self.preview_text.setReadOnly(True)
         self.preview_text.setStyleSheet("font-weight: bold; color: blue;")
-        main_layout.addWidget(self.preview_label)
-        main_layout.addWidget(self.preview_text)
+        numpy_layout.addWidget(self.preview_label)
+        numpy_layout.addWidget(self.preview_text)
+        self.numpy_tab.setLayout(numpy_layout)
+
+        vector_tab = QtWidgets.QWidget()
+        self.tab_widget.addTab(vector_tab, "Vector")
+        vector_layout = QtWidgets.QVBoxLayout()
+        vector_layout.addStretch()
+
+        self.vector_input_label = QtWidgets.QLabel("Vector Input:")
+        vector_layout.addWidget(self.vector_input_label)
+        self.vector_input = QtWidgets.QLineEdit()
+        self.vector_input.setAlignment(QtCore.Qt.AlignCenter)
+        vector_layout.addWidget(self.vector_input)
+        vector_layout.addStretch()
+
+        vector_tab.setLayout(vector_layout)
 
         h_layout = QtWidgets.QHBoxLayout()
         self.vector_preview_label = QtWidgets.QLabel("Vector Preview:")
@@ -145,22 +170,25 @@ class CreatorWindow(QtWidgets.QDialog):
         self.points_radio.toggled.connect(self.update_preview)
         self.vector_preview_text.clicked.connect(self.show_vector_preview)
 
+        self.vector_input.textChanged.connect(self.update_preview)
+
     def show_vector_preview(self):
         dialog = VectorPreviewDialog(self)
         dialog.set_vector(self.get_vector())
         dialog.exec_()
 
     def get_vector(self) -> np.ndarray:
-        command = self.get_command()
-        try:
-            return eval(f"np.{command}")
-        except Exception as e:
-            QtWidgets.QMessageBox.warning(self, "Error", str(e))
-            return np.array([])
+        return self.vector
 
     def on_ok_clicked(self):
-        if self.validate_input():
-            self.accept()
+        if self.tab_widget.currentIndex() == 0:
+            if self.validate_input():
+                self.accept()
+        else:
+            if self.vector:
+                self.accept()
+            else:
+                QtWidgets.QMessageBox.warning(self, "Invalid Input", "Invalid Vector Input.")
 
     def validate_input(self) -> bool:
         try:
@@ -200,11 +228,18 @@ class CreatorWindow(QtWidgets.QDialog):
             raise ValueError(f"Vector length exceeds maximum of {self.MAX_VECTOR_LENGTH}.")
 
     def update_preview(self):
+        if self.tab_widget.currentIndex() == 0:
+            self.update_numpy_preview()
+        else:
+            self.update_vector_preview()
+
+    def update_numpy_preview(self):
         try:
             start = float(self.start_input.text())
             end = float(self.end_input.text())
             step_or_points = float(self.step_input.text())
         except ValueError:
+            self.vector = None
             self.preview_text.setStyleSheet("color: red;")
             self.preview_text.setText("Invalid input")
             self.vector_preview_text.setText("")
@@ -219,23 +254,40 @@ class CreatorWindow(QtWidgets.QDialog):
             if self.step_radio.isChecked():
                 self.validate_step_input(start, end, step_or_points)
                 numpy_command = f"arange({format_number(start)}, {format_number(end)}, {format_number(step_or_points)})"
-                vector = np.arange(start, end, step_or_points)
+                self.vector = np.arange(start, end, step_or_points)
             else:
                 step_or_points = int(step_or_points)
                 self.validate_points_input(step_or_points)
                 numpy_command = f"linspace({format_number(start)}, {format_number(end)}, {step_or_points})"
-                vector = np.linspace(start, end, step_or_points)
+                self.vector = np.linspace(start, end, step_or_points)
 
             self.preview_text.setStyleSheet("color: blue;")
             self.preview_text.setText(numpy_command)
 
-            self.vector_preview_text.setText(self.format_vector_preview(vector))
+            self.vector_preview_text.setText(self.format_vector_preview(self.vector))
             self.vector_preview_text.setEnabled(True)
 
-            self.vector_length_label.setText(f"Vector Length: {len(vector)}")
+            self.vector_length_label.setText(f"Vector Length: {len(self.vector)}")
         except ValueError as e:
+            self.vector = None
             self.preview_text.setStyleSheet("color: red;")
             self.preview_text.setText(str(e))
+            self.vector_preview_text.setText("")
+            self.vector_preview_text.setEnabled(False)
+            self.vector_length_label.setText("Vector Length: X")
+
+    def update_vector_preview(self):
+        self.vector = None
+        try:
+            self.vector = Vector().generate_vector(self.vector_input.text())
+        except ValueError:
+            pass
+
+        if self.vector:
+            self.vector_preview_text.setText(self.format_vector_preview(np.array(self.vector)))
+            self.vector_preview_text.setEnabled(True)
+            self.vector_length_label.setText(f"Vector Length: {len(self.vector)}")
+        else:
             self.vector_preview_text.setText("")
             self.vector_preview_text.setEnabled(False)
             self.vector_length_label.setText("Vector Length: X")
@@ -270,7 +322,7 @@ class CreatorWindow(QtWidgets.QDialog):
         return f"{first_half[:-1]}, ..., {second_half[1:]}"
 
     def get_command(self) -> str:
-        return self.preview_text.text()
+        return self.preview_text.text() if self.tab_widget.currentIndex() == 0 else np.array2string(np.array(self.vector), separator=", ")
 
 
 def format_number(x: float) -> str:
