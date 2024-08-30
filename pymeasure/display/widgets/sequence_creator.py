@@ -11,13 +11,15 @@ class HorizontalLine(QtWidgets.QFrame):
 
 
 class CreatorWindow(QtWidgets.QDialog):
-    VECTOR_PREVIEW_LIMIT = 70
+    VECTOR_PREVIEW_LIMIT = 50
     MAX_VECTOR_LENGTH = 100
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Creator Window")
         self.setFixedSize(400, 380)
+        
+        self.setStyleSheet("font-size: 11pt;")
 
         main_layout = QtWidgets.QVBoxLayout()
 
