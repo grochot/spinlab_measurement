@@ -27,6 +27,7 @@ from modules.cims_mode import CIMSMode
 from modules.calibration_mode import FieldCalibrationMode
 from logic.find_instrument import FindInstrument
 from logic.save_parameters import SaveParameters
+from logic.normalize import Normalize
 
 from datetime import datetime
 from datetime import timedelta
@@ -201,7 +202,8 @@ class SpinLabMeasurement(Procedure):
     number_of_points = IntegerParameter("Number of points", default = 0, vis_cond=(NOT_VISIBLE))
 
     DEBUG = 1
-    DATA_COLUMNS = ['Voltage (V)', 'Current (A)', 'Resistance (ohm)', 'Field (Oe)', 'Frequency (Hz)', 'X (V)', 'Y (V)', 'Phase', 'Polar angle (deg)', 'Azimuthal angle (deg)','Applied Voltage (V)' ]
+    DATA_COLUMNS = ['Voltage (V)', 'Norm Voltage (V)' , 'Current (A)', 'Resistance (ohm)', 'Field (Oe)', 'Frequency (Hz)', 'X (V)', 'Norm X (V)', 'Y (V)', 'Phase', 'Polar angle (deg)', 'Azimuthal angle (deg)','Applied Voltage (V)' ]
+    normalize = Normalize(to_normalize=["Voltage (V)", "X (V)"])
     path_file = SaveFilePath()
     
     def refresh_parameters(self):
@@ -258,7 +260,8 @@ class SpinLabMeasurement(Procedure):
         self.points = self.selected_mode.generate_points()
         self.selected_mode.initializing()
 
-        window.inputs.number_of_points.setValue(len(self.points))        
+        window.inputs.number_of_points.setValue(len(self.points))
+        self.normalize._result_object = window.manager.running_experiment().results   
 
 #################################### PROCEDURE##############################################
     def execute(self):
@@ -276,6 +279,8 @@ class SpinLabMeasurement(Procedure):
             start_time = time()
             
             self.result = self.selected_mode.operating(point)
+            
+            self.result = self.normalize(self.result)
             
             self.emit('results', self.result)
             self.emit('progress', 100 * self.counter / len(self.points))
