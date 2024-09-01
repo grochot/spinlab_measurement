@@ -29,6 +29,7 @@ from collections import ChainMap
 
 from ..Qt import QtCore, QtWidgets, QtGui
 from ...experiment.sequencer import SequenceHandler, SequenceEvaluationError
+from .sequence_creator import CreatorWindow
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -277,6 +278,28 @@ class LineEditDelegate(QtWidgets.QStyledItemDelegate):
 
     def updateEditorGeometry(self, editor, option, index):
         editor.setGeometry(option.rect)
+
+    def editorEvent(self, event, model, option, index):
+        if event.type() == QtCore.QEvent.Type.MouseButtonPress and event.button() == QtCore.Qt.MouseButton.RightButton:
+            self.show_context_menu(event, model, index)
+            return True
+        return super().editorEvent(event, model, option, index)
+
+    def show_context_menu(self, event, model, index):
+        menu = QtWidgets.QMenu()
+
+        edit_action = menu.addAction("Use Creator")
+
+        action = menu.exec_(event.globalPos())
+
+        if action == edit_action:
+            self.open_creator_window(model, index)
+
+    def open_creator_window(self, model, index):
+        creator_window = CreatorWindow()
+        if creator_window.exec_() == QtWidgets.QDialog.Accepted:
+            numpy_command = creator_window.get_command()
+            model.setData(index, numpy_command, QtCore.Qt.ItemDataRole.EditRole)
 
 
 class SequencerTreeView(QtWidgets.QTreeView):
