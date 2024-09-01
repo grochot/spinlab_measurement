@@ -44,7 +44,7 @@ class Parameter:
         this argument is ignored.
     """
 
-    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True):
+    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True, vis_cond=None):
         self.name = name
         separator = ": "
         if separator in name:
@@ -71,6 +71,8 @@ class Parameter:
         elif group_by is not None:
             raise TypeError("The provided group_by argument is not valid, should be either a "
                             "string, a list of strings, or a dict with {string: condition} pairs.")
+            
+        self.vis_cond = vis_cond
 
     @property
     def value(self):

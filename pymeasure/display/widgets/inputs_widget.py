@@ -25,6 +25,7 @@
 import logging
 
 from functools import partial
+from inspect import signature
 
 from ..inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
 from ..Qt import QtWidgets, QtCore
@@ -42,8 +43,7 @@ class InputsWidget(QtWidgets.QWidget):
     # tuple of Input classes that do not need an external label
     NO_LABEL_INPUTS = (BooleanInput,)
 
-    def __init__(self, procedure_class, inputs=(), parent=None, hide_groups=True,
-                 inputs_in_scrollarea=False):
+    def __init__(self, procedure_class, inputs=(), parent=None, hide_groups=True, inputs_in_scrollarea=False):
         super().__init__(parent)
         self._procedure_class = procedure_class
         self._procedure = procedure_class()
@@ -101,8 +101,7 @@ class InputsWidget(QtWidgets.QWidget):
 
             inputs = QtWidgets.QWidget(self)
             inputs.setLayout(vbox)
-            inputs.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum,
-                                 QtWidgets.QSizePolicy.Policy.Fixed)
+            inputs.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Fixed)
             scroll_area.setWidget(inputs)
 
             vbox = QtWidgets.QVBoxLayout(self)
@@ -117,20 +116,31 @@ class InputsWidget(QtWidgets.QWidget):
         for name in self._inputs:
             parameter = parameters[name]
 
-            group_state = {g: True for g in parameter.group_by}
+            if parameter.vis_cond is None:
+                continue
+            
+            depends_on = ["layout_type"]
 
-            for group_name, condition in parameter.group_by.items():
-                if group_name not in self._inputs or group_name == name:
+            if isinstance(parameter.vis_cond, tuple):
+                if len(parameter.vis_cond) == 2:
+                    if callable(parameter.vis_cond[1]):
+                        depends_on += [arg.name for arg in signature(parameter.vis_cond[1]).parameters.values()]
+                    else:
+                        raise TypeError(f"Invalid visiblity condition for '{name}'. Expected a callable as the second element.")
+                elif len(parameter.vis_cond) > 2:
+                    raise TypeError(f"Invalid visiblity condition for '{name}'. Expected a tuple with 2 elements.")
+            
+            group_state = {}
+            for param_name in depends_on:
+                if getattr(self, param_name) is None or (param_name == name and name != "layout_type"):
                     continue
 
-                if isinstance(getattr(self, group_name), BooleanInput):
-                    # Adjust the boolean condition to a condition suitable for a checkbox
-                    condition = bool(condition)
+                group_state[param_name] = getattr(self, param_name).value()
 
-                if group_name not in groups:
-                    groups[group_name] = []
+                if param_name not in groups:
+                    groups[param_name] = []
 
-                groups[group_name].append((name, condition, group_state))
+                groups[param_name].append((name, parameter.vis_cond, group_state))
 
         for group_name, group in groups.items():
             toggle = partial(self.toggle_group, group_name=group_name, group=group)
@@ -148,17 +158,18 @@ class InputsWidget(QtWidgets.QWidget):
                 group_el.currentTextChanged.connect(toggle)
                 toggle(group_el.currentText())
             else:
-                raise NotImplementedError(
-                    f"Grouping based on {group_name} ({group_el}) is not implemented.")
+                raise NotImplementedError(f"Grouping based on {group_name} ({group_el}) is not implemented.")
 
     def toggle_group(self, state, group_name, group):
-        for (name, condition, group_state) in group:
-            if callable(condition):
-                group_state[group_name] = condition(state)
-            else:
-                group_state[group_name] = (state == condition)
-
-            visible = all(group_state.values())
+        for name, condition, group_state in group:
+            group_state[group_name] = state
+            
+            layout_type_condition = condition[0] if isinstance(condition, tuple) else condition
+            
+            layout_type_condition = layout_type_condition == group_state["layout_type"]
+            condition = condition[1](*[state for param_name, state in group_state.items() if param_name != "layout_type"]) if isinstance(condition, tuple) and len(condition) == 2 else True
+            
+            visible = layout_type_condition and condition
 
             if self._hide_groups:
                 getattr(self, name).setHidden(not visible)
@@ -177,7 +188,7 @@ class InputsWidget(QtWidgets.QWidget):
             element.set_parameter(parameter_objects[name])
 
     def get_procedure(self):
-        """ Returns the current procedure """
+        """Returns the current procedure"""
         self._procedure = self._procedure_class()
         parameter_values = {}
         for name in self._inputs:
