@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore
+from ..Qt import QtWidgets
 
 
 class ClearDialog(QtWidgets.QDialog):
