@@ -37,3 +37,4 @@ from .tab_widget import TabWidget
 from .table_widget import TableWidget
 
 from .current_pt_widget import CurrentPointWidget
+from .clear_dialog import ClearDialog
