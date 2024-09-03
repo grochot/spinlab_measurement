@@ -64,6 +64,8 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
 
         self.inputs: InputsWidget = None
         self.prev_mode: str = ""
+        
+        self.isRunning = False
 
         self._setup_ui()
         self._layout()
@@ -71,11 +73,8 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
     def _setup_ui(self):
         self.setStyleSheet("font-size: 14pt;")
 
-        # self.device_cb = QtWidgets.QComboBox()
-        # self.device_cb.addItems(self.devices.values())
-
-        self.measure_btn = QtWidgets.QPushButton("Measure")
-        self.measure_btn.clicked.connect(self.measure)
+        self.init_button = QtWidgets.QPushButton("Initialize")
+        self.init_button.clicked.connect(self.init)
 
         self.volt_le = QtWidgets.QLineEdit("- [V]")
         self.volt_le.setReadOnly(True)
@@ -92,20 +91,26 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
         self.res_le.setAlignment(QtCore.Qt.AlignCenter)
         self.res_le.setFixedHeight(100)
 
+        self.single_btn = QtWidgets.QPushButton("Single")
+        self.single_btn.clicked.connect(self.measure)
+
+        self.start_btn = QtWidgets.QPushButton("Start")
+        self.start_btn.clicked.connect(self.continous_measure)
+
     def _layout(self):
         main_layout = QtWidgets.QVBoxLayout()
 
-        # v_layout = QtWidgets.QVBoxLayout()
-        # v_layout.addStretch()
-        # v_layout.addWidget(self.device_cb)
-        # v_layout.addWidget(self.measure_btn)
-        # v_layout.addStretch()
-        # main_layout.addLayout(v_layout, stretch=1)
         main_layout.addStretch()
+        main_layout.addWidget(self.init_button, stretch=1)
         main_layout.addWidget(self.volt_le, stretch=2)
         main_layout.addWidget(self.curr_le, stretch=2)
         main_layout.addWidget(self.res_le, stretch=2)
-        main_layout.addWidget(self.measure_btn, stretch=1)
+        
+        h_layout = QtWidgets.QHBoxLayout()
+        h_layout.addWidget(self.single_btn, stretch=1)
+        h_layout.addWidget(self.start_btn, stretch=1)
+        main_layout.addLayout(h_layout)
+        
         main_layout.addStretch()
 
         self.setLayout(main_layout)
@@ -140,6 +145,9 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
 
     def get(self, attr: str):
         return getattr(self.inputs, attr).value()
+
+    def init(self):
+        pass
 
     def measure(self):
         meas_device = self.get("set_measdevice_qm")
@@ -251,3 +259,19 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
             else:
                 log.error("Function not implemented!")
                 return
+
+    def continous_measure(self):
+        if self.isRunning:
+            self.isRunning = False
+            self.start_btn.setText("Start")
+            self.single_btn.setEnabled(True)
+            self.init_button.setEnabled(True)
+        else:
+            self.isRunning = True
+            self.start_btn.setText("Stop")
+            self.single_btn.setEnabled(False)
+            self.init_button.setEnabled(False)
+            # self.measure()
+            # while self.isRunning:
+            #     self.measure()
+            #     QtWidgets.QApplication.processEvents()
