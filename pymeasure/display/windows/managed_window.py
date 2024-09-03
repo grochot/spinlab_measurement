@@ -475,6 +475,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                     experiment.browser_item.progressbar.setValue(100)
                     self.manager.load(experiment)
                     log.info('Opened data file %s' % filename)
+                    
+                    self.browser_widget.show_button.setEnabled(True)
+                    self.browser_widget.hide_button.setEnabled(True)
+        
+                    if not self.manager.is_running():
+                        self.browser_widget.clear_button.setEnabled(True)
+                        self.browser_widget.clear_by_status_button.setEnabled(True)
 
     def save_experiment_copy(self, source_filename):
         """Save a copy of the datafile to a selected folder and file.
