@@ -1,0 +1,97 @@
+#%%Load variables
+import numpy as np
+
+
+
+#variables_from_widget
+number_of_element_in_the_x_axis=5
+number_of_element_in_the_y_axis=3
+first_element_x=0.37
+first_element_y=0.37
+second_element_x=1.37
+second_element_y=0.37
+dx_calculation=1
+dy_calculation=1
+last_element_x=10.37
+last_element_y=0.5
+#end
+
+
+#%%function_without_function
+#coord=np.zeros((number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,2))
+
+move_vectors_prim=np.zeros((number_of_element_in_the_x_axis*number_of_element_in_the_y_axis,2))
+
+x_moves=0*first_element_x+np.arange(0,number_of_element_in_the_x_axis,1)*dx_calculation #tutaj jest terz przejscie do ukladu wlasnego
+y_moves=0*first_element_y+np.arange(0,number_of_element_in_the_y_axis,1)*dy_calculation
+
+theta=np.arcsin((last_element_y-first_element_y)/(last_element_x-first_element_x))
+   
+
+x_moves_prim=np.zeros(x_moves.shape)
+y_moves_prim=np.zeros(y_moves.shape)
+
+
+cos_theta=np.cos(theta)
+sin_theta=np.sin(theta)
+
+move_vectors_prim=[]
+i=0
+for y_idx in range(y_moves.shape[0]):
+	for x_idx in range(x_moves.shape[0]):
+		x_moves_prim=x_moves[x_idx]*cos_theta-y_moves[y_idx]*sin_theta+first_element_x
+		y_moves_prim=x_moves[x_idx]*sin_theta+y_moves[y_idx]*cos_theta+first_element_y
+
+		move_vectors_prim.append([x_moves_prim,y_moves_prim])
+		#names.append('{0},{1}u'.format(y_idx,x_idx))
+		i+=1
+		
+		
+gc={'move_vectors_prim':move_vectors_prim,'theta':theta}
+		
+
+seq_vector='- "Global "[x,y]"", "{0}"'.format(gc['move_vectors_prim'])
+		
+	
+#x_moves_prim=x_moves*np.cos(theta)-y_moves*np.sin(theta)+first_element_x #tez jest przejscie do ukladu glownego
+#y_moves_prim=x_moves*np.sin(theta)+y_moves*np.cos(theta)+first_element_y
+   
+
+
+#%%function
+def generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y):
+	move_vectors_prim=np.zeros((number_of_element_in_the_x_axis*number_of_element_in_the_y_axis,2))
+	
+	x_moves=0*first_element_x+np.arange(0,number_of_element_in_the_x_axis,1)*dx_calculation #tutaj jest terz przejscie do ukladu wlasnego
+	y_moves=0*first_element_y+np.arange(0,number_of_element_in_the_y_axis,1)*dy_calculation
+	
+	theta=np.arcsin((last_element_y-first_element_y)/(last_element_x-first_element_x))
+	   
+	
+	x_moves_prim=np.zeros(x_moves.shape)
+	y_moves_prim=np.zeros(y_moves.shape)
+	
+	
+	cos_theta=np.cos(theta)
+	sin_theta=np.sin(theta)
+	
+	move_vectors_prim=[]
+	#names=[]
+	i=0
+	for y_idx in range(y_moves.shape[0]):
+		for x_idx in range(x_moves.shape[0]):
+			x_moves_prim=x_moves[x_idx]*cos_theta-y_moves[y_idx]*sin_theta+first_element_x
+			y_moves_prim=x_moves[x_idx]*sin_theta+y_moves[y_idx]*cos_theta+first_element_y
+	
+
+			name='{0},{1}u'.format(y_idx,x_idx)
+			move_vectors_prim.append([x_moves_prim,y_moves_prim,name])
+			
+			i+=1
+	return {'move_vectors_prim':move_vectors_prim,'theta':theta}
+
+
+
+
+if __name__=='__main__':
+	coord=generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y)

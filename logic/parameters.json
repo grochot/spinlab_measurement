@@ -1,5 +1,5 @@
 {
-    "mode": "FMRMode",
+    "mode": "ResistanceMode",
     "sample_name": "dfsdf",
     "vector": "0,20,2000",
     "mode_resistance": false,
@@ -20,7 +20,7 @@
     "set_generator": "none",
     "address_sourcemeter": "None",
     "address_multimeter": "None",
-    "address_daq": "Dev4/ao0",
+    "address_daq": "None",
     "address_gaussmeter": "None",
     "address_lockin": "None",
     "address_switch": "None",
