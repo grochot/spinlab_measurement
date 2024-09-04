@@ -20,7 +20,7 @@
     "set_generator": "none",
     "address_sourcemeter": "None",
     "address_multimeter": "None",
-    "address_daq": "Dev4/ao0",
+    "address_daq": "None",
     "address_gaussmeter": "None",
     "address_lockin": "None",
     "address_switch": "None",

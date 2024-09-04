@@ -1177,11 +1177,11 @@ class PlotDataItem(GraphicsObject):
         ## Perform Fourier transform. If x values are not sampled uniformly,
         ## then use np.interp to resample before taking fft.
         if len(y) == 0:
-            return []
+            return x, []
 
    
         if np.max(y) == np.min(y):
-            return [0.5] * len(y)
+            return x, [0.5] * len(y)
        
 
         y_normalized =  (y - np.min(y)) / (np.max(y) - np.min(y))
