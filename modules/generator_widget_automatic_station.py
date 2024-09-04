@@ -5,7 +5,7 @@ import sys
 sys.path.append("C:\\Users\\IE\\git\\spinlab_measurement")
 from logic.find_instrument import FindInstrument
 from hardware.dummy_motion_driver import DummyMotionDriver
-#from hardware.esp300_simple import Esp300
+from hardware.esp300_simple import Esp300
 from hardware.keithley2400 import Keithley2400
 from functools import partial
 from PyQt5.QtCore import Qt
@@ -14,6 +14,8 @@ from logic.map_generator import generate_coord
 
 class AutomaticStationGenerator(QtWidgets.QWidget):
     object_name = "automatic_station_generator"
+
+
     def __init__(self):
         super(AutomaticStationGenerator, self).__init__()
         self.state = False
@@ -41,8 +43,17 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         print(self.address_list)
 
 
+    def go(self):
+        self.MotionDriver.goTo_2(self.go_x_textbox.text())
+        self.MotionDriver.goTo_3(self.go_y_textbox.text())
+        self.MotionDriver.goTo_1(self.go_z_textbox.text())
+
+
     def _setup_ui(self):
         self.MotionDriver=DummyMotionDriver("trash")
+        self.z_pos=self.MotionDriver.pos_1()
+        print(self.z_pos)
+        
 
         self.setWindowTitle("Automatic station generator")
         self.setWindowIcon(QtGui.QIcon(self.icon_path))
@@ -70,6 +81,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         self.make_connection_label=QtWidgets.QLabel('connect distance [mm]')
         self.make_connection_textbox=QtWidgets.QLineEdit(self)
+        self.make_connection_textbox.setText("0")
         self.make_connection_textbox.setFixedSize(100,20)
         self.make_connection_textbox.setAlignment(Qt.AlignLeft)
 
@@ -95,7 +107,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.go_z_textbox.setPlaceholderText('z')
 
         self.go_button=QtWidgets.QPushButton("GO")
-        #self.go_button.toggled.connect(self.X)
+        self.go_button.clicked.connect(self.go)
 
 
 
@@ -167,9 +179,8 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
     def make_connection_with_devices(self):
         if self.drive_motion_adresses_combo.currentText()!="None":
-            pass
-            self.MotionDriver=DummyMotionDriver(self.drive_motion_adresses_combo.currentText())
-            #self.MotionDriver=Esp300(self.drive_motion_adresses_combo.currentText())
+            self.MotionDriver=Esp300()
+            self.z_pos=self.MotionDriver.pos_1()
         else:
             self.MotionDriver=DummyMotionDriver(self.drive_motion_adresses_combo.currentText())
             print("DummyMotionDriver")
@@ -238,12 +249,14 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
     
     def update_led_indicator(self, checked):
         if checked:
-            self.led_indicator_label.setStyleSheet("background-color: red; border-radius: 10px;")
-            self.connect_checkable_button.setText("Disconnect")
-        else:
             self.led_indicator_label.setStyleSheet("background-color: green; border-radius: 10px;")
             self.connect_checkable_button.setText("Connect")
+            self.MotionDriver.goTo_1(self.z_pos-float(self.make_connection_textbox.text()))
 
+        else:
+            self.led_indicator_label.setStyleSheet("background-color: red; border-radius: 10px;")
+            self.connect_checkable_button.setText("Disconnect")
+            self.MotionDriver.goTo_1(self.z_pos)
     
     def enable_motors_function(self, checked):
         if checked:

@@ -18,4 +18,9 @@ class DummyMotionDriver:
     
     def disable(self):
         print("Disabled")
-    
+
+    def goTo_1(self,position):
+        print("go_to1",position)
+
+    def pos_1(self):
+        return 0.387
