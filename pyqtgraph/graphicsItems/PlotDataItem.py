@@ -324,7 +324,8 @@ class PlotDataItem(GraphicsObject):
         #self.clear()
         self.opts = {
             'connect': 'auto', # defaults to 'all', unless overridden to 'finite' for log-scaling
-            'skipFiniteCheck': False, 
+            'skipFiniteCheck': False,
+            'normalizeMode': False,
             'fftMode': False,
             'logMode': [False, False],
             'derivativeMode': False,
@@ -406,6 +407,18 @@ class PlotDataItem(GraphicsObject):
         self.opts['alphaMode'] = auto
         self.setOpacity(alpha)
         #self.update()
+        
+    def setNormalizeMode(self, state):
+        """
+        ``state = True`` enables mapping the data by normalizing the y values to the range [0, 1].
+        """
+        if self.opts['normalizeMode'] == state:
+            return
+        self.opts['normalizeMode'] = state
+        self._datasetMapped  = None
+        self._datasetDisplay = None
+        self.updateItems(styleUpdate=False)
+        self.informViewBoundsChanged()
 
     def setFftMode(self, state):
         """
@@ -929,6 +942,9 @@ class PlotDataItem(GraphicsObject):
                 y = y.astype(np.uint8)
             if x.dtype == bool:
                 x = x.astype(np.uint8)
+                
+            if self.opts['normalizeMode']:
+                x,y = self._normalizeData(x, y)
 
             if self.opts['fftMode']:
                 x,y = self._fourierTransform(x, y)
@@ -1172,32 +1188,30 @@ class PlotDataItem(GraphicsObject):
                 update_needed = True
         if update_needed:
             self.updateItems(styleUpdate=False)
+            
+    def _normalizeData(self, x, y):
+        if len(y) == 0:
+            return x, y
+        if np.max(y) == np.min(y):
+            return x, [0.5] * len(y)
+        return x, (y - np.min(y)) / (np.max(y) - np.min(y))
 
     def _fourierTransform(self, x, y):
         ## Perform Fourier transform. If x values are not sampled uniformly,
         ## then use np.interp to resample before taking fft.
-        if len(y) == 0:
-            return x, []
 
-   
-        if np.max(y) == np.min(y):
-            return x, [0.5] * len(y)
-       
-
-        y_normalized =  (y - np.min(y)) / (np.max(y) - np.min(y))
-
-        # dx = np.diff(x)
-        # uniform = not np.any(np.abs(dx-dx[0]) > (abs(dx[0]) / 1000.))
-        # if not uniform:
-        #     x2 = np.linspace(x[0], x[-1], len(x))
-        #     y = np.interp(x2, x, y)
-        #     x = x2
-        # n = y.size
-        # f = np.fft.rfft(y) / n
-        # d = float(x[-1]-x[0]) / (len(x)-1)
-        # x = np.fft.rfftfreq(n, d)
-        # y = np.abs(f)
-        return x, y_normalized
+        dx = np.diff(x)
+        uniform = not np.any(np.abs(dx-dx[0]) > (abs(dx[0]) / 1000.))
+        if not uniform:
+            x2 = np.linspace(x[0], x[-1], len(x))
+            y = np.interp(x2, x, y)
+            x = x2
+        n = y.size
+        f = np.fft.rfft(y) / n
+        d = float(x[-1]-x[0]) / (len(x)-1)
+        x = np.fft.rfftfreq(n, d)
+        y = np.abs(f)
+        return x, y
         
 # helper functions:
 def dataType(obj):

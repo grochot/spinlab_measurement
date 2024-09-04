@@ -218,7 +218,8 @@ class PlotItem(GraphicsWidget):
             self.stateGroup.autoAdd(w)
         
         self.fileDialog = None
-        
+
+        c.normalizeCheck.toggled.connect(self.updateNormalizeMode)      
         c.alphaGroup.toggled.connect(self.updateAlpha)
         c.alphaSlider.valueChanged.connect(self.updateAlpha)
         c.autoAlphaCheck.toggled.connect(self.updateAlpha)
@@ -911,6 +912,14 @@ class PlotItem(GraphicsWidget):
 
     def widgetGroupInterface(self):
         return (None, PlotItem.saveState, PlotItem.restoreState)
+    
+    def updateNormalizeMode(self, b=None):
+        if b is None:
+            b = self.ctrl.normalizeCheck.isChecked()
+        for c in self.curves:
+            c.setNormalizeMode(b)
+        self.enableAutoRange()
+        self.recomputeAverages()
       
     def updateSpectrumMode(self, b=None):
         if b is None:
