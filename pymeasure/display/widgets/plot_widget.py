@@ -125,14 +125,11 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
         return curve
     
     def enlarge_point(self, curve, spots):
+        for point in curve.scatter.points():
+            point.setSize(5)
+        
         for spot in spots:
             spot.setSize(10)
-            
-        # QtCore.QTimer.singleShot(1000, lambda: self.reset_point_size(spots))
-        
-    def reset_point_size(self, spots):
-        for spot in spots:
-            spot.setSize(5)
     
     def remove_point(self, curve, spots):
         for spot in spots:
