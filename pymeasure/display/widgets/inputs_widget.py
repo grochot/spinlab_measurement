@@ -167,7 +167,12 @@ class InputsWidget(QtWidgets.QWidget):
             layout_type_condition = condition[0] if isinstance(condition, tuple) else condition
             
             layout_type_condition = layout_type_condition == group_state["layout_type"]
-            condition = condition[1](*[state for param_name, state in group_state.items() if param_name != "layout_type"]) if isinstance(condition, tuple) and len(condition) == 2 else True
+            try:
+                condition = condition[1](*[state for param_name, state in group_state.items() if param_name != "layout_type"]) if isinstance(condition, tuple) and len(condition) == 2 else True
+            except TypeError as e:
+                print(f"Error in condition for '{name}': {e}")
+                raise e
+                
             
             visible = layout_type_condition and condition
 
