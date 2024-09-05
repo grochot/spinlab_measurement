@@ -62,6 +62,26 @@ class ResultsCurve(pg.PlotDataItem):
         self.opts['symbolBrush'] = color
         self.color = self.opts['pen'].color()
         self.updateItems(styleUpdate=True)
+        
+    def remove_point_spot(self, spot):
+        """ Removes a point from the curve based on a Point object """
+        x, y = spot.pos().x(), spot.pos().y()
+        self.remove_point_pos(x, y)
+        
+    def remove_point_pos(self, x, y):
+        """ Removes a point from the curve based on x and y data """
+        xdata, ydata = self.getData()
+        idx = np.where((xdata == x) & (ydata == y))[0]
+        if len(idx) > 0:
+            self.remove_point_idx(idx)
+        
+    def remove_point_idx(self, idx):
+        """ Removes a point from the curve based on index """
+        xdata, ydata = self.getData()
+        xdata = np.delete(xdata, idx)
+        ydata = np.delete(ydata, idx)
+        self.setData(xdata, ydata)
+        self.updateItems(styleUpdate=False)
 
 # TODO: Add method for changing x and y
 

@@ -118,7 +118,25 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
                              symbolSize=5,
                              **kwargs,
                              )
+        
+        curve.sigPointsClicked.connect(self.remove_point)
+        curve.sigPointsHovered.connect(self.enlarge_point)
+        
         return curve
+    
+    def enlarge_point(self, curve, spots):
+        for spot in spots:
+            spot.setSize(10)
+            
+        # QtCore.QTimer.singleShot(1000, lambda: self.reset_point_size(spots))
+        
+    def reset_point_size(self, spots):
+        for spot in spots:
+            spot.setSize(5)
+    
+    def remove_point(self, curve, spots):
+        for spot in spots:
+            curve.remove_point_spot(spot)
 
     def update_x_column(self, index):
         axis = self.columns_x.itemText(index)
