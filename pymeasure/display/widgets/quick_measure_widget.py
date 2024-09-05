@@ -64,8 +64,14 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
 
         self.inputs: InputsWidget = None
         self.prev_mode: str = ""
-        
+
         self.isRunning = False
+
+        self.device = None
+        self.meas_device = None
+
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.measure)
 
         self._setup_ui()
         self._layout()
@@ -92,7 +98,7 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
         self.res_le.setFixedHeight(100)
 
         self.single_btn = QtWidgets.QPushButton("Single")
-        self.single_btn.clicked.connect(self.measure)
+        self.single_btn.clicked.connect(self.single_measure)
 
         self.start_btn = QtWidgets.QPushButton("Start")
         self.start_btn.clicked.connect(self.continous_measure)
@@ -105,12 +111,12 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
         main_layout.addWidget(self.volt_le, stretch=2)
         main_layout.addWidget(self.curr_le, stretch=2)
         main_layout.addWidget(self.res_le, stretch=2)
-        
+
         h_layout = QtWidgets.QHBoxLayout()
         h_layout.addWidget(self.single_btn, stretch=1)
         h_layout.addWidget(self.start_btn, stretch=1)
         main_layout.addLayout(h_layout)
-        
+
         main_layout.addStretch()
 
         self.setLayout(main_layout)
@@ -147,69 +153,109 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
         return getattr(self.inputs, attr).value()
 
     def init(self):
-        pass
+        self.meas_device = self.get("set_measdevice_qm")
 
-    def measure(self):
-        meas_device = self.get("set_measdevice_qm")
-
-        if meas_device == "Sourcemeter":
-            device = self.get("set_sourcemeter")
-            if device in ["None", "none", None]:
+        if self.meas_device == "Sourcemeter":
+            device_name = self.get("set_sourcemeter")
+            if device_name in ["None", "none", None]:
                 log.error("QuickMeasure: device not selected!")
                 return
 
-            sourcemeter_address = self.get("address_sourcemeter")
-            if sourcemeter_address in ["None", "none", None]:
+            device_address = self.get("address_sourcemeter")
+            if device_address in ["None", "none", None]:
                 log.error("QuickMeasure: device address not selected!")
                 return
 
             sourcemeter_channel = self.get("sourcemeter_channel")
 
-            match device:
+            match device_name:
                 case "Keithley 2400":
-                    device = Keithley2400(sourcemeter_address)
-                    device.config_average(self.get("sourcemeter_average"))
+                    self.device = Keithley2400(device_address)
+                    self.device.config_average(self.get("sourcemeter_average"))
                 case "Keithley 2636":
                     if sourcemeter_channel == "Channel A":
-                        device = Keithley2636(sourcemeter_address).ChA
+                        self.device = Keithley2636(device_address).ChA
                     else:
-                        device = Keithley2636(sourcemeter_address).ChB
+                        self.device = Keithley2636(device_address).ChB
                 case "Agilent 2912":
                     if sourcemeter_channel == "Channel A":
-                        device = Agilent2912(sourcemeter_address).ChA
+                        self.device = Agilent2912(device_address).ChA
                     else:
-                        device = Agilent2912(sourcemeter_address).ChB
+                        self.device = Agilent2912(device_address).ChB
                 case _:
                     log.error("Device not implemented!")
                     return
 
             sourcemeter_source = self.get("sourcemter_source")
-            device.source_mode = sourcemeter_source
+            self.device.source_mode = sourcemeter_source
             if sourcemeter_source == "VOLT":
-                device.current_range = self.get("sourcemeter_limit")
-                device.compliance_current = self.get("sourcemeter_compliance")
-                device.source_voltage = self.get("sourcemeter_bias")
-                device.enable_source()
-                device.measure_current(self.get("sourcemeter_nplc"), self.get("sourcemeter_limit)"))
+                self.device.current_range = self.get("sourcemeter_limit")
+                self.device.compliance_current = self.get("sourcemeter_compliance")
+                self.device.source_voltage = self.get("sourcemeter_bias")
+                self.device.enable_source()
+                self.device.measure_current(self.get("sourcemeter_nplc"), self.get("sourcemeter_limit"))
             else:
-                device.voltage_range = self.get("sourcemeter_limit")
-                device.compliance_voltage = self.get("sourcemeter_compliance")
-                device.source_current = self.get("sourcemeter_bias")
-                device.enable_source()
-                device.measure_voltage(self.get("sourcemeter_nplc"), self.get("sourcemeter_limit)"))
+                self.device.voltage_range = self.get("sourcemeter_limit")
+                self.device.compliance_voltage = self.get("sourcemeter_compliance")
+                self.device.source_current = self.get("sourcemeter_bias")
+                self.device.enable_source()
+                self.device.measure_voltage(self.get("sourcemeter_nplc"), self.get("sourcemeter_limit"))
+
+        elif self.meas_device == "Multimeter":
+            device_name = self.get("set_multimeter")
+
+            if device_name in ["None", "none", None]:
+                log.error("QuickMeasure: device not selected!")
+                return
+
+            device_address = self.get("address_multimeter")
+            if device_address in ["None", "none", None]:
+                log.error("QuickMeasure: device address not selected!")
+                return
+
+            match device_name:
+                case "Agilent 34400":
+                    self.device = Agilent34410A(device_address)
+                case _:
+                    log.error("Device not implemented!")
+                    return
+
+            autorange = self.get("multimeter_autorange")
+
+            if not autorange:
+                self.device.resolution = self.get("multimeter_resolution")
+            self.device.range_ = self.get("multimeter_range")
+            self.device.autorange = autorange
+            self.multimeter_function = self.get("multimeter_function")
+            self.device.function_ = self.multimeter_function
+            self.device.trigger_delay = "MIN"
+            self.device.trigger_count = self.get("multimeter_average")
+            self.device.nplc = self.get("multimeter_nplc")
+        else:
+            raise ValueError("Invalid measurement device!")
+
+    def measure(self):
+        if self.device is None:
+            log.error("QuickMeasure: device not initialized!")
+            if self.isRunning:
+                self.stop_measure()
+            return
+
+        if self.meas_device == "Sourcemeter":
+            sourcemeter_source = self.get("sourcemter_source")
 
             if sourcemeter_source == "VOLT":
                 if self.get("sourcemeter_bias") != 0:
                     tmp_voltage = self.get("sourcemeter_bias")
                 else:
                     tmp_voltage = 1e-9
-                tmp_current = device.current
+                tmp_current = self.device.current
                 if type(tmp_current) == list:
                     tmp_current = np.average(tmp_current)
                 print(tmp_current)
                 tmp_resistance = tmp_voltage / tmp_current
             else:
-                tmp_voltage = device.voltage
+                tmp_voltage = self.device.voltage
                 if type(tmp_voltage) == list:
                     tmp_voltage = np.average(tmp_voltage)
                 print(tmp_voltage)
@@ -223,55 +269,50 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
                 self.set_le(tmp_voltage, "V")
                 self.set_le(tmp_current, "A")
                 self.set_le(tmp_resistance, "Ω")
-
         else:
-            device = self.get("set_multimeter")
-
-            match device:
-                case "Agilent 34400":
-                    device = Agilent34410A(self.get("address_multimeter"))
-                case _:
-                    log.error("Device not implemented!")
-                    return
-
-            autorange = self.get("multimeter_autorange")
-
-            if not autorange:
-                device.resolution = self.get("multimeter_resolution")
-            device.range_ = self.get("multimeter_range")
-            device.autorange = autorange
-            multimeter_function = self.get("multimeter_function")
-            device.function_ = multimeter_function
-            device.trigger_delay = "MIN"
-            device.trigger_count = self.get("multimeter_average")
-            device.nplc = self.get("multimeter_nplc")
-
-            reading = np.average(device.reading)
+            reading = np.average(self.device.reading)
 
             self.clear_le()
 
-            if multimeter_function in ["ACV", "DCV", "DCV_RATIO"]:
+            if self.multimeter_function in ["ACV", "DCV", "DCV_RATIO"]:
                 self.set_le(reading, "V")
-            elif multimeter_function in ["ACI", "DCI"]:
+            elif self.multimeter_function in ["ACI", "DCI"]:
                 self.set_le(reading, "A")
-            elif multimeter_function in ["R2W", "R4W"]:
+            elif self.multimeter_function in ["R2W", "R4W"]:
                 self.set_le(reading, "Ω")
             else:
                 log.error("Function not implemented!")
+                if self.isRunning:
+                    self.stop_measure()
                 return
+
+    def stop_device(self):
+        if self.device is not None:
+            if self.meas_device == "Sourcemeter":
+                self.device.disable_source()
+
+    def single_measure(self):
+        self.measure()
+        self.stop_device()
 
     def continous_measure(self):
         if self.isRunning:
-            self.isRunning = False
-            self.start_btn.setText("Start")
-            self.single_btn.setEnabled(True)
-            self.init_button.setEnabled(True)
+            self.stop_measure()
         else:
-            self.isRunning = True
-            self.start_btn.setText("Stop")
-            self.single_btn.setEnabled(False)
-            self.init_button.setEnabled(False)
-            # self.measure()
-            # while self.isRunning:
-            #     self.measure()
-            #     QtWidgets.QApplication.processEvents()
+            self.start_measure()
+
+    def stop_measure(self):
+        self.timer.stop()
+        self.stop_device()
+
+        self.isRunning = False
+        self.start_btn.setText("Start")
+        self.single_btn.setEnabled(True)
+        self.init_button.setEnabled(True)
+
+    def start_measure(self):
+        self.timer.start(500)
+        self.isRunning = True
+        self.start_btn.setText("Stop")
+        self.single_btn.setEnabled(False)
+        self.init_button.setEnabled(False)
