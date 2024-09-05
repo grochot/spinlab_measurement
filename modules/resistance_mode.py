@@ -21,11 +21,12 @@ from hardware.rotation_stage_dummy import RotationStageDummy
 from logic.vector import Vector
 from logic.sweep_field_to_zero import sweep_field_to_zero 
 from logic.sweep_field_to_value import sweep_field_to_value
+from hardware.esp300_simple import Esp300
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
 
 class ResistanceMode():
-    def __init__(self, vector:str, fourpoints:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool,return_the_rotationstation:bool, address_sourcemeter:str, address_multimeter:str, address_gaussmeter:str, address_switch:str,address_automaticstation, delay_field:float, delay_lockin:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float, rotation_axis:str, rotation_polar_constant:float, rotation_azimuth_constant:float,set_polar_angle,set_azimuthal_angle,global_xyname) -> None:   
+    def __init__(self, vector:str, fourpoints:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool,return_the_rotationstation:bool, address_sourcemeter:str, address_multimeter:str, address_gaussmeter:str, address_switch:str,address_automaticstation, delay_field:float, delay_lockin:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float, rotation_axis:str, rotation_polar_constant:float, rotation_azimuth_constant:float,set_polar_angle,set_azimuthal_angle,global_xyname,disconnect_length) -> None:   
         ## parameter initialization 
         self.sourcemeter = sourcemeter
         self.multimeter = multimeter
@@ -73,6 +74,7 @@ class ResistanceMode():
         self.set_polar_angle=set_polar_angle
         self.set_azimuthal_angle=set_azimuthal_angle
         self.global_xyname=global_xyname
+        self.disconnect_length=disconnect_length
         
         
     def generate_points(self):
@@ -189,8 +191,18 @@ class ResistanceMode():
 
         #MotionDriver
         if self.automaticstation:
-            pass
-            #print("drive_to:",self.global_xyname)
+            self.MotionDriver=Esp300()
+            self.z_pos=self.MotionDriver.pos_1()
+
+            self.MotionDriver.goTo_1(self.z_pos-self.disconnect_length) #Disconnecting
+            
+            self.MotionDriver.goTo_2(float(self.global_xyname[0]))
+            self.MotionDriver.goTo_3(float(self.global_xyname[1]))
+
+            self.MotionDriver.goTo_1(self.z_pos) #Connecting
+
+
+            
 
 
 
