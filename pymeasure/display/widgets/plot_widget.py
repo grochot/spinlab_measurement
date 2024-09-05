@@ -112,10 +112,11 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
                              wdg=self,
                              x=self.plot_frame.x_axis,
                              y=self.plot_frame.y_axis,
+                             symbol='o',
+                             symbolPen=color,
+                             symbolBrush=color,
                              **kwargs,
                              )
-        curve.setSymbol("o")
-        curve.setSymbolBrush(color)
         return curve
 
     def update_x_column(self, index):

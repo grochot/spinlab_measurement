@@ -58,6 +58,8 @@ class ResultsCurve(pg.PlotDataItem):
 
     def set_color(self, color):
         self.pen.setColor(color)
+        self.opts['symbolPen'] = color
+        self.opts['symbolBrush'] = color
         self.color = self.opts['pen'].color()
         self.updateItems(styleUpdate=True)
 
