@@ -91,7 +91,8 @@ class EstimatorWidget(QtWidgets.QWidget):
 
         self.update_estimates()
 
-        self.update_box.setCheckState(QtCore.Qt.CheckState.PartiallyChecked)
+        # self.update_box.setCheckState(QtCore.Qt.CheckState.PartiallyChecked)
+        self.update_box.setCheckState(QtCore.Qt.CheckState.Unchecked)
 
     def check_get_estimates_signature(self):
         """ Method that checks the signature of the get_estimates function.

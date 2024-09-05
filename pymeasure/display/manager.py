@@ -25,6 +25,7 @@
 import logging
 
 from os.path import basename
+from os import unlink
 
 from .Qt import QtCore
 from .listeners import Monitor
@@ -193,6 +194,17 @@ class BaseManager(QtCore.QObject):
         """
         for experiment in self.experiments[:]:
             self.remove(experiment)
+            
+    def clear_filtered(self, status, delete=False):
+        """ Remove all Experiments that match the status
+        """
+
+        for experiment in self.experiments[:]:
+            if experiment.procedure.status in status:
+                self.remove(experiment)
+                if delete:
+                    unlink(experiment.data_filename)
+                
 
     def next(self):
         """ Initiates the start of the next experiment in the queue as long
