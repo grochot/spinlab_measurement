@@ -22,6 +22,7 @@ from logic.vector import Vector
 from logic.sweep_field_to_zero import sweep_field_to_zero 
 from logic.sweep_field_to_value import sweep_field_to_value
 from hardware.esp300_simple import Esp300
+from hardware.dummy_motion_driver import DummyMotionDriver
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
 
@@ -191,7 +192,11 @@ class ResistanceMode():
 
         #MotionDriver
         if self.automaticstation:
-            self.MotionDriver=Esp300()
+            if self.address_automaticstation=='None':
+                self.MotionDriver=DummyMotionDriver("sth")
+            else:
+                pass
+                self.MotionDriver=Esp300(self.address_automaticstation)
             self.z_pos=self.MotionDriver.pos_1()
 
             self.MotionDriver.goTo_1(self.z_pos-self.disconnect_length) #Disconnecting

@@ -170,8 +170,13 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         #self.theta_textbox=QtWidgets.QLineEdit(self)
         #self.theta_read_button=QtWidgets.QPushButton('Calculate', self)
 
+        self.name_patern_name=QtWidgets.QLabel('Name pattern')
+        self.name_patern_textbox=QtWidgets.QLineEdit(self)
+        self.name_patern_textbox.setToolTip("{col} - column marker (number) \n{col_char} - column marker (char) \n{row} - row marker (number) \n{row_char} - row marker (char)")
+
         self.generate_map_button=QtWidgets.QPushButton('Generate sequence', self)
         self.generate_map_button.clicked.connect(partial(self.generate_sequence,))
+
 
 
         #Devices connection
@@ -196,8 +201,9 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         dy_calculation=float(self.dy_calculation_textbox.text())
         last_element_x=float(self.last_element_x_textbox.text())
         last_element_y=float(self.last_element_y_textbox.text())
+        name_pattern=self.name_patern_textbox.text()
 
-        gc=generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y)
+        gc=generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y,name_pattern)
 
         self.theta_name.setText(str("Calculated theta angle {0} [rad]".format(gc['theta'])))
 
@@ -330,7 +336,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
 
         #main part of widget
-        N=12
+        N=13
         row_n = [QtWidgets.QHBoxLayout() for i in range(N)]
 
         col_name =[QtWidgets.QVBoxLayout() for i in range(N)]
@@ -372,7 +378,9 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         col_name[10].addWidget(self.theta_name)
         #col_field[7].addWidget(self.last_element_x_textbox)
         #col_button[8].addWidget(self.theta_read_button)
-        col_field[11].addWidget(self.generate_map_button)
+        col_name[11].addWidget(self.name_patern_name)
+        col_field[11].addWidget(self.name_patern_textbox)
+        col_field[12].addWidget(self.generate_map_button)
 
         for i in range(N):
             row_n[i].addLayout(col_name[i])

@@ -22,5 +22,11 @@ class DummyMotionDriver:
     def goTo_1(self,position):
         print("go_to1",position)
 
+    def goTo_2(self,position):
+        print("go_to2",position)
+
+    def goTo_3(self,position):
+        print("go_to3",position)
+
     def pos_1(self):
         return 0.387

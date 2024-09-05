@@ -623,10 +623,12 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 filename = unique_filename(
                     self.directory,
                     prefix=self.file_input.filename_base,
+                    suffix='_{0}_{1}'.format(procedure.mode,procedure.global_xyname[2]) if procedure.set_automaticstation else '_{0}'.format(procedure.mode),
                     datetimeformat="",
                     procedure=procedure,
                     ext=self.file_input.filename_extension,
                 )
+                print("filename-queue",filename)
             except KeyError as E:
                 if not E.args[0].startswith("The following placeholder-keys are not valid:"):
                     raise E from None

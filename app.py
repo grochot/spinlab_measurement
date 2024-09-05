@@ -333,10 +333,12 @@ class MainWindow(ManagedDockWindow):
             
         )
        
+        print("procedure_class",self.procedure_class.global_xyname)
+        #self.suffix="A"
         self.setWindowTitle('SpinLabAPP v.1.00')
         self.directory = self.procedure_class.path_file.ReadFile()
         self.filename = self.procedure_class.parameters_from_file["sample_name"]
-        print("self.filename",self.filename)
+        print("filename-program",self.filename)
         self.store_measurement = False                              # Controls the 'Save data' toggle
         self.file_input.extensions = ["csv", "txt", "data"]         # Sets recognized extensions, first entry is the default extension
         self.file_input.filename_fixed = False    
@@ -375,6 +377,7 @@ class MainWindow(ManagedDockWindow):
         self.inputs.sample_name.setValue(value)
     
     def filename_getter(self):
+        print("filename_getter",self.file_input.filename)
         return self.file_input.filename
 
     # def queue(self, procedure=None):

@@ -20,9 +20,9 @@ import core
 class Esp300(Base):
     # Enable Visa port
     rm = visa.ResourceManager()
-    my_instrument = rm.open_resource('GPIB0::20::INSTR')
+    #my_instrument = rm.open_resource('GPIB0::20::INSTR')
     # del my_instrument.timeout
-    _address = 'GPIB0::20::INSTR'
+    #_address = 'GPIB0::20::INSTR'
 
 
     # init

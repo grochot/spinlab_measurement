@@ -5,16 +5,17 @@ import time
 
 class Esp300():
     # Enable Visa port
-    rm = visa.ResourceManager()
-    address='GPIB0::20::INSTR'
-    my_instrument = rm.open_resource(address)
+    
+    #address='GPIB0::20::INSTR'
+    #my_instrument = rm.open_resource(address)
 
 
     # init
-    def __init__(self,**kwargs):
+    def __init__(self,address,**kwargs):
         super().__init__(**kwargs)
         self.timeout = 2
-        print("ESP300_simple.py, Connected")
+        rm = visa.ResourceManager()
+        self.my_instrument = rm.open_resource(address)
         
         
 
@@ -101,10 +102,10 @@ class Esp300():
             units = self.last_position
         return units
 
-if __name__ == "__main__":
-    dev=Esp300()
-    dev.enable()
-    dev.goTo_1(0.15)
-    dev.goTo_2(0.45)
-    dev.goTo_3(0.35)
-    dev.disable()
+#if __name__ == "__main__":
+    #dev=Esp300()
+    #dev.enable()
+    #dev.goTo_1(0.15)
+    #dev.goTo_2(0.45)
+    #dev.goTo_3(0.35)
+    #dev.disable()
