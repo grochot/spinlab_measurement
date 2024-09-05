@@ -28,7 +28,7 @@
     "address_generator": "None",
     "address_lfgen": "None",
     "address_pulsegenerator": "None",
-    "address_automaticstation": "ASRL10::INSTR",
+    "address_automaticstation": "GPIB0::20::INSTR",
     "sourcemter_source": "CURR",
     "sourcemeter_compliance": 0.5,
     "sourcemeter_channel": "Channel A",

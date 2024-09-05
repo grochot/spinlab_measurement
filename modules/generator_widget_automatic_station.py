@@ -184,7 +184,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
     def make_connection_with_devices(self):
         if self.drive_motion_adresses_combo.currentText()!="None":
-            self.MotionDriver=Esp300()
+            self.MotionDriver=Esp300(self.drive_motion_adresses_combo.currentText())
             self.z_pos=self.MotionDriver.pos_1()
         else:
             self.MotionDriver=DummyMotionDriver(self.drive_motion_adresses_combo.currentText())
