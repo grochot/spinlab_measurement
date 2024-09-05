@@ -1,3 +1,7 @@
+-"dy" ma miec minusa bo takie jest odzworowani ruchu inaczje jedzie w zla srone
+-popraw dzialanie name patern tak by uwzglednial ze zaczynamy od innego eelementu np 3,3
+
+
 -Przerobic te kolumny w "#main part widget" na grid
 -Sample in plane (jak przetestujesz czy dzuala ok tp stare)
 -Zrob zeby wywalal blad gdy esp300 sie nie polaczy
