@@ -115,6 +115,7 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
                              symbol='o',
                              symbolPen=color,
                              symbolBrush=color,
+                             symbolSize=5,
                              **kwargs,
                              )
         return curve
