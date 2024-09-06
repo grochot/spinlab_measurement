@@ -30,3 +30,13 @@ class DummyMotionDriver:
 
     def pos_1(self):
         return 0.387
+
+
+    def is_motor_1_active(self):
+        return 1
+    
+    def is_motor_2_active(self):
+        return 1
+    
+    def is_motor_3_active(self):
+        return 1

@@ -103,6 +103,15 @@ class Esp300():
         return units
     
 
+    def is_motor_1_active(self):
+        return self.ask("1MO?")
+    
+    def is_motor_2_active(self):
+        return self.ask("2MO?")
+    
+    def is_motor_3_active(self):
+        return self.ask("3MO?")
+
     def test(self):
         print("work mo",self.ask("2MO?"))
 

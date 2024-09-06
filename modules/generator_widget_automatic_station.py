@@ -93,10 +93,10 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.update_led_indicator(False)
         self.connect_checkable_button.toggled.connect(self.update_led_indicator)
 
-        self.enable_motors_checkable_button= QtWidgets.QPushButton("Disabled")
-        self.enable_motors_checkable_button.setCheckable(True)
-        self.enable_motors_function(False)
-        self.enable_motors_checkable_button.toggled.connect(self.enable_motors_function)
+        self.enable_motors_checkable_button= QtWidgets.QPushButton("NO INFO")
+        #self.enable_motors_checkable_button.setCheckable(True)
+        #self.enable_motors_function(False)
+        self.enable_motors_checkable_button.clicked.connect(self.enable_motors_function)
         self.enable_motors_checkable_label=QtWidgets.QLabel("Enable or disable motors")
 
         self.go_x_textbox=QtWidgets.QLineEdit()
@@ -241,20 +241,11 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
                 write_axes2.setText(str(self.MotionDriver.pos_3()))
 
 
-    def calculate_dx_dy(self,f_x,f_y,s_x,s_y,dx_calculation_textbox,dy_calculation_textbox):
-        #print("to dostałem:",self.first_element_x_textbox.text())
-
-        dx=float(self.second_element_x_textbox.text())-float(self.first_element_x_textbox.text())
-        dy=float(self.second_element_y_textbox.text())-float(self.first_element_y_textbox.text())
-        dx_calculation_textbox.setText(str(dx))
-        dy_calculation_textbox.setText(str(dy))
-
-
 
     
     
     def update_led_indicator(self, checked):
-        if checked:
+        if checked and self.enable_motors_checkable_button:
             self.led_indicator_label.setStyleSheet("background-color: green; border-radius: 10px;")
             self.connect_checkable_button.setText("Connect")
             self.MotionDriver.goTo_1(self.z_pos-float(self.make_connection_textbox.text()))
@@ -265,13 +256,16 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
             self.MotionDriver.goTo_1(self.z_pos)
     
     def enable_motors_function(self, checked):
-        if checked:
-            self.MotionDriver.enable()
-            self.enable_motors_checkable_button.setText("Disable")
+        
+        motor_status=self.MotionDriver.is_motor_1_active()*self.MotionDriver.is_motor_2_active()*self.MotionDriver.is_motor_3_active()
+
+        if motor_status:
+            self.MotionDriver.disable()
+            self.enable_motors_checkable_button.setText("Enable")
             
         else:
-            self.MotionDriver.disable() #to ma byc negacja tekstu wysietlanego na ekranie, wtedy jest dobrze.
-            self.enable_motors_checkable_button.setText("Enable")
+            self.MotionDriver.enable() #to ma byc negacja tekstu wysietlanego na ekranie, wtedy jest dobrze.
+            self.enable_motors_checkable_button.setText("Disable")
     
 
     def connect_disconnect(self,plane):
