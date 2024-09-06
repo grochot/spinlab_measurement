@@ -22,7 +22,7 @@ def generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_ax
 	move_vectors_prim=np.zeros((number_of_element_in_the_x_axis*number_of_element_in_the_y_axis,2))
 	
 	x_moves=0*first_element_x+np.arange(0,number_of_element_in_the_x_axis,1)*dx_calculation #tutaj jest terz przejscie do ukladu wlasnego
-	y_moves=0*first_element_y+np.arange(0,number_of_element_in_the_y_axis,1)*dy_calculation
+	y_moves=0*first_element_y+np.arange(0,number_of_element_in_the_y_axis,1)*(-1*dy_calculation)
 	
 	theta=np.arcsin((last_element_y-first_element_y)/(last_element_x-first_element_x))
 	   
