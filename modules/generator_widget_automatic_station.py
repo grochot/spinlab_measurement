@@ -326,68 +326,56 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout.addWidget(self.go_z_textbox, 2, 5)
 
         grid_layout.addWidget(self.go_button, 1, 6)
-
-
-
-
-
-
         layout.addLayout(grid_layout)
 
-
+        line=QtWidgets.QFrame()
+        line.setFrameShape(QtWidgets.QFrame.HLine)
+        line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        layout.addWidget(line)
+        
         #main part of widget
-        N=13
-        row_n = [QtWidgets.QHBoxLayout() for i in range(N)]
+        grid_layout2=QtWidgets.QGridLayout()
 
-        col_name =[QtWidgets.QVBoxLayout() for i in range(N)]
-        col_field=[QtWidgets.QVBoxLayout() for i in range(N)]
-        col_button=[QtWidgets.QVBoxLayout() for i in range(N)]
+        grid_layout2.addWidget(self.number_of_element_in_the_x_axis_name, 0, 0)
+        grid_layout2.addWidget(self.number_of_element_in_the_x_axis_textbox,0,1)
+
+        grid_layout2.addWidget(self.number_of_element_in_the_y_axis_name,1,0)
+        grid_layout2.addWidget(self.number_of_element_in_the_y_axis_textbox,1,1)
+
+        grid_layout2.addWidget(self.first_element_x_name,2,0)
+        grid_layout2.addWidget(self.first_element_x_textbox,2,1)
+
+        grid_layout2.addWidget(self.first_element_y_name,3,0)
+        grid_layout2.addWidget(self.first_element_y_textbox,3,1)
+        grid_layout2.addWidget(self.first_element_xy_read_button,3,2)
+
+        grid_layout2.addWidget(self.dx_calculation_name,4,0)
+        grid_layout2.addWidget(self.dx_calculation_textbox,4,1)
+
+        grid_layout2.addWidget(self.dy_calculation_name,5,0)
+        grid_layout2.addWidget(self.dy_calculation_textbox,5,1)
+
+
+        grid_layout2.addWidget(self.last_element_x_name,6,0)
+        grid_layout2.addWidget(self.last_element_x_textbox,6,1)
+
+        grid_layout2.addWidget(self.last_element_y_name,7,0)
+        grid_layout2.addWidget(self.last_element_y_textbox,7,1)
+        grid_layout2.addWidget(self.last_element_xy_read_button,7,2)
+
+
+        grid_layout2.addWidget(self.theta_name,8,0)
         
-        # col_button=[None if i in {0,2,4,8} else QtWidgets.QVBoxLayout() for i in range(N)]
+        grid_layout2.addWidget(self.name_patern_name,9,0)
+        grid_layout2.addWidget(self.name_patern_textbox,9,1)
 
-        
-        col_name[0].addWidget(self.number_of_element_in_the_x_axis_name)
-        col_field[0].addWidget(self.number_of_element_in_the_x_axis_textbox)
+        grid_layout2.addWidget(self.generate_map_button,10,1)
 
-        col_name[1].addWidget(self.number_of_element_in_the_y_axis_name)
-        col_field[1].addWidget(self.number_of_element_in_the_y_axis_textbox)
 
-        col_name[2].addWidget(self.first_element_x_name)
-        col_field[2].addWidget(self.first_element_x_textbox)
-        #col_button[0].addWidget(self.first_element_x_read_button)
-        col_name[3].addWidget(self.first_element_y_name)
-        col_field[3].addWidget(self.first_element_y_textbox)
-        col_button[3].addWidget(self.first_element_xy_read_button)
-        #col_name[4].addWidget(self.second_element_x_name)
-        #col_field[4].addWidget(self.second_element_x_textbox)
-        #col_button[4].addWidget(self.second_element_x_read_button)
-        #col_name[5].addWidget(self.second_element_y_name)
-        #col_field[5].addWidget(self.second_element_y_textbox)
-        #col_button[5].addWidget(self.second_element_xy_read_button)
-        col_name[6].addWidget(self.dx_calculation_name)
-        col_field[6].addWidget(self.dx_calculation_textbox)
-        #col_button[4].addWidget(self.dx_calculation_read_button)
-        col_name[7].addWidget(self.dy_calculation_name)
-        col_field[7].addWidget(self.dy_calculation_textbox)
-        #col_button[7].addWidget(self.dx_dy_calculation_calc_button)
-        col_name[8].addWidget(self.last_element_x_name)
-        col_field[8].addWidget(self.last_element_x_textbox)
-        col_name[9].addWidget(self.last_element_y_name)
-        col_field[9].addWidget(self.last_element_y_textbox)
-        col_button[9].addWidget(self.last_element_xy_read_button)
-        col_name[10].addWidget(self.theta_name)
-        #col_field[7].addWidget(self.last_element_x_textbox)
-        #col_button[8].addWidget(self.theta_read_button)
-        col_name[11].addWidget(self.name_patern_name)
-        col_field[11].addWidget(self.name_patern_textbox)
-        col_field[12].addWidget(self.generate_map_button)
 
-        for i in range(N):
-            row_n[i].addLayout(col_name[i])
-            row_n[i].addLayout(col_field[i])
-            row_n[i].addLayout(col_button[i])
-            layout.addLayout(row_n[i]) #tutaj juz ma odzwierciedlenie w wygladzie
 
+
+        layout.addLayout(grid_layout2)
 
 
 
