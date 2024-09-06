@@ -101,9 +101,14 @@ class Esp300():
             print("ERROR while reading position on axis Y!")
             units = self.last_position
         return units
+    
 
-#if __name__ == "__main__":
-    #dev=Esp300()
+    def test(self):
+        print("work mo",self.ask("2MO?"))
+
+if __name__ == "__main__":
+    dev=Esp300("GPIB0::20::INSTR")
+    dev.test()
     #dev.enable()
     #dev.goTo_1(0.15)
     #dev.goTo_2(0.45)
