@@ -12,7 +12,7 @@ class Esp300():
 
     # init
     def __init__(self,address,**kwargs):
-        super().__init__(**kwargs)
+        #super().__init__(**kwargs)
         self.timeout = 2
         rm = visa.ResourceManager()
         self.my_instrument = rm.open_resource(address)
