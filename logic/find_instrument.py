@@ -46,10 +46,10 @@ class FindInstrument():
     
         self.tup = self.rm.list_resources()
         self.lista = list(self.tup)
-        system = nidaqmx.system.System.local()
-        for device in system.devices:
-            for channel in device.ao_physical_chans:
-                self.lista.append(channel.name)
+        #system = nidaqmx.system.System.local()
+        #for device in system.devices:
+        #    for channel in device.ao_physical_chans:
+        #        self.lista.append(channel.name)
         self.lista.append("None")
         return self.lista
 

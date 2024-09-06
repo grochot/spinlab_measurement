@@ -1,7 +1,7 @@
 import pyvisa as visa
 from pymeasure.display.Qt import QtCore, QtWidgets, QtGui
 import sys
-#sys.path.append("/home/mariusz/moje_pliki/programowanie/python/spinlab_measurement/")
+sys.path.append("/home/mariusz/moje_pliki/programowanie/python/spinlab_measurement/")
 sys.path.append("C:\\Users\\IE\\git\\spinlab_measurement")
 from logic.find_instrument import FindInstrument
 from hardware.dummy_motion_driver import DummyMotionDriver

@@ -1,4 +1,4 @@
--"dy" ma miec minusa bo takie jest odzworowani ruchu inaczje jedzie w zla srone
+#-"dy" ma miec minusa bo takie jest odzworowani ruchu inaczje jedzie w zla srone
 -popraw dzialanie name patern tak by uwzglednial ze zaczynamy od innego eelementu np 3,3
 -enallbe/disable ma odczytywac stan z urzadzenia a nie samo sie negowac
 dodaj przycisk read obok go tak aby odczytywac sobiue pozycje i ja delikatnie potem recznie zmieniac

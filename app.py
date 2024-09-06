@@ -34,7 +34,8 @@ from datetime import timedelta
 
 from modules.control_widget_water_cooler import WaterCoolerControl
 from modules.control_widget_lakeshore336 import Lakeshore336Control
-from modules.control_widget_camera import CameraControl
+#from modules.control_widget_camera import CameraControl
+from modules.generator_widget_automatic_station import AutomaticStationGenerator
 
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
@@ -329,7 +330,7 @@ class MainWindow(ManagedDockWindow):
             
             sequencer_inputs=['constant_field_value',"generator_frequency", "kriostat_temperature", 'global_xyname'],
             inputs_in_scrollarea=True,
-            ext_devices = [CameraControl, WaterCoolerControl, Lakeshore336Control],
+            ext_devices = [AutomaticStationGenerator] #[CameraControl, WaterCoolerControl, Lakeshore336Control],
             
         )
        
