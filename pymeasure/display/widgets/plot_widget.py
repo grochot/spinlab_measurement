@@ -126,9 +126,11 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
     
     def enlarge_point(self, curve, spots):
         for point in curve.scatter.points():
+            point.setSymbol('o')
             point.setSize(5)
         
         for spot in spots:
+            spot.setSymbol('x')
             spot.setSize(10)
     
     def remove_point(self, curve, spots):
