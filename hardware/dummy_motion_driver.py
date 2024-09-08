@@ -5,13 +5,13 @@ class DummyMotionDriver:
         pass
 
     def pos_1(self):
-        return rd.random()
+        return 0.387
 
     def pos_2(self):
-        return rd.random()
+        return round(rd.random(),5)
 
     def pos_3(self):
-        return rd.random()
+        return round(rd.random(),5)
     
     def enable(self):
         print("Enabled")
@@ -27,10 +27,6 @@ class DummyMotionDriver:
 
     def goTo_3(self,position):
         print("go_to3",position)
-
-    def pos_1(self):
-        return 0.387
-
 
     def is_motor_1_active(self):
         return 1

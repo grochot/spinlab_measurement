@@ -8,9 +8,9 @@ from hardware.dummy_motion_driver import DummyMotionDriver
 from hardware.esp300_simple import Esp300
 from hardware.keithley2400 import Keithley2400
 from functools import partial
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSettings
 from logic.map_generator import generate_coord
-
+import json
 
 class AutomaticStationGenerator(QtWidgets.QWidget):
     object_name = "automatic_station_generator"
@@ -49,7 +49,17 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.MotionDriver.goTo_1(self.go_z_textbox.text())
 
 
+    def read_for_go_button(self):
+        self.go_x_textbox.setText(str(self.MotionDriver.pos_2()))
+        self.go_y_textbox.setText(str(self.MotionDriver.pos_3()))
+        self.go_z_textbox.setText(str(self.MotionDriver.pos_1()))
+
+
     def _setup_ui(self):
+        settings_file = 'automatic_station_generator_settings.ini'  # Możesz tutaj podać pełną ścieżkę np. '/path/to/my_custom_settings.ini'
+        self.settings = QSettings(settings_file, QSettings.IniFormat)
+        
+
         self.MotionDriver=DummyMotionDriver("trash")
         self.z_pos=self.MotionDriver.pos_1()
         print(self.z_pos)
@@ -81,7 +91,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         self.make_connection_label=QtWidgets.QLabel('connect distance [mm]')
         self.make_connection_textbox=QtWidgets.QLineEdit(self)
-        self.make_connection_textbox.setText("0")
+        #self.make_connection_textbox.setText("0")
         self.make_connection_textbox.setFixedSize(100,20)
         self.make_connection_textbox.setAlignment(Qt.AlignLeft)
 
@@ -90,8 +100,8 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.led_indicator_label=QtWidgets.QLabel()
         self.led_indicator_label.setFixedSize(35,35)
         self.led_indicator_label.setAlignment(Qt.AlignCenter)
-        self.update_led_indicator(False)
-        self.connect_checkable_button.toggled.connect(self.update_led_indicator)
+        self.connect_with_sample(False)
+        self.connect_checkable_button.toggled.connect(self.connect_with_sample)
 
         self.enable_motors_checkable_button= QtWidgets.QPushButton("NO INFO")
         #self.enable_motors_checkable_button.setCheckable(True)
@@ -108,6 +118,12 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         self.go_button=QtWidgets.QPushButton("GO")
         self.go_button.clicked.connect(self.go)
+
+        self.read_for_go_button_button=QtWidgets.QPushButton("Read")
+        self.read_for_go_button_button.clicked.connect(self.read_for_go_button)
+
+
+
 
 
 
@@ -174,21 +190,87 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.name_patern_textbox=QtWidgets.QLineEdit(self)
         self.name_patern_textbox.setToolTip("{col} - column marker (number) \n{col_char} - column marker (char) \n{row} - row marker (number) \n{row_char} - row marker (char)")
 
+        self.initial_row_name=QtWidgets.QLabel('First row')
+        self.initial_row_textbox=QtWidgets.QLineEdit(self)
+        self.initial_row_textbox.setToolTip("Type column of element which you start")
+
+        self.initial_column_name=QtWidgets.QLabel('First column')
+        self.initial_column_textbox=QtWidgets.QLineEdit(self)
+        self.initial_column_textbox.setToolTip("Type column of element which you start")
+
+
+
         self.generate_map_button=QtWidgets.QPushButton('Generate sequence', self)
-        self.generate_map_button.clicked.connect(partial(self.generate_sequence,))
+        self.generate_map_button.clicked.connect(self.generate_sequence)
 
 
 
         #Devices connection
         self.make_connection_with_devices_button.clicked.connect(self.make_connection_with_devices)
 
+
+        self.load_settings()
+        
+    def save_settings(self):
+        # Zapisanie wartości do QSettings
+        self.settings.setValue('drive_motion_adresses_combo', self.drive_motion_adresses_combo.currentIndex())
+        self.settings.setValue('make_connection_textbox', self.make_connection_textbox.text())
+
+        self.settings.setValue('first_element_x_textbox', self.first_element_x_textbox.text())
+        self.settings.setValue('first_element_y_textbox', self.first_element_y_textbox.text())
+        self.settings.setValue('number_of_element_in_the_x_axis_textbox', self.number_of_element_in_the_x_axis_textbox.text())
+        self.settings.setValue('number_of_element_in_the_y_axis_textbox', self.number_of_element_in_the_y_axis_textbox.text())
+        self.settings.setValue('dx_calculation_textbox', self.dx_calculation_textbox.text())
+        self.settings.setValue('dy_calculation_textbox', self.dy_calculation_textbox.text())
+        self.settings.setValue('last_element_x_textbox', self.last_element_x_textbox.text())
+        self.settings.setValue('last_element_y_textbox', self.last_element_y_textbox.text())
+        self.settings.setValue('name_patern_textbox', self.name_patern_textbox.text())
+        self.settings.setValue('initial_row_textbox', self.initial_row_textbox.text())
+        self.settings.setValue('initial_column_textbox', self.initial_column_textbox.text())
+      
+
+    def load_settings(self):
+        self.drive_motion_adresses_combo.setCurrentIndex(int(self.settings.value('drive_motion_adresses_combo', 0)))
+        self.make_connection_textbox.setText(self.settings.value('make_connection_textbox', ''))
+
+        self.first_element_x_textbox.setText(self.settings.value('first_element_x_textbox', ''))
+        self.first_element_y_textbox.setText(self.settings.value('first_element_y_textbox', ''))
+        self.number_of_element_in_the_x_axis_textbox.setText(self.settings.value('number_of_element_in_the_x_axis_textbox', ''))
+        self.number_of_element_in_the_y_axis_textbox.setText(self.settings.value('number_of_element_in_the_y_axis_textbox', ''))
+        self.dx_calculation_textbox.setText(self.settings.value('dx_calculation_textbox', ''))
+        self.dy_calculation_textbox.setText(self.settings.value('dy_calculation_textbox', ''))
+        self.last_element_x_textbox.setText(self.settings.value('last_element_x_textbox', ''))
+        self.last_element_y_textbox.setText(self.settings.value('last_element_y_textbox', ''))
+        self.name_patern_textbox.setText(self.settings.value('name_patern_textbox', ''))
+        self.initial_row_textbox.setText(self.settings.value('initial_row_textbox', ''))
+        self.initial_column_textbox.setText(self.settings.value('initial_column_textbox', ''))
+
+
+
+    def closeEvent(self, event):
+        self.save_settings()  # Zapisanie ustawień
+        event.accept() 
+
+
+
+
+    def get_motor_status(self):
+        return self.MotionDriver.is_motor_1_active()*self.MotionDriver.is_motor_2_active()*self.MotionDriver.is_motor_3_active()
+
     def make_connection_with_devices(self):
         if self.drive_motion_adresses_combo.currentText()!="None":
             self.MotionDriver=Esp300(self.drive_motion_adresses_combo.currentText())
-            self.z_pos=self.MotionDriver.pos_1()
         else:
             self.MotionDriver=DummyMotionDriver(self.drive_motion_adresses_combo.currentText())
             print("DummyMotionDriver")
+
+        self.read_for_go_button()
+        self.z_pos=self.MotionDriver.pos_1()
+        motor_status=self.get_motor_status()
+        if motor_status:
+            self.enable_motors_checkable_button.setText("Disable")
+        else:
+            self.enable_motors_checkable_button.setText("Enable")
 
 
 
@@ -202,8 +284,10 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         last_element_x=float(self.last_element_x_textbox.text())
         last_element_y=float(self.last_element_y_textbox.text())
         name_pattern=self.name_patern_textbox.text()
+        initial_column=self.initial_column_textbox.text()
+        initial_row=self.initial_row_textbox.text()
 
-        gc=generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y,name_pattern)
+        gc=generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y,name_pattern,initial_column,initial_row)
 
         self.theta_name.setText(str("Calculated theta angle {0} [rad]".format(gc['theta'])))
 
@@ -212,7 +296,11 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         with open('./example_sequence','w') as f:
             f.write(seq_vector)
-        
+
+        with open('../logic/parameters.json', 'a') as file:
+            data = json.load(file)
+            data['disconnect_length']=float(self.make_connection_textbox.text())
+            json.dump(data,file)
 
 
 
@@ -244,8 +332,8 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
     
     
-    def update_led_indicator(self, checked):
-        if checked and self.enable_motors_checkable_button:
+    def connect_with_sample(self, checked):
+        if checked and self.get_motor_status():
             self.led_indicator_label.setStyleSheet("background-color: green; border-radius: 10px;")
             self.connect_checkable_button.setText("Connect")
             self.MotionDriver.goTo_1(self.z_pos-float(self.make_connection_textbox.text()))
@@ -257,15 +345,24 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
     
     def enable_motors_function(self, checked):
         
-        motor_status=self.MotionDriver.is_motor_1_active()*self.MotionDriver.is_motor_2_active()*self.MotionDriver.is_motor_3_active()
+        motor_status=self.get_motor_status()
 
         if motor_status:
             self.MotionDriver.disable()
-            self.enable_motors_checkable_button.setText("Enable")
+            #self.enable_motors_checkable_button.setText("Enable")
             
         else:
             self.MotionDriver.enable() #to ma byc negacja tekstu wysietlanego na ekranie, wtedy jest dobrze.
+            #self.enable_motors_checkable_button.setText("Disable")
+
+        motor_status=self.get_motor_status()
+
+        if motor_status:
             self.enable_motors_checkable_button.setText("Disable")
+        else:
+            self.enable_motors_checkable_button.setText("Enable")
+
+        
     
 
     def connect_disconnect(self,plane):
@@ -319,7 +416,8 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout.addWidget(self.go_y_textbox, 1, 5)
         grid_layout.addWidget(self.go_z_textbox, 2, 5)
 
-        grid_layout.addWidget(self.go_button, 1, 6)
+        grid_layout.addWidget(self.go_button, 2, 6)
+        grid_layout.addWidget(self.read_for_go_button_button,1,6)
         layout.addLayout(grid_layout)
 
         line=QtWidgets.QFrame()
@@ -363,7 +461,18 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout2.addWidget(self.name_patern_name,9,0)
         grid_layout2.addWidget(self.name_patern_textbox,9,1)
 
-        grid_layout2.addWidget(self.generate_map_button,10,1)
+
+
+        grid_layout2.addWidget(self.initial_row_name,10,0)
+        grid_layout2.addWidget(self.initial_row_textbox,10,1)
+
+        grid_layout2.addWidget(self.initial_column_name,11,0)
+        grid_layout2.addWidget(self.initial_column_textbox,11,1)
+
+
+
+
+        grid_layout2.addWidget(self.generate_map_button,12,1)
 
 
 
