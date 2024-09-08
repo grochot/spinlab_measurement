@@ -21,6 +21,7 @@ from ..PlotCurveItem import PlotCurveItem
 from ..PlotDataItem import PlotDataItem
 from ..ScatterPlotItem import ScatterPlotItem
 from ..ViewBox import ViewBox
+from packages.point_del_widget import PointDelWidget
 
 
 translate = QtCore.QCoreApplication.translate
@@ -247,6 +248,8 @@ class PlotItem(GraphicsWidget):
         self.ctrl.maxTracesCheck.toggled.connect(self._handle_max_traces_toggle)
         self.ctrl.forgetTracesCheck.toggled.connect(self.updateDecimation)
         self.ctrl.maxTracesSpin.valueChanged.connect(self.updateDecimation)
+        
+        self.ctrl.deletePoints.clicked.connect(self.deletePoints)
         
         if labels is None:
             labels = {}
@@ -912,6 +915,10 @@ class PlotItem(GraphicsWidget):
 
     def widgetGroupInterface(self):
         return (None, PlotItem.saveState, PlotItem.restoreState)
+    
+    def deletePoints(self):
+        self.deletePointWidget = PointDelWidget()
+        self.deletePointWidget.show()
     
     def updateNormalizeMode(self, b=None):
         if b is None:

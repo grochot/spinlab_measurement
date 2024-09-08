@@ -74,6 +74,8 @@ class ResultsCurve(pg.PlotDataItem):
             new_xdata = np.delete(xdata, idx)
             new_ydata = np.delete(ydata, idx)
             self.setData(new_xdata, new_ydata)
+            
+            self.wdg.plot.deletePointWidget.pointDeleted(self, idx, spot)
 
 # TODO: Add method for changing x and y
 
