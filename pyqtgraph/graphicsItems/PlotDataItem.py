@@ -1198,7 +1198,7 @@ class PlotDataItem(GraphicsObject):
         if len(y) == 0:
             return x, y
         if np.max(y) == np.min(y):
-            return x, [0.5] * len(y)
+            return x, np.array([0.5] * len(y))
         return x, (y - np.min(y)) / (np.max(y) - np.min(y))
 
     def _fourierTransform(self, x, y):
