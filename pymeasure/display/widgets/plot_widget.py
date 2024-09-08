@@ -135,7 +135,7 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
     
     def remove_point(self, curve, spots):
         for spot in spots:
-            curve.remove_point_spot(spot)
+            curve.remove_point(spot)
 
     def update_x_column(self, index):
         axis = self.columns_x.itemText(index)
