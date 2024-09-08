@@ -118,6 +118,8 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
                              symbolSize=5,
                              **kwargs,
                              )
+        curve.setNormalize(self.plot.ctrl.normalizeCheck.isChecked())
+             
         return curve
 
     def update_x_column(self, index):
