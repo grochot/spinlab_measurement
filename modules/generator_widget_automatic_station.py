@@ -44,9 +44,15 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
 
     def go(self):
-        self.MotionDriver.goTo_2(self.go_x_textbox.text())
-        self.MotionDriver.goTo_3(self.go_y_textbox.text())
-        self.MotionDriver.goTo_1(self.go_z_textbox.text())
+
+        if self.sample_in_plane_checkbox.isChecked():
+            self.MotionDriver.goTo_2(self.go_x_textbox.text())
+            self.MotionDriver.goTo_1(self.go_y_textbox.text())
+            self.MotionDriver.goTo_3(self.go_z_textbox.text())
+        else:
+            self.MotionDriver.goTo_2(self.go_x_textbox.text())
+            self.MotionDriver.goTo_3(self.go_y_textbox.text())
+            self.MotionDriver.goTo_1(self.go_z_textbox.text())
 
 
     def read_for_go_button(self):
@@ -110,17 +116,20 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.enable_motors_checkable_label=QtWidgets.QLabel("Enable or disable motors")
 
         self.go_x_textbox=QtWidgets.QLineEdit()
-        self.go_x_textbox.setPlaceholderText('x')
         self.go_y_textbox=QtWidgets.QLineEdit()
-        self.go_y_textbox.setPlaceholderText('y')
         self.go_z_textbox=QtWidgets.QLineEdit()
-        self.go_z_textbox.setPlaceholderText('z')
+
+        self.go_x_name=QtWidgets.QLabel('x [mm]')
+        self.go_y_name=QtWidgets.QLabel('y [mm]')
+        self.go_z_name=QtWidgets.QLabel('z [mm]')
 
         self.go_button=QtWidgets.QPushButton("GO")
         self.go_button.clicked.connect(self.go)
 
         self.read_for_go_button_button=QtWidgets.QPushButton("Read")
         self.read_for_go_button_button.clicked.connect(self.read_for_go_button)
+
+        self.sample_in_plane_checkbox=QtWidgets.QCheckBox("Sample in plane")
 
 
 
@@ -182,7 +191,8 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.last_element_xy_read_button=QtWidgets.QPushButton('Read', self)
         self.last_element_xy_read_button.clicked.connect(partial(self.read_coordinates,"xy",self.last_element_x_textbox,self.last_element_y_textbox))
 
-        self.theta_name=QtWidgets.QLabel('Calculated theta angle ??')
+        self.theta_name=QtWidgets.QLabel('Calculated theta angle')
+        self.theta_value_name=QtWidgets.QLabel('??')
         #self.theta_textbox=QtWidgets.QLineEdit(self)
         #self.theta_read_button=QtWidgets.QPushButton('Calculate', self)
 
@@ -215,6 +225,8 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         # Zapisanie wartości do QSettings
         self.settings.setValue('drive_motion_adresses_combo', self.drive_motion_adresses_combo.currentIndex())
         self.settings.setValue('make_connection_textbox', self.make_connection_textbox.text())
+        self.settings.setValue('sample_in_plane_checkbox', self.sample_in_plane_checkbox.isChecked())
+       
 
         self.settings.setValue('first_element_x_textbox', self.first_element_x_textbox.text())
         self.settings.setValue('first_element_y_textbox', self.first_element_y_textbox.text())
@@ -232,6 +244,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
     def load_settings(self):
         self.drive_motion_adresses_combo.setCurrentIndex(int(self.settings.value('drive_motion_adresses_combo', 0)))
         self.make_connection_textbox.setText(self.settings.value('make_connection_textbox', ''))
+        self.sample_in_plane_checkbox.setChecked(self.settings.value('sample_in_plane_checkbox', '').lower()=="true")
 
         self.first_element_x_textbox.setText(self.settings.value('first_element_x_textbox', ''))
         self.first_element_y_textbox.setText(self.settings.value('first_element_y_textbox', ''))
@@ -289,7 +302,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         gc=generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y,name_pattern,initial_column,initial_row)
 
-        self.theta_name.setText(str("Calculated theta angle {0} [rad]".format(gc['theta'])))
+        self.theta_value_name.setText(str("{0} [rad]".format(gc['theta'])))
 
         #sequence generation
         seq_vector='- "Global "[x,y,name]"", "{0}"'.format(gc['move_vectors_prim'])
@@ -297,10 +310,16 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         with open('./example_sequence','w') as f:
             f.write(seq_vector)
 
-        with open('../logic/parameters.json', 'a') as file:
+        #data migration
+        with open('./logic/parameters.json', 'r+') as file:
             data = json.load(file)
             data['disconnect_length']=float(self.make_connection_textbox.text())
-            json.dump(data,file)
+            data['sample_in_plane']=float(self.sample_in_plane_checkbox.isChecked())
+            file.seek(0)
+            json.dump(data,file,indent=4)
+            file.truncate()
+
+            
 
 
 
@@ -412,12 +431,20 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout.addWidget(self.enable_motors_checkable_button, 0, 4)
         grid_layout.addWidget(self.enable_motors_checkable_label, 1, 4)
 
-        grid_layout.addWidget(self.go_x_textbox, 0, 5)
-        grid_layout.addWidget(self.go_y_textbox, 1, 5)
-        grid_layout.addWidget(self.go_z_textbox, 2, 5)
+        grid_layout.addWidget(self.go_x_name, 0, 5)
+        grid_layout.addWidget(self.go_y_name, 1, 5)
+        grid_layout.addWidget(self.go_z_name, 2, 5)
 
-        grid_layout.addWidget(self.go_button, 2, 6)
-        grid_layout.addWidget(self.read_for_go_button_button,1,6)
+        grid_layout.addWidget(self.go_x_textbox, 0, 6)
+        grid_layout.addWidget(self.go_y_textbox, 1, 6)
+        grid_layout.addWidget(self.go_z_textbox, 2, 6)
+
+
+
+        grid_layout.addWidget(self.go_button, 2, 7)
+        grid_layout.addWidget(self.read_for_go_button_button,1,7)
+
+        grid_layout.addWidget(self.sample_in_plane_checkbox,1,8)
         layout.addLayout(grid_layout)
 
         line=QtWidgets.QFrame()
@@ -457,6 +484,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
 
         grid_layout2.addWidget(self.theta_name,8,0)
+        grid_layout2.addWidget(self.theta_value_name,8,1)
         
         grid_layout2.addWidget(self.name_patern_name,9,0)
         grid_layout2.addWidget(self.name_patern_textbox,9,1)

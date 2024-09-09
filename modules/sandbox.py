@@ -1,58 +1,34 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLineEdit, QComboBox, QPushButton
-from PyQt5.QtCore import QSettings
+from PyQt5.QtWidgets import QApplication, QPushButton, QWidget, QVBoxLayout
+from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import QSize
 
-class MyApp(QWidget):
+class Okno(QWidget):
     def __init__(self):
         super().__init__()
 
         self.initUI()
 
     def initUI(self):
-        # Wybierz ścieżkę do pliku, w którym mają być zapisane ustawienia
-        settings_file = 'my_custom_settings.ini'  # Możesz tutaj podać pełną ścieżkę np. '/path/to/my_custom_settings.ini'
-        self.settings = QSettings(settings_file, QSettings.IniFormat)
+        # Tworzenie przycisku
+        przycisk = QPushButton("Zatwierdź", self)
 
-        self.load_settings()
+        # Ustawienie ikony z ptaszkiem (checkmark) z zasobów systemowych
+        przycisk.setIcon(self.style().standardIcon(getattr(self.style(), "SP_DialogApplyButton")))
         
-        # Tworzenie elementów UI
-        self.textbox = QLineEdit(self)
-        self.combobox = QComboBox(self)
-        self.save_button = QPushButton('Zapisz', self)
-        self.load_button = QPushButton('Wczytaj', self)
-
-        # Dodanie opcji do QComboBox
-        self.combobox.addItems(['Opcja 1', 'Opcja 2', 'Opcja 3'])
+        # Ustawienie rozmiaru ikony
+        przycisk.setIconSize(QSize(24, 24))
 
         # Layout
         layout = QVBoxLayout()
-        layout.addWidget(self.textbox)
-        layout.addWidget(self.combobox)
-        layout.addWidget(self.save_button)
-        layout.addWidget(self.load_button)
+        layout.addWidget(przycisk)
         self.setLayout(layout)
 
-        # Wczytanie ustawień
-        self.load_settings()
-
-        # Połączenie przycisków z metodami
-        self.save_button.clicked.connect(self.save_settings)
-        self.load_button.clicked.connect(self.load_settings)
-
-        self.setWindowTitle('QSettings Example with Custom Path')
+        # Ustawienia okna
+        self.setWindowTitle("Przycisk z ptaszkiem")
         self.show()
 
-    def save_settings(self):
-        # Zapisanie wartości do QSettings
-        self.settings.setValue('textbox_text', self.textbox.text())
-        self.settings.setValue('combobox_index', self.combobox.currentIndex())
-
-    def load_settings(self):
-        # Wczytanie wartości z QSettings
-        self.textbox.setText(self.settings.value('textbox_text', ''))
-        self.combobox.setCurrentIndex(int(self.settings.value('combobox_index', 0)))
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
-    ex = MyApp()
+    okno = Okno()
     sys.exit(app.exec_())

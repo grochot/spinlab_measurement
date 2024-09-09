@@ -28,7 +28,7 @@
     "address_generator": "None",
     "address_lfgen": "None",
     "address_pulsegenerator": "None",
-    "address_automaticstation": "GPIB0::20::INSTR",
+    "address_automaticstation": "None",
     "sourcemter_source": "CURR",
     "sourcemeter_compliance": 0.5,
     "sourcemeter_channel": "Channel A",
@@ -95,5 +95,6 @@
     "layout_type": true,
     "kriostat_temperature": 306.0,
     "disconnect_length": 0.5,
+    "sample_in_plane": 1.0,
     "path": "C://"
 }
