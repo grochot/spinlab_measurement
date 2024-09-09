@@ -7,6 +7,8 @@ class PointDelWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(PointDelWidget, self).__init__(parent)
 
+        self.enabled = False
+
         self.n_points_deleted = 0
 
         self.undo_stack = []
@@ -77,6 +79,10 @@ class PointDelWidget(QtWidgets.QWidget):
     def dec(self):
         self.n_points_deleted -= 1
         self.label.setText(f"Points deleted: {self.n_points_deleted}")
+
+    def closeEvent(self, ev):
+        self.enabled = False
+        ev.accept()
 
 
 if __name__ == "__main__":

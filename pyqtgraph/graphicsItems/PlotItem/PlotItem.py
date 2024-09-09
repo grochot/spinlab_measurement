@@ -250,6 +250,7 @@ class PlotItem(GraphicsWidget):
         self.ctrl.maxTracesSpin.valueChanged.connect(self.updateDecimation)
         
         self.ctrl.deletePoints.clicked.connect(self.deletePoints)
+        self.deletePointWidget = PointDelWidget()
         
         if labels is None:
             labels = {}
@@ -917,7 +918,7 @@ class PlotItem(GraphicsWidget):
         return (None, PlotItem.saveState, PlotItem.restoreState)
     
     def deletePoints(self):
-        self.deletePointWidget = PointDelWidget()
+        self.deletePointWidget.enabled = True
         self.deletePointWidget.show()
     
     def updateNormalizeMode(self, b=None):
