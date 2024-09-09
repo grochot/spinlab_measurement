@@ -8,6 +8,7 @@ class PointDelWidget(QtWidgets.QWidget):
         super(PointDelWidget, self).__init__(parent)
 
         self.enabled = False
+        self.isConfirmed = False
 
         self.n_points_deleted = 0
 
@@ -19,11 +20,11 @@ class PointDelWidget(QtWidgets.QWidget):
     def _setup_ui(self):
         self.setWindowTitle(" ")
         self.setStyleSheet("font-size: 12pt;")
-        self.setFixedSize(200, 160)
+        self.setFixedSize(250, 160)
 
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
 
-        self.label = QtWidgets.QLabel("Points deleted: 0")
+        self.label = QtWidgets.QLabel("Points to delete: 0")
         self.label.setAlignment(QtCore.Qt.AlignCenter)
 
         self.undo_bttn = QtWidgets.QPushButton("Undo")
@@ -35,6 +36,7 @@ class PointDelWidget(QtWidgets.QWidget):
         self.undo_all_bttn.clicked.connect(self.undo_all)
 
         self.confirm_bttn = QtWidgets.QPushButton("Confirm")
+        self.confirm_bttn.clicked.connect(self.confirm)
 
     def _layout(self):
         layout = QtWidgets.QGridLayout()
@@ -44,12 +46,24 @@ class PointDelWidget(QtWidgets.QWidget):
         layout.addWidget(self.confirm_bttn, 3, 0)
         self.setLayout(layout)
 
+    def setLabelText(self):
+        self.label.setText(f"Points to delete: {self.n_points_deleted}")
+
+    def updateUndoBttnsState(self):
+        if not self.undo_stack:
+            self.undo_bttn.setEnabled(False)
+            self.undo_all_bttn.setEnabled(False)
+        else:
+            self.undo_bttn.setEnabled(True)
+            self.undo_all_bttn.setEnabled(True)
+
+
     def pointDeleted(self, curve, idx: int, spot):
+        self.isConfirmed = False
         self.inc()
         self.undo_stack.append((curve, idx, spot))
 
-        self.undo_bttn.setEnabled(True)
-        self.undo_all_bttn.setEnabled(True)
+        self.updateUndoBttnsState()
 
     def undo(self):
         if self.undo_stack:
@@ -62,25 +76,31 @@ class PointDelWidget(QtWidgets.QWidget):
             curve.setData(new_xdata, new_ydata)
             self.dec()
 
-        if not self.undo_stack:
-            self.undo_bttn.setEnabled(False)
-            self.undo_all_bttn.setEnabled(False)
+        self.updateUndoBttnsState()
 
     def undo_all(self):
         while self.undo_stack:
             self.undo()
-        self.undo_bttn.setEnabled(False)
-        self.undo_all_bttn.setEnabled(False)
 
     def inc(self):
         self.n_points_deleted += 1
-        self.label.setText(f"Points deleted: {self.n_points_deleted}")
+        self.setLabelText()
 
     def dec(self):
         self.n_points_deleted -= 1
-        self.label.setText(f"Points deleted: {self.n_points_deleted}")
+        self.setLabelText()
+
+    def confirm(self):
+        self.isConfirmed = True
+        self.n_points_deleted = 0
+        self.undo_stack = []
+        self.updateUndoBttnsState()
+        self.setLabelText()
 
     def closeEvent(self, ev):
+        if not self.isConfirmed:
+            self.undo_all()
+        self.isConfirmed = False
         self.enabled = False
         ev.accept()
 

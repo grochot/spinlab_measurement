@@ -144,10 +144,16 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             curve.remove_point(spot)
 
     def update_x_column(self, index):
+        if self.plot.deletePointWidget.enabled:
+            self.plot.deletePointWidget.undo_all()
+            
         axis = self.columns_x.itemText(index)
         self.plot_frame.change_x_axis(axis)
 
     def update_y_column(self, index):
+        if self.plot.deletePointWidget.enabled:
+            self.plot.deletePointWidget.undo_all()
+
         axis = self.columns_y.itemText(index)
         self.plot_frame.change_y_axis(axis)
 
