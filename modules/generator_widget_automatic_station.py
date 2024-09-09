@@ -79,25 +79,11 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.drive_motion_adresses_combo.addItems(self.address_list) #dodaj prawdziwe
         self.drive_motion_adresses_label=QtWidgets.QLabel('Driver motion address')
 
-        '''self.sourcemeter_adresses_combo=QtWidgets.QComboBox()
-        self.sourcemeter_adresses_combo.addItems(self.address_list)
-        self.sourcemeter_adresses_combo_label = QtWidgets.QLabel('Sourcemeter address')
-
-        self.choice_sourcemeter_label=QtWidgets.QLabel('Sourcemeter type')
-        self.choice_sourcemeter_label_combo=QtWidgets.QComboBox()
-        self.choice_sourcemeter_label_combo.addItems(["Keithley 2400","Keithley 2636","Agilent 2912"])'''
-
         self.make_connection_with_devices_label=QtWidgets.QLabel('Make connection with devices')
         self.make_connection_with_devices_button=QtWidgets.QPushButton("connect")
-        
-
-        '''self.resistance_label=QtWidgets.QLabel('Resistance: ')
-        #self.resistance_label.setFixedSize(10,20)
-        self.resistance_read_button=QtWidgets.QPushButton('Read', self)'''
 
         self.make_connection_label=QtWidgets.QLabel('connect distance [mm]')
         self.make_connection_textbox=QtWidgets.QLineEdit(self)
-        #self.make_connection_textbox.setText("0")
         self.make_connection_textbox.setFixedSize(100,20)
         self.make_connection_textbox.setAlignment(Qt.AlignLeft)
 
@@ -110,8 +96,6 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.connect_checkable_button.toggled.connect(self.connect_with_sample)
 
         self.enable_motors_checkable_button= QtWidgets.QPushButton("NO INFO")
-        #self.enable_motors_checkable_button.setCheckable(True)
-        #self.enable_motors_function(False)
         self.enable_motors_checkable_button.clicked.connect(self.enable_motors_function)
         self.enable_motors_checkable_label=QtWidgets.QLabel("Enable or disable motors")
 
@@ -130,12 +114,6 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.read_for_go_button_button.clicked.connect(self.read_for_go_button)
 
         self.sample_in_plane_checkbox=QtWidgets.QCheckBox("Sample in plane")
-
-
-
-
-
-
     
         #main part of widget
         self.number_of_element_in_the_x_axis_name=QtWidgets.QLabel('number of elements on the x axis')
@@ -146,30 +124,12 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         self.first_element_x_name=QtWidgets.QLabel('First element on x axis')
         self.first_element_x_textbox=QtWidgets.QLineEdit(self)
-        #self.first_element_x_read_button=QtWidgets.QPushButton('Read', self)
-        #self.first_element_x_read_button.clicked.connect(partial(self.read_position,"x",self.first_element_x_textbox))
 
         self.first_element_y_name=QtWidgets.QLabel('First element on y axis')
         self.first_element_y_textbox=QtWidgets.QLineEdit(self)
-        #self.first_element_y_read_button=QtWidgets.QPushButton('Read', self)
-        #self.first_element_y_read_button.clicked.connect(partial(self.read_position,"y",self.first_element_y_textbox))
 
         self.first_element_xy_read_button=QtWidgets.QPushButton('Read', self)
         self.first_element_xy_read_button.clicked.connect(partial(self.read_coordinates,"xy",self.first_element_x_textbox,self.first_element_y_textbox))
-        
-
-        #self.second_element_x_name=QtWidgets.QLabel('Second element on x axis')
-        #self.second_element_x_textbox=QtWidgets.QLineEdit(self)
-        #self.second_element_x_read_button=QtWidgets.QPushButton('Read', self)
-        #self.second_element_x_read_button.clicked.connect(partial(self.read_position,"x",self.second_element_x_textbox))
-
-        #self.second_element_y_name=QtWidgets.QLabel('Second element on y axis')
-        #self.second_element_y_textbox=QtWidgets.QLineEdit(self)
-        #self.second_element_y_read_button=QtWidgets.QPushButton('Read', self)
-        #self.second_element_y_read_button.clicked.connect(partial(self.read_position,"y",self.second_element_y_textbox))
-
-        #self.second_element_xy_read_button=QtWidgets.QPushButton('Read', self)
-        #self.second_element_xy_read_button.clicked.connect(partial(self.read_coordinates,"xy",self.second_element_x_textbox,self.second_element_y_textbox))
 
         self.dx_calculation_name=QtWidgets.QLabel('Dx')
         self.dx_calculation_textbox=QtWidgets.QLineEdit(self)
@@ -177,24 +137,17 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.dy_calculation_name=QtWidgets.QLabel('Dy')
         self.dy_calculation_textbox=QtWidgets.QLineEdit(self)
 
-        #self.dx_dy_calculation_calc_button=QtWidgets.QPushButton('Calculate', self)
-        #self.dx_dy_calculation_calc_button.clicked.connect(partial(self.calculate_dx_dy,self.first_element_x_textbox.text(),self.first_element_y_textbox.text(),self.second_element_x_textbox.text(),self.second_element_y_textbox.text(),self.dx_calculation_textbox,self.dy_calculation_textbox))
-
         self.last_element_x_name=QtWidgets.QLabel('Last element on x axis')
         self.last_element_x_textbox=QtWidgets.QLineEdit(self)
-        #self.last_element_x_read_button=QtWidgets.QPushButton('Read', self)
 
         self.last_element_y_name=QtWidgets.QLabel('Last element on y axis')
         self.last_element_y_textbox=QtWidgets.QLineEdit(self)
-        #self.last_element_y_read_button=QtWidgets.QPushButton('Read', self)
 
         self.last_element_xy_read_button=QtWidgets.QPushButton('Read', self)
         self.last_element_xy_read_button.clicked.connect(partial(self.read_coordinates,"xy",self.last_element_x_textbox,self.last_element_y_textbox))
 
         self.theta_name=QtWidgets.QLabel('Calculated theta angle')
         self.theta_value_name=QtWidgets.QLabel('??')
-        #self.theta_textbox=QtWidgets.QLineEdit(self)
-        #self.theta_read_button=QtWidgets.QPushButton('Calculate', self)
 
         self.name_patern_name=QtWidgets.QLabel('Name pattern')
         self.name_patern_textbox=QtWidgets.QLineEdit(self)
@@ -208,16 +161,11 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.initial_column_textbox=QtWidgets.QLineEdit(self)
         self.initial_column_textbox.setToolTip("Type column of element which you start")
 
-
-
         self.generate_map_button=QtWidgets.QPushButton('Generate sequence', self)
         self.generate_map_button.clicked.connect(self.generate_sequence)
 
-
-
         #Devices connection
         self.make_connection_with_devices_button.clicked.connect(self.make_connection_with_devices)
-
 
         self.load_settings()
         
@@ -368,11 +316,9 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         if motor_status:
             self.MotionDriver.disable()
-            #self.enable_motors_checkable_button.setText("Enable")
             
         else:
             self.MotionDriver.enable() #to ma byc negacja tekstu wysietlanego na ekranie, wtedy jest dobrze.
-            #self.enable_motors_checkable_button.setText("Disable")
 
         motor_status=self.get_motor_status()
 
@@ -381,46 +327,17 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         else:
             self.enable_motors_checkable_button.setText("Enable")
 
-        
-    
-
-    def connect_disconnect(self,plane):
-        match plane:
-            case "xy":
-                pass
-        
-
 
     def _layout(self):
         layout = QtWidgets.QVBoxLayout()
 
         grid_layout=QtWidgets.QGridLayout()
 
-
-        # Dodajemy przyciski do pierwszego wiersza (row 0)
-        #for col in range(6):
-        #    button = QtWidgets.QPushButton(f"Button {col + 1}")
-        #    grid_layout.addWidget(button, 0, col)
-
-        # Dodajemy pola tekstowe do drugiego wiersza (row 1)
-        #for col in range(6):
-        #    line_edit = QtWidgets.QLineEdit(f"Text {col + 1}")
-        #    grid_layout.addWidget(line_edit, 1, col)
-        
         grid_layout.addWidget(self.drive_motion_adresses_combo, 0, 0)
         grid_layout.addWidget(self.drive_motion_adresses_label, 1, 0)
 
-        #grid_layout.addWidget(self.sourcemeter_adresses_combo, 0, 1)
-        #grid_layout.addWidget(self.sourcemeter_adresses_combo_label, 1, 1)
-
-        #grid_layout.addWidget(self.choice_sourcemeter_label_combo, 0, 2)
-        #grid_layout.addWidget(self.choice_sourcemeter_label, 1, 2)
-
         grid_layout.addWidget(self.make_connection_with_devices_label, 0, 1)
         grid_layout.addWidget(self.make_connection_with_devices_button, 1, 1)
-
-        #grid_layout.addWidget(self.resistance_label, 0, 4)
-        #grid_layout.addWidget(self.resistance_read_button, 1, 4)
 
         grid_layout.addWidget(self.make_connection_textbox, 0, 2)
         grid_layout.addWidget(self.make_connection_label, 1, 2)
@@ -438,8 +355,6 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout.addWidget(self.go_x_textbox, 0, 6)
         grid_layout.addWidget(self.go_y_textbox, 1, 6)
         grid_layout.addWidget(self.go_z_textbox, 2, 6)
-
-
 
         grid_layout.addWidget(self.go_button, 2, 7)
         grid_layout.addWidget(self.read_for_go_button_button,1,7)
@@ -474,7 +389,6 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout2.addWidget(self.dy_calculation_name,5,0)
         grid_layout2.addWidget(self.dy_calculation_textbox,5,1)
 
-
         grid_layout2.addWidget(self.last_element_x_name,6,0)
         grid_layout2.addWidget(self.last_element_x_textbox,6,1)
 
@@ -482,14 +396,11 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout2.addWidget(self.last_element_y_textbox,7,1)
         grid_layout2.addWidget(self.last_element_xy_read_button,7,2)
 
-
         grid_layout2.addWidget(self.theta_name,8,0)
         grid_layout2.addWidget(self.theta_value_name,8,1)
         
         grid_layout2.addWidget(self.name_patern_name,9,0)
         grid_layout2.addWidget(self.name_patern_textbox,9,1)
-
-
 
         grid_layout2.addWidget(self.initial_row_name,10,0)
         grid_layout2.addWidget(self.initial_row_textbox,10,1)
@@ -497,32 +408,18 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout2.addWidget(self.initial_column_name,11,0)
         grid_layout2.addWidget(self.initial_column_textbox,11,1)
 
-
-
-
         grid_layout2.addWidget(self.generate_map_button,12,1)
 
-
-
-
-
         layout.addLayout(grid_layout2)
-
 
 
         # Ustawienie głównego layoutu dla widgetu
         self.setLayout(layout)
         self.setWindowTitle('automatic station generator')
-        #self.setGeometry(300, 300, 400, 200)
-        
-        
-        #row_name_layout.addLayout(QtWidgets.QLabel('sth7'))
-
 
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     widget = AutomaticStationGenerator()
     widget.open_widget()
-    #widget.show()
     sys.exit(app.exec_())
