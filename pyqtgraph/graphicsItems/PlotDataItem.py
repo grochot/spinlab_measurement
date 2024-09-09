@@ -408,11 +408,6 @@ class PlotDataItem(GraphicsObject):
         self.setOpacity(alpha)
         #self.update()
         
-    def setNormalize(self, state):
-        if self.opts['normalizeMode'] == state:
-            return
-        self.opts['normalizeMode'] = state
-        
     def setNormalizeMode(self, state):
         """
         ``state = True`` enables mapping the data by normalizing the y values to the range [0, 1].

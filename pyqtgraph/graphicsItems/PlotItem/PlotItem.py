@@ -553,6 +553,7 @@ class PlotItem(GraphicsWidget):
             ## configure curve for this plot
             (alpha, auto) = self.alphaState()
             item.setAlpha(alpha, auto)
+            item.setNormalizeMode(self.ctrl.normalizeCheck.isChecked())
             item.setFftMode(self.ctrl.fftCheck.isChecked())
             item.setDownsampling(*self.downsampleMode())
             item.setClipToView(self.clipToViewMode())
