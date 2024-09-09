@@ -218,7 +218,7 @@ class ResistanceMode():
                 self.MotionDriver.goTo_1(self.z_pos) #Connecting
 
 
-            
+            self.MotionDriver.pos_1()
 
 
 

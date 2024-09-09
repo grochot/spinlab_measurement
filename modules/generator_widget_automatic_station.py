@@ -23,6 +23,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.icon_path = "modules\icons\AutomaticStationGenerator.ico"
         self.address_list = ["None"]
         self.address = "None"
+        self.inputs = None
         self.get_available_addresses()
         #self.make_connection_with_devices()
 
@@ -56,9 +57,17 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
 
     def read_for_go_button(self):
-        self.go_x_textbox.setText(str(self.MotionDriver.pos_2()))
-        self.go_y_textbox.setText(str(self.MotionDriver.pos_3()))
-        self.go_z_textbox.setText(str(self.MotionDriver.pos_1()))
+
+        if self.sample_in_plane_checkbox.isChecked():
+            self.go_x_textbox.setText(format(self.MotionDriver.pos_2(),'f'))
+            self.go_y_textbox.setText(format(self.MotionDriver.pos_1(),'f'))
+            self.go_z_textbox.setText(format(self.MotionDriver.pos_3(),'f'))
+
+        else:
+            self.go_x_textbox.setText(format(self.MotionDriver.pos_2(),'f'))
+            self.go_y_textbox.setText(format(self.MotionDriver.pos_3(),'f'))
+            self.go_z_textbox.setText(format(self.MotionDriver.pos_1(),'f'))
+
 
 
     def _setup_ui(self):
@@ -92,7 +101,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.led_indicator_label=QtWidgets.QLabel()
         self.led_indicator_label.setFixedSize(35,35)
         self.led_indicator_label.setAlignment(Qt.AlignCenter)
-        self.connect_with_sample(False)
+        
         self.connect_checkable_button.toggled.connect(self.connect_with_sample)
 
         self.enable_motors_checkable_button= QtWidgets.QPushButton("NO INFO")
@@ -113,7 +122,11 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.read_for_go_button_button=QtWidgets.QPushButton("Read")
         self.read_for_go_button_button.clicked.connect(self.read_for_go_button)
 
-        self.sample_in_plane_checkbox=QtWidgets.QCheckBox("Sample in plane")
+        self.sample_in_plane_checkbox=QtWidgets.QCheckBox("Sample in plane",self)
+        self.sample_in_plane_checkbox.toggled.connect(lambda state: self.inputs.sample_in_plane.setValue(state))
+        self.connect_with_sample(False)
+        #self.sample_in_plane_checkbox.stateChanged()
+
     
         #main part of widget
         self.number_of_element_in_the_x_axis_name=QtWidgets.QLabel('number of elements on the x axis')
@@ -216,7 +229,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
 
     def get_motor_status(self):
-        return self.MotionDriver.is_motor_1_active()*self.MotionDriver.is_motor_2_active()*self.MotionDriver.is_motor_3_active()
+        return int(self.MotionDriver.is_motor_1_active())*int(self.MotionDriver.is_motor_2_active())*int(self.MotionDriver.is_motor_3_active())
 
     def make_connection_with_devices(self):
         if self.drive_motion_adresses_combo.currentText()!="None":
@@ -300,15 +313,21 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
     
     
     def connect_with_sample(self, checked):
+
         if checked and self.get_motor_status():
+            if self.sample_in_plane_checkbox.isChecked():
+                self.MotionDriver.goTo_3(self.z_pos-float(self.make_connection_textbox.text()))
+            else:
+                self.MotionDriver.goTo_1(self.z_pos-float(self.make_connection_textbox.text()))
             self.led_indicator_label.setStyleSheet("background-color: green; border-radius: 10px;")
             self.connect_checkable_button.setText("Connect")
-            self.MotionDriver.goTo_1(self.z_pos-float(self.make_connection_textbox.text()))
-
         else:
+            if self.sample_in_plane_checkbox.isChecked():
+                self.MotionDriver.goTo_3(self.z_pos)
+            else:
+                self.MotionDriver.goTo_1(self.z_pos)
             self.led_indicator_label.setStyleSheet("background-color: red; border-radius: 10px;")
             self.connect_checkable_button.setText("Disconnect")
-            self.MotionDriver.goTo_1(self.z_pos)
     
     def enable_motors_function(self, checked):
         

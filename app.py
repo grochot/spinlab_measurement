@@ -331,7 +331,7 @@ class MainWindow(ManagedDockWindow):
             
             sequencer_inputs=['constant_field_value',"generator_frequency", "kriostat_temperature", 'global_xyname'],
             inputs_in_scrollarea=True,
-            ext_devices = [CameraControl, WaterCoolerControl, Lakeshore336Control],
+            ext_devices = [CameraControl, WaterCoolerControl, Lakeshore336Control, AutomaticStationGenerator],
             
         )
        

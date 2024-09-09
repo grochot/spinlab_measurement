@@ -94,6 +94,11 @@ class ManagedDockWindow(ManagedWindowBase):
 
         self.browser_widget.browser.measured_quantities.update(measure_quantities)
 
+        try:
+            self.devices_widget.automatic_station_generator.inputs = self.inputs
+        except AttributeError:
+            pass
+
         logging.getLogger().addHandler(self.log_widget.handler)
         log.setLevel(self.log_level)
         log.info("DockWindow connected to logging")
