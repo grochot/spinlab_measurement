@@ -1,7 +1,12 @@
 (half)-Geerate sequence ma też wykonywać "migrate data" do parameters.json tak aby uwzgledniac niekrote parametry (in-plane oraz dz) - trzeba dać refresj parameter.json w app.py
 -zabebzpieczenie tak aby sprawdził czy naprawde odjechal sondami od probki (na jakis epsilon jednym if to zalatwisz)
 
--zmienna Z powinna aktualizowac sie z karzym przycisniezmiem GO
--read ciagle odczytuje do momentu w ktorym nie wycisniesz spowrotem
+
+
+
+
 -automatyczne ladowanie do sequencera
+-read ciagle odczytuje do momentu w ktorym nie wycisniesz spowrotem (sens less)
 -Zrob zeby wywalal blad gdy esp300 sie nie polaczy
+
+

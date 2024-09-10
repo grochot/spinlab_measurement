@@ -55,6 +55,11 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
             self.MotionDriver.goTo_3(self.go_y_textbox.text())
             self.MotionDriver.goTo_1(self.go_z_textbox.text())
 
+        if self.sample_in_plane_checkbox.isChecked():
+            self.z_pos=self.MotionDriver.pos_3()
+        else:
+            self.z_pos=self.MotionDriver.pos_1()
+
 
     def read_for_go_button(self):
 
@@ -142,7 +147,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.first_element_y_textbox=QtWidgets.QLineEdit(self)
 
         self.first_element_xy_read_button=QtWidgets.QPushButton('Read', self)
-        self.first_element_xy_read_button.clicked.connect(partial(self.read_coordinates,"xy",self.first_element_x_textbox,self.first_element_y_textbox))
+        self.first_element_xy_read_button.clicked.connect(partial(self.read_coordinates,self.first_element_x_textbox,self.first_element_y_textbox))
 
         self.dx_calculation_name=QtWidgets.QLabel('Dx')
         self.dx_calculation_textbox=QtWidgets.QLineEdit(self)
@@ -157,7 +162,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.last_element_y_textbox=QtWidgets.QLineEdit(self)
 
         self.last_element_xy_read_button=QtWidgets.QPushButton('Read', self)
-        self.last_element_xy_read_button.clicked.connect(partial(self.read_coordinates,"xy",self.last_element_x_textbox,self.last_element_y_textbox))
+        self.last_element_xy_read_button.clicked.connect(partial(self.read_coordinates,self.last_element_x_textbox,self.last_element_y_textbox))
 
         self.theta_name=QtWidgets.QLabel('Calculated theta angle')
         self.theta_value_name=QtWidgets.QLabel('??')
@@ -173,6 +178,16 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.initial_column_name=QtWidgets.QLabel('First column')
         self.initial_column_textbox=QtWidgets.QLineEdit(self)
         self.initial_column_textbox.setToolTip("Type column of element which you start")
+
+
+        self.column_name_pattern_iterator_name=QtWidgets.QLabel('Column name iterator')
+        self.column_name_pattern_iterator_textbox=QtWidgets.QLineEdit(self)
+        self.column_name_pattern_iterator_textbox.setToolTip("Type value of which program will increment name")
+
+
+        self.row_name_pattern_iterator_name=QtWidgets.QLabel('row name iterator')
+        self.row_name_pattern_iterator_textbox=QtWidgets.QLineEdit(self)
+        self.row_name_pattern_iterator_textbox.setToolTip("Type value of which program will increment name")
 
         self.generate_map_button=QtWidgets.QPushButton('Generate sequence', self)
         self.generate_map_button.clicked.connect(self.generate_sequence)
@@ -200,6 +215,8 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.settings.setValue('name_patern_textbox', self.name_patern_textbox.text())
         self.settings.setValue('initial_row_textbox', self.initial_row_textbox.text())
         self.settings.setValue('initial_column_textbox', self.initial_column_textbox.text())
+        self.settings.setValue('column_name_pattern_iterator_textbox', self.column_name_pattern_iterator_textbox.text())
+        self.settings.setValue('row_name_pattern_iterator_textbox', self.row_name_pattern_iterator_textbox.text())
       
 
     def load_settings(self):
@@ -218,6 +235,9 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.name_patern_textbox.setText(self.settings.value('name_patern_textbox', ''))
         self.initial_row_textbox.setText(self.settings.value('initial_row_textbox', ''))
         self.initial_column_textbox.setText(self.settings.value('initial_column_textbox', ''))
+        self.column_name_pattern_iterator_textbox.setText(self.settings.value('column_name_pattern_iterator_textbox', ''))
+        self.row_name_pattern_iterator_textbox.setText(self.settings.value('row_name_pattern_iterator_textbox', ''))
+
 
 
 
@@ -239,7 +259,12 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
             print("DummyMotionDriver")
 
         self.read_for_go_button()
-        self.z_pos=self.MotionDriver.pos_1()
+
+        if self.sample_in_plane_checkbox.isChecked():
+            self.z_pos=self.MotionDriver.pos_3()
+        else:
+            self.z_pos=self.MotionDriver.pos_1()
+
         motor_status=self.get_motor_status()
         if motor_status:
             self.enable_motors_checkable_button.setText("Disable")
@@ -260,8 +285,10 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         name_pattern=self.name_patern_textbox.text()
         initial_column=self.initial_column_textbox.text()
         initial_row=self.initial_row_textbox.text()
+        column_iterator=int(self.column_name_pattern_iterator_textbox.text())
+        row_iterator=int(self.row_name_pattern_iterator_textbox.text())
 
-        gc=generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y,name_pattern,initial_column,initial_row)
+        gc=generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y,name_pattern,initial_column,initial_row,column_iterator,row_iterator)
 
         self.theta_value_name.setText(str("{0} [rad]".format(gc['theta'])))
 
@@ -283,30 +310,16 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
             
 
 
-
-
-    def read_position(self,axis,write_destination):
+    def read_coordinates(self,write_axes1,write_axes2):
         #z=pos1
         #x=pos2
         #y=pos3
-        match axis:
-            case "x":
-                position=self.MotionDriver.pos_2() 
-            case "y":
-                position=self.MotionDriver.pos_3()
-            case "z":
-                position=self.MotionDriver.pos_1()
-
-        write_destination.setText(str(position))
-
-    def read_coordinates(self,plane,write_axes1,write_axes2):
-        #z=pos1
-        #x=pos2
-        #y=pos3
-        match plane:
-            case "xy":
-                write_axes1.setText(str(self.MotionDriver.pos_2()))
-                write_axes2.setText(str(self.MotionDriver.pos_3()))
+        if self.sample_in_plane_checkbox.isChecked():
+            write_axes1.setText(str(self.MotionDriver.pos_2()))
+            write_axes2.setText(str(self.MotionDriver.pos_1()))
+        else:
+            write_axes1.setText(str(self.MotionDriver.pos_2()))
+            write_axes2.setText(str(self.MotionDriver.pos_3())) 
 
 
 
@@ -427,7 +440,13 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout2.addWidget(self.initial_column_name,11,0)
         grid_layout2.addWidget(self.initial_column_textbox,11,1)
 
-        grid_layout2.addWidget(self.generate_map_button,12,1)
+        grid_layout2.addWidget(self.column_name_pattern_iterator_name,12,0)
+        grid_layout2.addWidget(self.column_name_pattern_iterator_textbox,12,1)
+
+        grid_layout2.addWidget(self.row_name_pattern_iterator_name,13,0)
+        grid_layout2.addWidget(self.row_name_pattern_iterator_textbox,13,1)
+
+        grid_layout2.addWidget(self.generate_map_button,14,1)
 
         layout.addLayout(grid_layout2)
 

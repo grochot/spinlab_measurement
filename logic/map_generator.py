@@ -18,7 +18,7 @@ last_element_y=0.5
 
 
 #%%function
-def generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y,name_pattern,initial_column,initial_row):
+def generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y,name_pattern,initial_column,initial_row,column_iterator,row_iterator):
 	try:
 		initial_column_int=int(initial_column)
 	except ValueError:
@@ -54,7 +54,7 @@ def generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_ax
 			y_moves_prim=x_moves[x_idx]*sin_theta+y_moves[y_idx]*cos_theta+first_element_y
 	
 
-			name=name_pattern.replace("{col}",str(initial_column_int+x_idx)).replace("{row}",str(initial_row_int+y_idx)).replace("{col_char}",chr(65+x_idx+initial_column_int)).replace("{row_char}",chr(65+y_idx+initial_row_int))
+			name=name_pattern.replace("{col}",str(initial_column_int*column_iterator+x_idx)).replace("{row}",str(initial_row_int*row_iterator+y_idx)).replace("{col_char}",chr(65+x_idx+initial_column_int*column_iterator)).replace("{row_char}",chr(65+y_idx+initial_row_int*row_iterator))
 			move_vectors_prim.append([x_moves_prim,y_moves_prim,name])
 			
 			i+=1
