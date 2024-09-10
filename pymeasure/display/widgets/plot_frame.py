@@ -80,6 +80,9 @@ class PlotFrame(QtWidgets.QFrame):
                                      pen=pg.mkPen(color='#AAAAAA',
                                                   style=QtCore.Qt.PenStyle.DashLine))
         self.crosshairs.coordinates.connect(self.update_coordinates)
+        
+        self.vline = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen(color='r', width=1, style=QtCore.Qt.PenStyle.DashLine))
+        self.plot.addItem(self.vline)
 
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_curves)
@@ -98,6 +101,9 @@ class PlotFrame(QtWidgets.QFrame):
                         item.update_data()
                 else:
                     item.update_data()
+                    
+    def update_vline(self, x):
+        self.vline.setPos(x) 
 
     def parse_axis(self, axis):
         """ Returns the units of an axis by searching the string

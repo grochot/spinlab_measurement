@@ -91,7 +91,10 @@ class ManagedDockWindow(ManagedWindowBase):
         kwargs["widget_list"] = kwargs["widget_list"] + (self.dock_widget, self.log_widget, self.devices_widget)
 
         super().__init__(procedure_class, **kwargs)
-
+        
+        for plot_widget in self.dock_widget.plot_frames:
+            self.manager.update_point.connect(plot_widget.plot_frame.update_vline)
+            
         self.browser_widget.browser.measured_quantities.update(measure_quantities)
 
         logging.getLogger().addHandler(self.log_widget.handler)
