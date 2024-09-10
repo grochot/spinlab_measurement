@@ -1,4 +1,5 @@
 from pymeasure.display.Qt import QtGui, QtCore, QtWidgets
+from pymeasure.experiment.results import Results
 import numpy as np
 import sys
 
@@ -95,11 +96,37 @@ class PointDelWidget(QtWidgets.QWidget):
         self.setLabelText()
 
     def confirm(self):
+        self.storeChanges()
         self.isConfirmed = True
         self.n_points_deleted = 0
         self.undo_stack = []
         self.updateBttns()
         self.setLabelText()
+        
+    def storeChanges(self):
+        to_rewrite = {}
+        
+        while self.undo_stack:
+            curve, idx, _ = self.undo_stack.pop()
+            results: Results = curve.results
+            try:
+                data = to_rewrite[curve][1]
+            except KeyError:
+                data = results.data
+                
+            data = data.drop(idx)
+            data = data.reset_index(drop=True)
+            to_rewrite[curve] = (results, data)
+            
+        curve = set([curve for curve, _, _ in self.undo_stack])
+        for (results, data) in to_rewrite.values():
+            with open(results.data_filename, "w") as f:
+                f.write(results.header())
+                f.write(results.labels())
+                for _, row in data.iterrows():
+                            f.write(results.format(row.to_dict()) + results.LINE_BREAK)
+            results.store_metadata()
+            results.reload()
 
     def close(self):
         if not self.isConfirmed:
