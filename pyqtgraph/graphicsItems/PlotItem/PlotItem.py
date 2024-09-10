@@ -249,9 +249,6 @@ class PlotItem(GraphicsWidget):
         self.ctrl.forgetTracesCheck.toggled.connect(self.updateDecimation)
         self.ctrl.maxTracesSpin.valueChanged.connect(self.updateDecimation)
         
-        self.ctrl.deletePoints.clicked.connect(self.deletePoints)
-        self.deletePointWidget = PointDelWidget()
-        
         if labels is None:
             labels = {}
         for label in list(self.axes.keys()):
@@ -916,10 +913,6 @@ class PlotItem(GraphicsWidget):
 
     def widgetGroupInterface(self):
         return (None, PlotItem.saveState, PlotItem.restoreState)
-    
-    def deletePoints(self):
-        self.deletePointWidget.enabled = True
-        self.deletePointWidget.show()
     
     def updateNormalizeMode(self, b=None):
         if b is None:

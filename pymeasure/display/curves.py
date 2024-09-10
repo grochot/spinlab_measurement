@@ -63,7 +63,7 @@ class ResultsCurve(pg.PlotDataItem):
         self.color = self.opts['pen'].color()
         self.updateItems(styleUpdate=True)
         
-    def remove_point(self, spot: pg.SpotItem):
+    def remove_point(self, spot: pg.SpotItem, pointWdg):
         xdata, ydata = self.getData()
         x, y = spot.pos()
 
@@ -75,7 +75,7 @@ class ResultsCurve(pg.PlotDataItem):
             new_ydata = np.delete(ydata, idx)
             self.setData(new_xdata, new_ydata)
             
-            self.wdg.plot.deletePointWidget.pointDeleted(self, idx, spot)
+            pointWdg.pointDeleted(self, idx, spot)
 
 # TODO: Add method for changing x and y
 

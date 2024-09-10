@@ -18,11 +18,7 @@ class PointDelWidget(QtWidgets.QWidget):
         self._layout()
 
     def _setup_ui(self):
-        self.setWindowTitle(" ")
-        self.setStyleSheet("font-size: 12pt;")
-        self.setFixedSize(250, 160)
-
-        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+        # self.setStyleSheet("font-size: 12pt;")
 
         self.label = QtWidgets.QLabel("Points to delete: 0")
         self.label.setAlignment(QtCore.Qt.AlignCenter)
@@ -36,6 +32,7 @@ class PointDelWidget(QtWidgets.QWidget):
         self.undo_all_bttn.clicked.connect(self.undo_all)
 
         self.confirm_bttn = QtWidgets.QPushButton("Confirm")
+        self.confirm_bttn.setEnabled(False)
         self.confirm_bttn.clicked.connect(self.confirm)
 
     def _layout(self):
@@ -45,25 +42,32 @@ class PointDelWidget(QtWidgets.QWidget):
         layout.addWidget(self.undo_all_bttn, 2, 0)
         layout.addWidget(self.confirm_bttn, 3, 0)
         self.setLayout(layout)
+        
+    def setEnabled(self, enabled):
+        self.enabled = enabled
+        
+        if not enabled:
+            self.close()
 
     def setLabelText(self):
         self.label.setText(f"Points to delete: {self.n_points_deleted}")
 
-    def updateUndoBttnsState(self):
+    def updateBttns(self):
         if not self.undo_stack:
             self.undo_bttn.setEnabled(False)
             self.undo_all_bttn.setEnabled(False)
+            self.confirm_bttn.setEnabled(False)
         else:
             self.undo_bttn.setEnabled(True)
             self.undo_all_bttn.setEnabled(True)
-
+            self.confirm_bttn.setEnabled(True)
 
     def pointDeleted(self, curve, idx: int, spot):
         self.isConfirmed = False
         self.inc()
         self.undo_stack.append((curve, idx, spot))
 
-        self.updateUndoBttnsState()
+        self.updateBttns()
 
     def undo(self):
         if self.undo_stack:
@@ -76,7 +80,7 @@ class PointDelWidget(QtWidgets.QWidget):
             curve.setData(new_xdata, new_ydata)
             self.dec()
 
-        self.updateUndoBttnsState()
+        self.updateBttns()
 
     def undo_all(self):
         while self.undo_stack:
@@ -94,15 +98,13 @@ class PointDelWidget(QtWidgets.QWidget):
         self.isConfirmed = True
         self.n_points_deleted = 0
         self.undo_stack = []
-        self.updateUndoBttnsState()
+        self.updateBttns()
         self.setLabelText()
 
-    def closeEvent(self, ev):
+    def close(self):
         if not self.isConfirmed:
             self.undo_all()
         self.isConfirmed = False
-        self.enabled = False
-        ev.accept()
 
 
 if __name__ == "__main__":

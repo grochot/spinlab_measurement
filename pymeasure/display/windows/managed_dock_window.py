@@ -91,6 +91,9 @@ class ManagedDockWindow(ManagedWindowBase):
         kwargs["widget_list"] = kwargs["widget_list"] + (self.dock_widget, self.log_widget, self.devices_widget)
 
         super().__init__(procedure_class, **kwargs)
+        
+        for frame in self.dock_widget.plot_frames:
+            frame.pointWidget = self.pointWidget
 
         self.browser_widget.browser.measured_quantities.update(measure_quantities)
 
