@@ -286,7 +286,7 @@ class SpinLabMeasurement(Procedure):
             
             self.result = self.selected_mode.operating(point)
             
-            self.result = self.normalize(self.result)
+            #self.result = self.normalize(self.result)
             
             self.emit('results', self.result)
             self.emit('progress', 100 * self.counter / len(self.points))

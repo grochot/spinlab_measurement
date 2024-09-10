@@ -18,7 +18,7 @@ last_element_y=0.5
 
 
 #%%function
-def generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y,name_pattern,initial_column,initial_row,column_iterator,row_iterator):
+def generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y,name_pattern,initial_column,initial_row,column_iterator,row_iterator,sample_in_plane):
 	try:
 		initial_column_int=int(initial_column)
 	except ValueError:
@@ -32,8 +32,14 @@ def generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_ax
 	
 	move_vectors_prim=np.zeros((number_of_element_in_the_x_axis*number_of_element_in_the_y_axis,2))
 	
-	x_moves=0*first_element_x+np.arange(0,number_of_element_in_the_x_axis,1)*dx_calculation #tutaj jest terz przejscie do ukladu wlasnego
-	y_moves=0*first_element_y+np.arange(0,number_of_element_in_the_y_axis,1)*(-1*dy_calculation)
+
+
+	if sample_in_plane:
+		x_moves=-1*np.arange(0,number_of_element_in_the_x_axis,1)*dx_calculation #tutaj jest terz przejscie do ukladu wlasnego
+		y_moves=-1*np.arange(0,number_of_element_in_the_y_axis,1)*dy_calculation
+	else:
+		x_moves=np.arange(0,number_of_element_in_the_x_axis,1)*dx_calculation #tutaj jest terz przejscie do ukladu wlasnego
+		y_moves=-1*np.arange(0,number_of_element_in_the_y_axis,1)*dy_calculation
 	
 	theta=np.arcsin((last_element_y-first_element_y)/(last_element_x-first_element_x))
 	   
@@ -54,7 +60,7 @@ def generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_ax
 			y_moves_prim=x_moves[x_idx]*sin_theta+y_moves[y_idx]*cos_theta+first_element_y
 	
 
-			name=name_pattern.replace("{col}",str(initial_column_int*column_iterator+x_idx)).replace("{row}",str(initial_row_int*row_iterator+y_idx)).replace("{col_char}",chr(65+x_idx+initial_column_int*column_iterator)).replace("{row_char}",chr(65+y_idx+initial_row_int*row_iterator))
+			name=name_pattern.replace("{col}",str(initial_column_int+x_idx*column_iterator)).replace("{row}",str(initial_row_int+y_idx*row_iterator)).replace("{col_char}",chr(65+x_idx*column_iterator+initial_column_int)).replace("{row_char}",chr(65+y_idx*row_iterator+initial_row_int))
 			move_vectors_prim.append([x_moves_prim,y_moves_prim,name])
 			
 			i+=1

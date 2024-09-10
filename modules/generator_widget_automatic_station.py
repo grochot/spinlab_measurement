@@ -80,9 +80,8 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.settings = QSettings(settings_file, QSettings.IniFormat)
         
 
-        self.MotionDriver=DummyMotionDriver("trash")
+        self.MotionDriver=DummyMotionDriver("")
         self.z_pos=self.MotionDriver.pos_1()
-        print(self.z_pos)
         
 
         self.setWindowTitle("Automatic station generator")
@@ -287,8 +286,9 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         initial_row=self.initial_row_textbox.text()
         column_iterator=int(self.column_name_pattern_iterator_textbox.text())
         row_iterator=int(self.row_name_pattern_iterator_textbox.text())
+        sample_in_plane=self.sample_in_plane_checkbox.isChecked()
 
-        gc=generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y,name_pattern,initial_column,initial_row,column_iterator,row_iterator)
+        gc=generate_coord(first_element_x,first_element_y,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,dx_calculation,dy_calculation,last_element_x,last_element_y,name_pattern,initial_column,initial_row,column_iterator,row_iterator,sample_in_plane)
 
         self.theta_value_name.setText(str("{0} [rad]".format(gc['theta'])))
 

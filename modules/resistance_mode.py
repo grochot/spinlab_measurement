@@ -198,10 +198,12 @@ class ResistanceMode():
             else:
                 pass
                 self.MotionDriver=Esp300(self.address_automaticstation)
-            self.z_pos=self.MotionDriver.pos_1()
+            
 
 
             if self.sample_in_plane:
+                self.z_pos=self.MotionDriver.pos_3()
+
                 self.MotionDriver.goTo_3(self.z_pos-self.disconnect_length) #Disconnecting
                 
                 self.MotionDriver.goTo_2(float(self.global_xyname[0]))
@@ -210,6 +212,8 @@ class ResistanceMode():
                 self.MotionDriver.goTo_3(self.z_pos) #Connecting
 
             else:
+                self.z_pos=self.MotionDriver.pos_1()
+
                 self.MotionDriver.goTo_1(self.z_pos-self.disconnect_length) #Disconnecting
                 
                 self.MotionDriver.goTo_2(float(self.global_xyname[0]))
@@ -218,7 +222,7 @@ class ResistanceMode():
                 self.MotionDriver.goTo_1(self.z_pos) #Connecting
 
 
-            self.MotionDriver.pos_1()
+            self.MotionDriver.pos_1() #Non sense reading position to stop program
 
 
 

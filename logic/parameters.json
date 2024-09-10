@@ -92,9 +92,9 @@
     "set_polar_angle_fmr": 0.0,
     "set_azimuthal_angle_fmr": 0.0,
     "remanency_correction_time": 5.0,
-    "layout_type": false,
+    "layout_type": true,
     "kriostat_temperature": 306.0,
     "disconnect_length": 0.5,
-    "sample_in_plane": false,
+    "sample_in_plane": true,
     "path": "C://"
 }

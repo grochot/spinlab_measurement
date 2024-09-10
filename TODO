@@ -1,12 +1,11 @@
-(half)-Geerate sequence ma też wykonywać "migrate data" do parameters.json tak aby uwzgledniac niekrote parametry (in-plane oraz dz) - trzeba dać refresj parameter.json w app.py
--zabebzpieczenie tak aby sprawdził czy naprawde odjechal sondami od probki (na jakis epsilon jednym if to zalatwisz)
-
-
-
-
-
+(half)-Geerate sequence ma też wykonywać "migrate data" do parameters.json tak aby uwzgledniac niekrote parametry (in-plane oraz dz) - trzeba dać refresj parameter.json w app.py (juz jest sample in plane zostalo dz)
 -automatyczne ladowanie do sequencera
+-warinig ussing dummy !! dodaj nad sample in plane taki komunikat
+
+
+
+pomysly:
 -read ciagle odczytuje do momentu w ktorym nie wycisniesz spowrotem (sens less)
 -Zrob zeby wywalal blad gdy esp300 sie nie polaczy
-
+-zabebzpieczenie tak aby sprawdził czy naprawde odjechal sondami od probki (na jakis epsilon jednym if to zalatwisz)
 
