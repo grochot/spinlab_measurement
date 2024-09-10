@@ -307,7 +307,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             
         self.point_dock = QtWidgets.QDockWidget('Point Removal')
         self.point_dock.setWidget(self.pointWidget)
-        self.point_dock.visibilityChanged.connect(self.pointWidget.setEnabled)
+        self.point_dock.visibilityChanged.connect(self.pointWidget.setMode)
         self.point_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
         self.point_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.point_dock.setVisible(False)

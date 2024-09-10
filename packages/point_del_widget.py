@@ -43,12 +43,12 @@ class PointDelWidget(QtWidgets.QWidget):
         layout.addWidget(self.undo_all_bttn, 2, 0)
         layout.addWidget(self.confirm_bttn, 3, 0)
         self.setLayout(layout)
-        
-    def setEnabled(self, enabled):
+
+    def setMode(self, enabled):
         self.enabled = enabled
-        
         if not enabled:
-            self.close()
+            self.undo_all()
+            self.isConfirmed = False
 
     def setLabelText(self):
         self.label.setText(f"Points to delete: {self.n_points_deleted}")
@@ -63,24 +63,22 @@ class PointDelWidget(QtWidgets.QWidget):
             self.undo_all_bttn.setEnabled(True)
             self.confirm_bttn.setEnabled(True)
 
-    def pointDeleted(self, curve, idx: int, spot):
+    def pointDeleted(self, curve, spot):
         self.isConfirmed = False
         self.inc()
-        self.undo_stack.append((curve, idx, spot))
-
+        self.undo_stack.append((curve, spot))
         self.updateBttns()
 
     def undo(self):
         if self.undo_stack:
-            curve, idx, spot = self.undo_stack.pop()
-
+            curve, spot = self.undo_stack.pop()
             xdata, ydata = curve.getData()
+            idx = spot.index()
             x, y = spot.pos()
             new_xdata = np.insert(xdata, idx, x)
             new_ydata = np.insert(ydata, idx, y)
             curve.setData(new_xdata, new_ydata)
             self.dec()
-
         self.updateBttns()
 
     def undo_all(self):
@@ -102,36 +100,37 @@ class PointDelWidget(QtWidgets.QWidget):
         self.undo_stack = []
         self.updateBttns()
         self.setLabelText()
-        
+
     def storeChanges(self):
         to_rewrite = {}
-        
+
         while self.undo_stack:
-            curve, idx, _ = self.undo_stack.pop()
+            curve, spot = self.undo_stack.pop()
+
             results: Results = curve.results
             try:
                 data = to_rewrite[curve][1]
             except KeyError:
                 data = results.data
-                
-            data = data.drop(idx)
-            data = data.reset_index(drop=True)
+
+            x_col, y_col = curve.x, curve.y
+            x, y = spot.pos()
+
+            idx = np.where((data[x_col] == x) & (data[y_col] == y))[0]
+            if len(idx) > 0:
+                idx = idx[0]
+                data = data.drop(idx)
+                data = data.reset_index(drop=True)
             to_rewrite[curve] = (results, data)
-            
-        curve = set([curve for curve, _, _ in self.undo_stack])
-        for (results, data) in to_rewrite.values():
+
+        for results, data in to_rewrite.values():
             with open(results.data_filename, "w") as f:
                 f.write(results.header())
                 f.write(results.labels())
                 for _, row in data.iterrows():
-                            f.write(results.format(row.to_dict()) + results.LINE_BREAK)
+                    f.write(results.format(row.to_dict()) + results.LINE_BREAK)
             results.store_metadata()
             results.reload()
-
-    def close(self):
-        if not self.isConfirmed:
-            self.undo_all()
-        self.isConfirmed = False
 
 
 if __name__ == "__main__":

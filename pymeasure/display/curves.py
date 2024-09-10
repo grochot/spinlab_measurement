@@ -65,17 +65,13 @@ class ResultsCurve(pg.PlotDataItem):
         
     def remove_point(self, spot: pg.SpotItem, pointWdg):
         xdata, ydata = self.getData()
-        x, y = spot.pos()
+        idx = spot.index()
 
-        idx = np.where((xdata == x) & (ydata == y))[0]
-
-        if len(idx) > 0:
-            idx = idx[0]  
-            new_xdata = np.delete(xdata, idx)
-            new_ydata = np.delete(ydata, idx)
-            self.setData(new_xdata, new_ydata)
-            
-            pointWdg.pointDeleted(self, idx, spot)
+        new_xdata = np.delete(xdata, idx)
+        new_ydata = np.delete(ydata, idx)
+        self.setData(new_xdata, new_ydata)
+        
+        pointWdg.pointDeleted(self, spot)
 
 # TODO: Add method for changing x and y
 
