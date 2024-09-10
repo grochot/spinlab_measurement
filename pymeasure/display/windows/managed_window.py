@@ -305,7 +305,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             estimator_dock.setVisible(False)
             self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, estimator_dock)
             
-        point_dock = QtWidgets.QDockWidget('Point Deletion')
+        point_dock = QtWidgets.QDockWidget('Point Removal')
         point_dock.visibilityChanged.connect(self.pointWidget.setEnabled)
         point_dock.setWidget(self.pointWidget)
         point_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
