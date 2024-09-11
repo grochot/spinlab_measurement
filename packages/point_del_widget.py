@@ -103,24 +103,16 @@ class PointDelWidget(QtWidgets.QWidget):
 
     def storeChanges(self):
         to_rewrite = {}
-
         while self.undo_stack:
-            curve, spot = self.undo_stack.pop()
-
+            curve, spot = self.undo_stack.pop(0)
             results: Results = curve.results
             try:
                 data = to_rewrite[curve][1]
             except KeyError:
                 data = results.data
-
-            x_col, y_col = curve.x, curve.y
-            x, y = spot.pos()
-
-            idx = np.where((data[x_col] == x) & (data[y_col] == y))[0]
-            if len(idx) > 0:
-                idx = idx[0]
-                data = data.drop(idx)
-                data = data.reset_index(drop=True)
+            idx = spot.index()
+            data = data.drop(idx)
+            data = data.reset_index(drop=True)
             to_rewrite[curve] = (results, data)
 
         for results, data in to_rewrite.values():
