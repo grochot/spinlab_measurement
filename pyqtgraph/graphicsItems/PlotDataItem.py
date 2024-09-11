@@ -855,9 +855,9 @@ class PlotDataItem(GraphicsObject):
 
         if styleUpdate: # repeat style arguments only when changed
             if not self.opts['pointMode']:
-                self.opts['symbolSize'] = 0
+                self.opts['symbol'] = None
             else:
-                self.opts['symbolSize'] = 5
+                self.opts['symbol'] = "o"
             
             for k, v in [
                 ('pen','pen'),
