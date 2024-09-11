@@ -94,6 +94,17 @@ class PointDelWidget(QtWidgets.QWidget):
         self.setLabelText()
 
     def confirm(self):
+        mssg = QtWidgets.QMessageBox()
+        mssg.setIcon(QtWidgets.QMessageBox.Warning)
+        mssg.setText("Are you sure you want to delete these points? After confirming, the changes will be permanent.")
+        mssg.setWindowTitle("Confirm deletion")
+        mssg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        mssg.setDefaultButton(QtWidgets.QMessageBox.No)
+        mssg.setStyleSheet("font-size: 12pt;")
+        mssg = mssg.exec_()
+        if mssg == QtWidgets.QMessageBox.No:
+            return
+        
         self.storeChanges()
         self.isConfirmed = True
         self.n_points_deleted = 0
