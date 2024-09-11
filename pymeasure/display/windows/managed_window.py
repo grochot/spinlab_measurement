@@ -254,6 +254,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         current_pt_dock = QtWidgets.QDockWidget('Current Point')
         current_pt_dock.setWidget(self.current_point)
         current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, current_pt_dock)
 
         inputs_dock = QtWidgets.QWidget(self)
@@ -510,6 +511,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             for curve in experiment.curve_list:
                 if curve:
                     curve.wdg.set_color(curve, color=color)
+                    
+            if self.manager.running_experiment() == experiment:
+                for plot_widget in self.dock_widget.plot_frames:
+                    plot_widget.plot_frame.set_vline_color(color)
         
 
     def open_file_externally(self, filename):
