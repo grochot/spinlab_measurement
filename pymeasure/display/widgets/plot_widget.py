@@ -30,6 +30,7 @@ from ..curves import ResultsCurve
 from ..Qt import QtCore, QtWidgets
 from .tab_widget import TabWidget
 from .plot_frame import PlotFrame
+from ...experiment import Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -127,6 +128,9 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
         return curve
     
     def enlarge_point(self, curve, spots):
+        if curve.results.procedure.status == Procedure.RUNNING:
+            return
+        
         if not self.pointWidget.enabled:
             return
 
@@ -139,6 +143,9 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             spot.setSize(10)
     
     def remove_point(self, curve, spots):
+        if curve.results.procedure.status == Procedure.RUNNING:
+            return
+        
         if not self.pointWidget.enabled:
             return
 

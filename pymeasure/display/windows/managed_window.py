@@ -311,7 +311,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.point_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
         self.point_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.point_dock.setVisible(False)
-        # self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.point_dock)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.point_dock)
 
         self.tabs = QtWidgets.QTabWidget(self.main)
         for wdg in self.widget_list:
@@ -702,12 +702,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if not self.manager.is_running():
             self.browser_widget.clear_button.setEnabled(True)
             self.browser_widget.clear_by_status_button.setEnabled(True)
-            self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.point_dock)
 
     def running(self, experiment):
         self.browser_widget.clear_button.setEnabled(False)
         self.browser_widget.clear_by_status_button.setEnabled(False)
-        self.removeDockWidget(self.point_dock)
 
     def abort_returned(self, experiment):
         if self.manager.experiments.has_next():
@@ -717,7 +715,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if len(self.manager.experiments.queue) > 0:
             self.browser_widget.clear_button.setEnabled(True)
             self.browser_widget.clear_by_status_button.setEnabled(True)
-            self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.point_dock)
 
     def finished(self, experiment):
         if not self.manager.experiments.has_next():
@@ -726,7 +723,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if len(self.manager.experiments.queue) > 0:
             self.browser_widget.clear_button.setEnabled(True)
             self.browser_widget.clear_by_status_button.setEnabled(True)
-            self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.point_dock)
 
     @property
     def directory(self):
