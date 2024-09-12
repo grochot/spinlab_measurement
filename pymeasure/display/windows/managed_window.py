@@ -231,8 +231,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.manager.log.connect(self.log.handle)
         
         self.manager.update_point.connect(self.current_point.set_current_point)
-        self.manager.finished.connect(self.current_point.reset)
-        self.manager.abort_returned.connect(self.current_point.reset)
 
         if self.use_sequencer:
             self.sequencer = SequencerWidget(
@@ -695,6 +693,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.browser_widget.clear_by_status_button.setEnabled(False)
 
     def abort_returned(self, experiment):
+        self.current_point.reset()
+        
         if self.manager.experiments.has_next():
             self.abort_button.setText("Resume")
             self.abort_button.setEnabled(True)
@@ -704,6 +704,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.browser_widget.clear_by_status_button.setEnabled(True)
 
     def finished(self, experiment):
+        self.current_point.reset()
+        
         if not self.manager.experiments.has_next():
             self.abort_button.setEnabled(False)
             
