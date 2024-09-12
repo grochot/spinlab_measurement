@@ -431,7 +431,7 @@ class ScatterPlotItem(GraphicsObject):
             'size': 7,
             'pen': fn.mkPen(getConfigOption('foreground')),
             'brush': fn.mkBrush(100, 100, 150),
-            'hoverable': False,
+            'hoverable': True,
             'tip': 'x: {x:.3g}\ny: {y:.3g}\ndata={data}'.format,
         }
         self.opts.update(

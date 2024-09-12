@@ -48,6 +48,7 @@ from ..widgets import (
     ClearDialog
 )
 from ...experiment import Results, Procedure, unique_filename
+from packages.point_del_widget import PointDelWidget
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -244,6 +245,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 parent=self
             )
             
+        self.pointWidget = PointDelWidget(parent=self)
+            
         self.clear_dialog = ClearDialog(parent=self)
 
     def _layout(self):
@@ -300,6 +303,14 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             estimator_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
             estimator_dock.setVisible(False)
             self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, estimator_dock)
+            
+        self.point_dock = QtWidgets.QDockWidget('Point Removal')
+        self.point_dock.setWidget(self.pointWidget)
+        self.point_dock.visibilityChanged.connect(self.pointWidget.setMode)
+        self.point_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        self.point_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
+        self.point_dock.setVisible(False)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.point_dock)
 
         self.tabs = QtWidgets.QTabWidget(self.main)
         for wdg in self.widget_list:

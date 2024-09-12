@@ -102,7 +102,9 @@ class ManagedDockWindow(ManagedWindowBase):
             self.manager.update_point.connect(plot_widget.plot_frame.set_vline_pos)
             self.manager.finished.connect(plot_widget.plot_frame.hide_vline)
             self.manager.abort_returned.connect(plot_widget.plot_frame.hide_vline)
-            
+                    
+            plot_widget.pointWidget = self.pointWidget
+
         self.browser_widget.browser.measured_quantities.update(measure_quantities)
 
         logging.getLogger().addHandler(self.log_widget.handler)

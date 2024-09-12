@@ -21,6 +21,7 @@ from ..PlotCurveItem import PlotCurveItem
 from ..PlotDataItem import PlotDataItem
 from ..ScatterPlotItem import ScatterPlotItem
 from ..ViewBox import ViewBox
+from packages.point_del_widget import PointDelWidget
 
 
 translate = QtCore.QCoreApplication.translate

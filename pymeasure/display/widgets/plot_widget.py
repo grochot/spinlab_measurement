@@ -30,6 +30,7 @@ from ..curves import ResultsCurve
 from ..Qt import QtCore, QtWidgets
 from .tab_widget import TabWidget
 from .plot_frame import PlotFrame
+from ...experiment import Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -55,6 +56,8 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
         if y_axis is not None:
             self.columns_y.setCurrentIndex(self.columns_y.findText(y_axis))
             self.plot_frame.change_y_axis(y_axis)
+            
+        self.pointWidget = None
 
     def _setup_ui(self):
         self.columns_x_label = QtWidgets.QLabel(self)
@@ -118,13 +121,48 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
                              symbolSize=5,
                              **kwargs,
                              )
+        
+        curve.sigPointsClicked.connect(self.remove_point)
+        curve.sigPointsHovered.connect(self.enlarge_point)
+        
         return curve
+    
+    def enlarge_point(self, curve, spots):
+        if curve.results.procedure.status == Procedure.RUNNING:
+            return
+        
+        if not self.pointWidget.enabled:
+            return
+
+        for point in curve.scatter.points():
+            point.setSymbol('o')
+            point.setSize(5)
+        
+        for spot in spots:
+            spot.setSymbol('x')
+            spot.setSize(10)
+    
+    def remove_point(self, curve, spots):
+        if curve.results.procedure.status == Procedure.RUNNING:
+            return
+        
+        if not self.pointWidget.enabled:
+            return
+
+        for spot in spots:
+            curve.remove_point(spot, self.pointWidget)
 
     def update_x_column(self, index):
+        if self.pointWidget.enabled:
+            self.pointWidget.undo_all()
+            
         axis = self.columns_x.itemText(index)
         self.plot_frame.change_x_axis(axis)
 
     def update_y_column(self, index):
+        if self.pointWidget.enabled:
+            self.pointWidget.undo_all()
+
         axis = self.columns_y.itemText(index)
         self.plot_frame.change_y_axis(axis)
 
