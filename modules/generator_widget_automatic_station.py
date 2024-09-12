@@ -23,7 +23,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.icon_path = "modules\icons\AutomaticStationGenerator.ico"
         self.address_list = ["None"]
         self.address = "None"
-        self.inputs = None
+        self.sequencer = None
         self.get_available_addresses()
         #self.make_connection_with_devices()
 
@@ -127,7 +127,6 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.read_for_go_button_button.clicked.connect(self.read_for_go_button)
 
         self.sample_in_plane_checkbox=QtWidgets.QCheckBox("Sample in plane",self)
-        self.sample_in_plane_checkbox.toggled.connect(lambda state: self.inputs.sample_in_plane.setValue(state))
         self.connect_with_sample(False)
         #self.sample_in_plane_checkbox.stateChanged()
 
@@ -297,6 +296,9 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         with open('./example_sequence','w') as f:
             f.write(seq_vector)
+            
+        if self.sequencer is not None:
+            self.sequencer.load_sequence(filename='./example_sequence')
 
         #data migration
         with open('./logic/parameters.json', 'r+') as file:

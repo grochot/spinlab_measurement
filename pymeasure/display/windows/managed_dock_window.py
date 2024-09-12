@@ -95,7 +95,8 @@ class ManagedDockWindow(ManagedWindowBase):
         self.browser_widget.browser.measured_quantities.update(measure_quantities)
 
         try:
-            self.devices_widget.automatic_station_generator.inputs = self.inputs
+            self.devices_widget.automatic_station_generator.sample_in_plane_checkbox.toggled.connect(lambda state: self.inputs.sample_in_plane.setValue(state))
+            self.devices_widget.automatic_station_generator.sequencer = self.sequencer
         except AttributeError:
             pass
 
