@@ -176,8 +176,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.parameters_button = QtWidgets.QPushButton('Parameters', self)
         self.abort_button.setEnabled(False)
         self.abort_button.clicked.connect(self.abort)
-        self.settings_button.clicked.connect(self.settings_function)
-        self.parameters_button.clicked.connect(self.parameters_function)
+        self.settings_button.clicked.connect(lambda: self.change_layout_type(False))
+        self.parameters_button.clicked.connect(lambda: self.change_layout_type(True))
 
         self.refresh_button = QtWidgets.QPushButton('Refresh', self)
         self.refresh_button.clicked.connect(self.refresh)
@@ -571,13 +571,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if not isinstance(self.inputs, InputsWidget):
             raise Exception("ManagedWindow can not set parameters"
                             " without a InputsWidget")
+        self.change_layout_type(parameters["layout_type"].value)
         self.inputs.set_parameters(parameters)
 
     def refresh(self):
         raise NotImplementedError("Refresh method must be overwritten by the child class.")
-    
-    def change_input_type(self):
-        raise NotImplementedError("Change input type method must be overwritten by the child class.")
 
     def _queue(self, checked):
         """ This method is a wrapper for the `self.queue` method to be connected
@@ -663,15 +661,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.abort_button.clicked.disconnect()
             self.abort_button.clicked.connect(self.abort)
 
-    def settings_function(self): 
-        self.settings_button.setEnabled(False)
-        self.parameters_button.setEnabled(True)
-        self.change_input_type()
-
-    def parameters_function(self):
-        self.settings_button.setEnabled(True)
-        self.parameters_button.setEnabled(False)
-        self.change_input_type()
+    def change_layout_type(self, value):
+        self.settings_button.setEnabled(value)
+        self.parameters_button.setEnabled(not value)
+        self.inputs.layout_type.setValue(value)
 
 
     def resume(self):
