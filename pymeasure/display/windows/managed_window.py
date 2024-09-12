@@ -723,6 +723,12 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if len(self.manager.experiments.queue) > 0:
             self.browser_widget.clear_button.setEnabled(True)
             self.browser_widget.clear_by_status_button.setEnabled(True)
+            
+    def curve_clicked(self, curve):
+        for experiment in self.manager.experiments.queue:
+            if curve in experiment.curve_list:
+                self.browser.setCurrentItem(experiment.browser_item )
+                break
 
     @property
     def directory(self):

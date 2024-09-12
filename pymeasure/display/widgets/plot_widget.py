@@ -40,6 +40,8 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
     """ Extends :class:`PlotFrame<pymeasure.display.widgets.plot_frame.PlotFrame>`
     to allow different columns of the data to be dynamically chosen
     """
+    
+    sigCurveClicked = QtCore.Signal(object)
 
     def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
                  check_status=True, linewidth=1, parent=None):
@@ -122,7 +124,8 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
                              **kwargs,
                              )
         
-        curve.sigPointsClicked.connect(self.remove_point)
+        curve.sigClicked.connect(self.sigCurveClicked)
+        curve.sigPointsClicked.connect(self.remove_points)
         curve.sigPointsHovered.connect(self.enlarge_point)
         
         return curve
@@ -142,7 +145,7 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             spot.setSymbol('x')
             spot.setSize(10)
     
-    def remove_point(self, curve, spots):
+    def remove_points(self, curve, spots):
         if curve.results.procedure.status == Procedure.RUNNING:
             return
         

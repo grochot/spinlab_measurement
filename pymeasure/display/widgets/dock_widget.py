@@ -31,7 +31,7 @@ from pyqtgraph.dockarea.Dock import DockLabel
 import pyqtgraph as pg
 
 from .plot_widget import PlotWidget, PlotFrame
-from ..Qt import QtWidgets
+from ..Qt import QtWidgets, QtCore
 from .tab_widget import TabWidget
 
 log = logging.getLogger(__name__)
@@ -57,6 +57,8 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         Default: *current procedure class* + "_dock_layout.json"
     :param parent: Passed on to QtWidgets.QWidget. Default is None
     """
+    
+    sigCurveClicked = QtCore.Signal(object)
 
     def __init__(self, name, procedure_class, x_axis_labels=None, y_axis_labels=None, linewidth=1,
                  layout_path='./', layout_filename='', parent=None):
@@ -118,9 +120,10 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
 
             dock = Dock("Dock " + str(i + 1), closable=False, size=(200, 50))
             self.dock_area.addDock(dock)
-            self.plot_frames.append(
-                PlotWidget("Results Graph", self.procedure_class.DATA_COLUMNS, x_label,
-                           y_label, linewidth=self.linewidth))
+            wdg = PlotWidget("Results Graph", self.procedure_class.DATA_COLUMNS, x_label,
+                           y_label, linewidth=self.linewidth)
+            wdg.sigCurveClicked.connect(self.sigCurveClicked)
+            self.plot_frames.append(wdg)
             self.plot_frames[i].plot_frame.plot_widget.scene().contextMenu.append(
                 self.save_dock_action())
             dock.addWidget(self.plot_frames[i])

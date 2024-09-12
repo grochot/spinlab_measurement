@@ -104,6 +104,8 @@ class ManagedDockWindow(ManagedWindowBase):
             self.manager.abort_returned.connect(plot_widget.plot_frame.hide_vline)
                     
             plot_widget.pointWidget = self.pointWidget
+            
+        self.dock_widget.sigCurveClicked.connect(self.curve_clicked)
 
         self.browser_widget.browser.measured_quantities.update(measure_quantities)
 
