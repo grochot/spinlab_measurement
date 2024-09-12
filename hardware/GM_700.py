@@ -23,8 +23,10 @@ class GM700(Instrument):
 
 
 if __name__ == "__main__":
-    device = GM700("ASRL7::INSTR")
+    device = GM700("ASRL8::INSTR")
     response = device.query("*IDN?")
     print(f"Response: {response}")
+    
+    device.shutdown()
 
 
