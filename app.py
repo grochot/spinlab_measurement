@@ -297,7 +297,9 @@ class SpinLabMeasurement(Procedure):
     
     def get_estimates(self, sequence_length=None, sequence=None):
         duration = self.point_meas_duration * self.number_of_points
-        total_duration = round(duration * (sequence_length if sequence_length > 0 else 1))
+        total_duration = round(duration)
+        if sequence_length is not None:
+            total_duration  = round(duration * (sequence_length if sequence_length > 0 else 1))
         estimates = [
             ("Single:", str(timedelta(seconds=round(duration)))),
             ("Total:", str(timedelta(seconds=total_duration))),

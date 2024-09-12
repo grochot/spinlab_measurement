@@ -504,10 +504,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if color.isValid():
             pixelmap = QtGui.QPixmap(24, 24)
             pixelmap.fill(color)
+            self.browser.itemChanged.disconnect(self.browser_item_changed)
             experiment.browser_item.setIcon(0, QtGui.QIcon(pixelmap))
+            self.browser.itemChanged.connect(self.browser_item_changed)
             for curve in experiment.curve_list:
                 if curve:
                     curve.wdg.set_color(curve, color=color)
+        
 
     def open_file_externally(self, filename):
         """ Method to open the datafile using an external editor or viewer. Uses the default
