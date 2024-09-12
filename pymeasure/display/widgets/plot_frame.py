@@ -83,7 +83,7 @@ class PlotFrame(QtWidgets.QFrame):
         
         self.vline = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen(color='r', width=1, style=QtCore.Qt.PenStyle.DashLine))
         self.vline_pos = 0
-
+        self.isVlineVisible = False
 
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_curves)
@@ -104,16 +104,14 @@ class PlotFrame(QtWidgets.QFrame):
                     item.update_data()
         self.vline.setPos(self.vline_pos)
                     
-    def show_vline(self, experiment):
-        try:
-            self.vline_pos = experiment.procedure.points[0]
-        except AttributeError:
-            self.vline_pos = 0
+    def get_experiment(self, experiment):
         color = experiment.curve_list[0].color
         self.set_vline_color(color)
-        self.plot.addItem(self.vline)
                     
     def set_vline_pos(self, x):
+        if not self.isVlineVisible:
+            self.plot.addItem(self.vline)
+            self.isVlineVisible = True
         self.vline_pos = x
         
     def set_vline_color(self, color):
@@ -121,6 +119,7 @@ class PlotFrame(QtWidgets.QFrame):
         
     def hide_vline(self):
         self.plot.removeItem(self.vline)
+        self.isVlineVisible = False
 
     def parse_axis(self, axis):
         """ Returns the units of an axis by searching the string
