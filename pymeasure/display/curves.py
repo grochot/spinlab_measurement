@@ -72,6 +72,11 @@ class ResultsCurve(pg.PlotDataItem):
         self.setData(new_xdata, new_ydata)
         
         pointWdg.pointDeleted(self, spot)
+        
+    def set_size(self, pen_size=1, symbol_size=5):
+        self.opts['pen'].setWidth(pen_size)
+        self.opts['symbolSize'] = symbol_size
+        self.updateItems(styleUpdate=True)
 
 # TODO: Add method for changing x and y
 

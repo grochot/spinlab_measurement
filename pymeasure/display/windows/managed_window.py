@@ -199,6 +199,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.browser.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.browser.customContextMenuRequested.connect(self.browser_item_menu)
         self.browser.itemChanged.connect(self.browser_item_changed)
+        self.browser.currentItemChanged.connect(self.browser_current_item_changed)
+        
         
         self.current_point = CurrentPointWidget(parent=self)
 
@@ -346,7 +348,15 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             else:
                 for curve in experiment.curve_list:
                     if curve:
-                        curve.wdg.load(curve)
+                        curve.wdg.load(curve)            
+                        
+    def browser_current_item_changed(self, current, previous):
+        current_experiment = self.manager.experiments.with_browser_item(current)
+        if current_experiment:
+                current_experiment.setSelected(True)
+        previous_experiment = self.manager.experiments.with_browser_item(previous)
+        if previous_experiment:
+                previous_experiment.setSelected(False)
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)
