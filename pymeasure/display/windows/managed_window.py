@@ -159,6 +159,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         log.setLevel(log_level)
         self.log.setLevel(log_level)
         self.widget_list = widget_list
+        self.is_expanded = False
 
         # Check if the get_estimates function is reimplemented
         self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
@@ -198,6 +199,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.browser_widget.clear_button.clicked.connect(self.clear_experiments)
         self.browser_widget.clear_by_status_button.clicked.connect(self.open_clear_dialog)
         self.browser_widget.open_button.clicked.connect(self.open_experiment)
+        self.browser_widget.expand_button.clicked.connect(self.expand)
         self.browser = self.browser_widget.browser
 
         self.browser.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
@@ -565,6 +567,56 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                     os.unlink(experiment.data_filename)
             else:
                 i += 1
+            
+    def expand(self): 
+        root = self.browser.invisibleRootItem()
+        self.is_expanded = not self.is_expanded
+        self.browser_widget.expand_button.setText('Collapse' if self.is_expanded else 'Expand')
+
+        if not self.is_expanded:
+            for i in range(root.childCount()):
+                experiment = self.manager.experiments.with_browser_item(root.child(i))
+                for curve in experiment.curve_list:
+                    if curve:
+                        curve.update_data()
+            return
+
+        amp_list = [None] * root.childCount()
+        param_list = []
+
+        for i in range(root.childCount()):
+            experiment = self.manager.experiments.with_browser_item(root.child(i))
+            parameters = experiment.procedure.parameter_objects()
+            freq = parameters['generator_frequency'].value
+            param_list.append((freq, i))
+            for idx, curve in enumerate(experiment.curve_list):
+                if curve:
+                    _, ydata = curve.getData()
+                    amp = max(ydata) - min(ydata)
+                    if amp_list[idx] is None or amp > amp_list[idx]:
+                        amp_list[idx] = amp
+                        
+        param_list.sort()
+        
+        offset_list = [0] * len(param_list)
+        
+        merged, i = 0, 0
+        while i < len(param_list):
+            while i < len(param_list) - 1 and param_list[i][0] == param_list[i+1][0]:
+                offset_list[param_list[i][1]] =  i - merged
+                merged += 1
+                i += 1
+            offset_list[param_list[i][1]] =  i - merged
+            i += 1  
+            
+
+        for i in range(root.childCount()):
+            experiment = self.manager.experiments.with_browser_item(root.child(i))
+            for idx, curve in enumerate(experiment.curve_list):
+                if curve and amp_list[idx]:
+                    xdata, ydata = curve.getData()
+                    curve.setData(xdata, ydata + offset_list[i] * amp_list[idx])
+                    curve.updateItems(styleUpdate=False)
 
     def open_experiment(self):
         dialog = ResultsDialog(self.procedure_class,
