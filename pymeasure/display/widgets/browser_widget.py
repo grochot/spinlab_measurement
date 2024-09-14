@@ -54,6 +54,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self.show_button.setEnabled(False)
         self.open_button = QtWidgets.QPushButton('Open', self)
         self.open_button.setEnabled(True)
+        self.expand_button = QtWidgets.QPushButton('Expand', self)
 
     def _layout(self):
         vbox = QtWidgets.QVBoxLayout(self)
@@ -66,6 +67,7 @@ class BrowserWidget(QtWidgets.QWidget):
         hbox.addWidget(self.hide_button)
         hbox.addWidget(self.clear_button)
         hbox.addWidget(self.clear_by_status_button)
+        hbox.addWidget(self.expand_button)
         hbox.addStretch()
         hbox.addWidget(self.open_button)
 
