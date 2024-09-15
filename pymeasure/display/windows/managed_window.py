@@ -485,7 +485,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 experiment = self.manager.experiments.with_browser_item(root.child(i))
                 for curve in experiment.curve_list:
                     if curve:
-                        curve.update_data()
+                        curve.offset = None
+                        curve.update_data(reload=True)
             return
 
         amp_list = [None] * root.childCount()
@@ -493,13 +494,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         for i in range(root.childCount()):
             experiment = self.manager.experiments.with_browser_item(root.child(i))
-            parameters = experiment.procedure.parameter_objects()
-            freq = parameters['generator_frequency'].value
-            param_list.append((freq, i))
             for idx, curve in enumerate(experiment.curve_list):
                 if curve:
-                    _, ydata = curve.getData()
-                    amp = max(ydata) - min(ydata)
+                    amp = curve.get_amplitude()
+                    freq = curve.get_param_value('RF Generator Frequency')
+                    param_list.append((freq, i))
                     if amp_list[idx] is None or amp > amp_list[idx]:
                         amp_list[idx] = amp
                         
@@ -521,9 +520,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             experiment = self.manager.experiments.with_browser_item(root.child(i))
             for idx, curve in enumerate(experiment.curve_list):
                 if curve and amp_list[idx]:
-                    xdata, ydata = curve.getData()
-                    curve.setData(xdata, ydata + offset_list[i] * amp_list[idx])
-                    curve.updateItems(styleUpdate=False)
+                    curve.offset = offset_list[i] * amp_list[idx]
+                    curve.update_data()
 
     def open_experiment(self):
         dialog = ResultsDialog(self.procedure_class,
