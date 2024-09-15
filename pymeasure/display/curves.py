@@ -47,15 +47,30 @@ class ResultsCurve(pg.PlotDataItem):
         self.force_reload = force_reload
         self.color = self.opts['pen'].color()
         self.prevZValue = self.zValue()
+        self.offset = None
 
-    def update_data(self):
+    def update_data(self, reload=False):
         """Updates the data by polling the results"""
-        if self.force_reload:
+        if self.force_reload or reload:
             self.results.reload()
         data = self.results.data  # get the current snapshot
+        
+        xdata = data[self.x]
+        ydata = data[self.y]
+        if self.offset:
+            ydata += self.offset
 
         # Set x-y data
-        self.setData(data[self.x], data[self.y])
+        self.setData(xdata, ydata)
+        
+    def get_amplitude(self):
+        xdata, ydata = self.getData()
+        return np.max(ydata) - np.min(ydata)
+    
+    def get_param_value(self, param):
+        parameters = self.results.procedure.placeholder_objects()
+        placeholders = {param.name: param.value for param in parameters.values()}
+        return placeholders[param]
 
     def set_color(self, color):
         self.pen.setColor(color)
