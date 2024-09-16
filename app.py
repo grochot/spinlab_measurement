@@ -1,14 +1,8 @@
 from ast import Num
 from email.policy import default
 import logging
-import math
 import sys
-import random
-import os
-import requests
-import subprocess
 from time import sleep, time
-import traceback
 from logic.find_instrument import FindInstrument
 from logic.save_results_path import SaveFilePath
 from pymeasure.experiment.procedure import Procedure
