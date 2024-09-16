@@ -48,6 +48,7 @@ class ResultsCurve(pg.PlotDataItem):
         self.color = self.opts['pen'].color()
         self.prevZValue = self.zValue()
         self.offset = None
+        self.isExpanded = False
 
     def update_data(self, reload=False):
         """Updates the data by polling the results"""
@@ -57,8 +58,9 @@ class ResultsCurve(pg.PlotDataItem):
         
         xdata = data[self.x]
         ydata = data[self.y]
-        if self.offset:
+        if self.offset and not self.isExpanded:
             ydata += self.offset
+            self.isExpanded = True
 
         # Set x-y data
         self.setData(xdata, ydata)

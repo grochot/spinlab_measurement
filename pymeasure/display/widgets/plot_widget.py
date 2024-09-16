@@ -177,9 +177,7 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
         self.isExpanded = not self.isExpanded
         curves = [item for item in self.plot.items if isinstance(item, ResultsCurve)]
         if not self.isExpanded:
-            for curve in curves:
-                curve.offset = None
-                curve.update_data(reload=True)
+            self.plot_frame.collapse()
         else:
             self.expandParam = param
             max_amp = 0
