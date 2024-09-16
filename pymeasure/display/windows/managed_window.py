@@ -48,6 +48,7 @@ from ..widgets import (
     ClearDialog
 )
 from ...experiment import Results, Procedure, unique_filename
+from packages.point_del_widget import PointDelWidget
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -176,8 +177,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.parameters_button = QtWidgets.QPushButton('Parameters', self)
         self.abort_button.setEnabled(False)
         self.abort_button.clicked.connect(self.abort)
-        self.settings_button.clicked.connect(self.settings_function)
-        self.parameters_button.clicked.connect(self.parameters_function)
+        self.settings_button.clicked.connect(lambda: self.change_layout_type(False))
+        self.parameters_button.clicked.connect(lambda: self.change_layout_type(True))
 
         self.refresh_button = QtWidgets.QPushButton('Refresh', self)
         self.refresh_button.clicked.connect(self.refresh)
@@ -198,6 +199,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.browser.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.browser.customContextMenuRequested.connect(self.browser_item_menu)
         self.browser.itemChanged.connect(self.browser_item_changed)
+        self.browser.currentItemChanged.connect(self.browser_current_item_changed)
+        
         
         self.current_point = CurrentPointWidget(parent=self)
 
@@ -231,8 +234,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.manager.log.connect(self.log.handle)
         
         self.manager.update_point.connect(self.current_point.set_current_point)
-        self.manager.finished.connect(self.current_point.reset)
-        self.manager.abort_returned.connect(self.current_point.reset)
 
         if self.use_sequencer:
             self.sequencer = SequencerWidget(
@@ -246,6 +247,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 parent=self
             )
             
+        self.pointWidget = PointDelWidget(parent=self)
+            
         self.clear_dialog = ClearDialog(parent=self)
 
     def _layout(self):
@@ -254,6 +257,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         current_pt_dock = QtWidgets.QDockWidget('Current Point')
         current_pt_dock.setWidget(self.current_point)
         current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, current_pt_dock)
 
         inputs_dock = QtWidgets.QWidget(self)
@@ -301,6 +305,14 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             estimator_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
             estimator_dock.setVisible(False)
             self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, estimator_dock)
+            
+        self.point_dock = QtWidgets.QDockWidget('Point Removal')
+        self.point_dock.setWidget(self.pointWidget)
+        self.point_dock.visibilityChanged.connect(self.pointWidget.setMode)
+        self.point_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        self.point_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
+        self.point_dock.setVisible(False)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.point_dock)
 
         self.tabs = QtWidgets.QTabWidget(self.main)
         for wdg in self.widget_list:
@@ -336,7 +348,15 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             else:
                 for curve in experiment.curve_list:
                     if curve:
-                        curve.wdg.load(curve)
+                        curve.wdg.load(curve)            
+                        
+    def browser_current_item_changed(self, current, previous):
+        current_experiment = self.manager.experiments.with_browser_item(current)
+        if current_experiment:
+                current_experiment.setSelected(True)
+        previous_experiment = self.manager.experiments.with_browser_item(previous)
+        if previous_experiment:
+                previous_experiment.setSelected(False)
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)
@@ -510,6 +530,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             for curve in experiment.curve_list:
                 if curve:
                     curve.wdg.set_color(curve, color=color)
+                    
+            if self.manager.running_experiment() == experiment:
+                for plot_widget in self.dock_widget.plot_frames:
+                    plot_widget.plot_frame.set_vline_color(color)
         
 
     def open_file_externally(self, filename):
@@ -571,13 +595,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if not isinstance(self.inputs, InputsWidget):
             raise Exception("ManagedWindow can not set parameters"
                             " without a InputsWidget")
+        self.change_layout_type(parameters["layout_type"].value)
         self.inputs.set_parameters(parameters)
 
     def refresh(self):
         raise NotImplementedError("Refresh method must be overwritten by the child class.")
-    
-    def change_input_type(self):
-        raise NotImplementedError("Change input type method must be overwritten by the child class.")
 
     def _queue(self, checked):
         """ This method is a wrapper for the `self.queue` method to be connected
@@ -663,15 +685,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.abort_button.clicked.disconnect()
             self.abort_button.clicked.connect(self.abort)
 
-    def settings_function(self): 
-        self.settings_button.setEnabled(False)
-        self.parameters_button.setEnabled(True)
-        self.change_input_type()
-
-    def parameters_function(self):
-        self.settings_button.setEnabled(True)
-        self.parameters_button.setEnabled(False)
-        self.change_input_type()
+    def change_layout_type(self, value):
+        self.settings_button.setEnabled(value)
+        self.parameters_button.setEnabled(not value)
+        self.inputs.layout_type.setValue(value)
 
 
     def resume(self):
@@ -697,6 +714,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.browser_widget.clear_by_status_button.setEnabled(False)
 
     def abort_returned(self, experiment):
+        self.current_point.reset()
+        
         if self.manager.experiments.has_next():
             self.abort_button.setText("Resume")
             self.abort_button.setEnabled(True)
@@ -706,12 +725,20 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.browser_widget.clear_by_status_button.setEnabled(True)
 
     def finished(self, experiment):
+        self.current_point.reset()
+        
         if not self.manager.experiments.has_next():
             self.abort_button.setEnabled(False)
             
         if len(self.manager.experiments.queue) > 0:
             self.browser_widget.clear_button.setEnabled(True)
             self.browser_widget.clear_by_status_button.setEnabled(True)
+            
+    def curve_clicked(self, curve):
+        for experiment in self.manager.experiments.queue:
+            if curve in experiment.curve_list:
+                self.browser.setCurrentItem(experiment.browser_item )
+                break
 
     @property
     def directory(self):

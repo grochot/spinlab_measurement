@@ -55,6 +55,21 @@ class Experiment(QtCore.QObject):
         self.procedure = self.results.procedure
         self.curve_list = curve_list
         self.browser_item = browser_item
+        self.isSelected = False
+        
+    def setSelected(self, selected):
+        self.isSelected = selected
+        self.update_curves_width()
+        
+    def update_curves_width(self):
+        if self.curve_list is None:
+            return
+        
+        for curve in self.curve_list:
+            if curve is None:
+                continue
+                
+            curve.set_size(pen_size=3, symbol_size=7) if self.isSelected else curve.set_size()
 
 
 class ExperimentQueue(QtCore.QObject):

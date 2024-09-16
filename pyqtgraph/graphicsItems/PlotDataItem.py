@@ -347,7 +347,7 @@ class PlotDataItem(GraphicsObject):
             'pxMode': True,
 
             'antialias': getConfigOption('antialias'),
-            'pointMode': None,
+            'pointMode': False,
 
             'downsample': 1,
             'autoDownsample': False,
@@ -487,7 +487,7 @@ class PlotDataItem(GraphicsObject):
         if self.opts['pointMode'] == state:
             return
         self.opts['pointMode'] = state
-        self.update()
+        self.updateItems()
 
     def setPen(self, *args, **kargs):
         """
@@ -854,6 +854,11 @@ class PlotDataItem(GraphicsObject):
         scatterArgs = {}
 
         if styleUpdate: # repeat style arguments only when changed
+            if not self.opts['pointMode']:
+                self.opts['symbol'] = None
+            else:
+                self.opts['symbol'] = "o"
+            
             for k, v in [
                 ('pen','pen'),
                 ('shadowPen','shadowPen'),

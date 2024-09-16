@@ -21,6 +21,7 @@ from ..PlotCurveItem import PlotCurveItem
 from ..PlotDataItem import PlotDataItem
 from ..ScatterPlotItem import ScatterPlotItem
 from ..ViewBox import ViewBox
+from packages.point_del_widget import PointDelWidget
 
 
 translate = QtCore.QCoreApplication.translate
@@ -240,6 +241,8 @@ class PlotItem(GraphicsWidget):
         c.subsampleRadio.toggled.connect(self.updateDownsampling)
         c.meanRadio.toggled.connect(self.updateDownsampling)
         c.clipToViewCheck.toggled.connect(self.updateDownsampling)
+        
+        c.pointsGroup.toggled.connect(self.updatePointMode)
 
         self.ctrl.avgParamList.itemClicked.connect(self.avgParamListClicked)
         self.ctrl.averageGroup.toggled.connect(self.avgToggled)
@@ -553,11 +556,12 @@ class PlotItem(GraphicsWidget):
             ## configure curve for this plot
             (alpha, auto) = self.alphaState()
             item.setAlpha(alpha, auto)
+            item.setPointMode(self.ctrl.pointsGroup.isChecked())
             item.setNormalizeMode(self.ctrl.normalizeCheck.isChecked())
             item.setFftMode(self.ctrl.fftCheck.isChecked())
             item.setDownsampling(*self.downsampleMode())
             item.setClipToView(self.clipToViewMode())
-            item.setPointMode(self.pointMode())
+            # item.setPointMode(self.pointMode())
             
             ## Hide older plots if needed
             self.updateDecimation()
@@ -913,6 +917,12 @@ class PlotItem(GraphicsWidget):
 
     def widgetGroupInterface(self):
         return (None, PlotItem.saveState, PlotItem.restoreState)
+    
+    def updatePointMode(self, b=None):
+        if b is None:
+            b = self.ctrl.pointsGroup.isChecked()
+        for c in self.curves:
+            c.setPointMode(b)
     
     def updateNormalizeMode(self, b=None):
         if b is None:

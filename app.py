@@ -1,14 +1,8 @@
 from ast import Num
 from email.policy import default
 import logging
-import math
 import sys
-import random
-import os
-import requests
-import subprocess
 from time import sleep, time
-import traceback
 from logic.find_instrument import FindInstrument
 from logic.save_results_path import SaveFilePath
 from pymeasure.experiment.procedure import Procedure
@@ -48,13 +42,13 @@ class SpinLabMeasurement(Procedure):
 
     finded_instruments = find_instruments.show_instrument()
     daq_channels = [addr for addr in finded_instruments if "Dev" in addr]
-    used_parameters_list=['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'set_measdevice', 'set_sourcemeter', 'set_multimeter','set_pulsegenerator', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','set_switch', 'set_kriostat', 'set_lfgen', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','address_pulsegenerator','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias', 'rotation_axis', 'rotation_polar_constant', 'rotation_azimuth_constant', 'constant_field_value', 'address_rotationstation', 'mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','delay_measurement','pulsegenerator_compliance','pulsegenerator_source_range','return_the_rotationstation','field_bias_value','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','remanency_correction','set_polar_angle','set_azimuthal_angle','set_polar_angle_fmr','set_azimuthal_angle_fmr','remanency_correction_time', 'layout_type', 'kriostat_temperature']
+    used_parameters_list=['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'set_measdevice_fmr', 'set_measdevice_qm', 'set_sourcemeter', 'set_multimeter','set_pulsegenerator', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','set_switch', 'set_kriostat', 'set_lfgen', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','address_pulsegenerator','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias', 'rotation_axis', 'rotation_polar_constant', 'rotation_azimuth_constant', 'constant_field_value', 'address_rotationstation', 'mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','delay_measurement','pulsegenerator_compliance','pulsegenerator_source_range','return_the_rotationstation','field_bias_value','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','remanency_correction','set_polar_angle','set_azimuthal_angle','set_polar_angle_fmr','set_azimuthal_angle_fmr','remanency_correction_time', 'layout_type', 'kriostat_temperature']
     parameters_from_file = save_parameter.ReadFile()
 #################################################################### METADATA #####################################################################  
     time_of_measurement = Metadata("Measurement start time", default=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     
 #################################################################### PARAMETERS #####################################################################
-    mode = ListParameter("Mode", default = parameters_from_file["mode"] , choices=['ResistanceMode', 'FMRMode', 'VSMMode', 'HarmonicMode', 'CalibrationFieldMode', 'PulseMode','CIMSMode'], vis_cond=(PARAMETERS))
+    mode = ListParameter("Mode", default = parameters_from_file["mode"] , choices=['QuickMeasurement', 'ResistanceMode', 'FMRMode', 'VSMMode', 'HarmonicMode', 'CalibrationFieldMode', 'PulseMode','CIMSMode'], vis_cond=(PARAMETERS))
     mode_resistance = BooleanParameter("Use 4-points measurement", default = parameters_from_file["mode_resistance"], vis_cond=(PARAMETERS, lambda mode: mode == "ResistanceMode"))
     mode_fmr = ListParameter("FMR Mode", default = parameters_from_file["mode_fmr"], choices = ["V-FMR", "ST-FMR"], vis_cond=(SETTINGS, lambda mode: mode == "FMRMode"))
     mode_cims_relays = BooleanParameter("Use relays", default = parameters_from_file["mode_cims_relays"], vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode"))
@@ -72,26 +66,27 @@ class SpinLabMeasurement(Procedure):
     
 
     #Hardware
-    set_sourcemeter=ListParameter("Sourcemeter", choices=["Keithley 2400", "Keithley 2636", "Agilent 2912", "none"], default = parameters_from_file["set_sourcemeter"], vis_cond=(SETTINGS, lambda mode: mode == "ResistanceMode" or mode == "CIMSMode"))
-    set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"],default = parameters_from_file["set_multimeter"], vis_cond=(SETTINGS, lambda mode, mode_resistance, set_measdevice:(mode == "ResistanceMode" and mode_resistance == True) or (mode == "FMRMode" and set_measdevice == "Multimeter")))
+    set_sourcemeter=ListParameter("Sourcemeter", choices=["Keithley 2400", "Keithley 2636", "Agilent 2912", "none"], default = parameters_from_file["set_sourcemeter"], vis_cond=(SETTINGS, lambda mode, set_measdevice_qm: mode == "ResistanceMode" or mode == "CIMSMode" or (mode == "QuickMeasurement" and set_measdevice_qm == "Sourcemeter")))
+    set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"],default = parameters_from_file["set_multimeter"], vis_cond=(SETTINGS, lambda mode, mode_resistance, set_measdevice_fmr, set_measdevice_qm: (mode == "ResistanceMode" and mode_resistance == True) or (mode == "FMRMode" and set_measdevice_fmr == "Multimeter") or (mode == "QuickMeasurement" and set_measdevice_qm == "Multimeter")))
     set_gaussmeter = ListParameter("Gaussmeter", default = parameters_from_file["set_gaussmeter"], choices=["Lakeshore", "GM700", "none"], vis_cond=(SETTINGS, lambda mode: mode == "ResistanceMode" or mode == "HarmonicMode" or mode == "FMRMode" or mode == "CalibrationFieldMode" or mode=="CIMSMode"))
     set_field = ListParameter("Magnetic Field Controller", default = parameters_from_file["set_field"], choices = ["DAQ", "Lockin", "none"], vis_cond=(SETTINGS, lambda mode: mode == "ResistanceMode" or mode == "HarmonicMode" or mode == "FMRMode" or mode == "CalibrationFieldMode" or mode=="CIMSMode"))
-    set_lockin = ListParameter("Lockin", default = parameters_from_file["set_lockin"], choices = ["Zurich", "SR830", "none"], vis_cond=(SETTINGS, lambda mode, set_measdevice: mode == "HarmonicMode" or (mode == "FMRMode" and set_measdevice == "LockIn")))
-    set_automaticstation = BooleanParameter("Automatic Station",  default = parameters_from_file["set_automaticstation"], vis_cond=(SETTINGS, lambda mode: mode != "CalibrationFieldMode" and mode != "HarmonicMode"))
-    set_rotationstation = BooleanParameter("Rotation Station", default = parameters_from_file["set_rotationstation"], vis_cond=(PARAMETERS, lambda mode: mode != "CalibrationFieldMode"))
-    set_switch = BooleanParameter("Switch", default = parameters_from_file["set_switch"], vis_cond=(PARAMETERS, lambda mode: mode != "CalibrationFieldMode" and mode != "HarmonicMode" and mode != "FMRMode"))
-    set_kriostat = BooleanParameter("Kriostat", default = parameters_from_file["set_kriostat"], vis_cond=(PARAMETERS))
+    set_lockin = ListParameter("Lockin", default = parameters_from_file["set_lockin"], choices = ["Zurich", "SR830", "none"], vis_cond=(SETTINGS, lambda mode, set_measdevice_fmr: mode == "HarmonicMode" or (mode == "FMRMode" and set_measdevice_fmr == "LockIn")))
+    set_automaticstation = BooleanParameter("Automatic Station",  default = parameters_from_file["set_automaticstation"], vis_cond=(SETTINGS, lambda mode: mode != "CalibrationFieldMode" and mode != "HarmonicMode" and mode != "QuickMeasurement"))
+    set_rotationstation = BooleanParameter("Rotation Station", default = parameters_from_file["set_rotationstation"], vis_cond=(PARAMETERS, lambda mode: mode != "CalibrationFieldMode" and mode != "QuickMeasurement"))
+    set_switch = BooleanParameter("Switch", default = parameters_from_file["set_switch"], vis_cond=(PARAMETERS, lambda mode: mode != "CalibrationFieldMode" and mode != "QuickMeasurement" and mode != "FMRMode" and mode != "HarmonicMode"))
+    set_kriostat = BooleanParameter("Kriostat", default = parameters_from_file["set_kriostat"], vis_cond=(PARAMETERS, lambda mode: mode != "QuickMeasurement"))
     set_lfgen = ListParameter("LF Generator", default = parameters_from_file["set_lfgen"], choices = ["SR830", "HP33120A","none"], vis_cond=(SETTINGS, lambda mode: mode == "FMRMode"))
     set_analyzer = ListParameter("Vector Analyzer", default = parameters_from_file["set_analyzer"], choices = ['VectorAnalyzer', 'none'], vis_cond=(SETTINGS, lambda mode: mode == "VSMMode"))
     set_generator = ListParameter("RF Generator", default = parameters_from_file["set_generator"], choices = ["Agilent","WindFreak", "none"], vis_cond=(SETTINGS, lambda mode: mode == "FMRMode"))
     set_pulsegenerator=ListParameter("Pulse Generator", choices=["Agilent 2912","Tektronix 10,070A","Keithley 2636", "none"], default = parameters_from_file["set_pulsegenerator"], vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode"))
-    set_measdevice = ListParameter("Measurement Device", choices=["LockIn", "Multimeter"], default=parameters_from_file["set_measdevice"], vis_cond=(SETTINGS, lambda mode: mode == "FMRMode"))
+    set_measdevice_fmr = ListParameter("Measurement Device FMR", choices=["LockIn", "Multimeter"], default=parameters_from_file["set_measdevice_fmr"], vis_cond=(SETTINGS, lambda mode: mode == "FMRMode"))
+    set_measdevice_qm = ListParameter("Measurement Device QM", choices=["Sourcemeter", "Multimeter"], default=parameters_from_file["set_measdevice_qm"], vis_cond=(SETTINGS, lambda mode: mode == "QuickMeasurement"))
 
     #Hardware address
-    address_sourcemeter=ListParameter("Sourcemeter address", default = parameters_from_file["address_sourcemeter"] if parameters_from_file["address_sourcemeter"] in finded_instruments else 'None', choices=finded_instruments, vis_cond=(SETTINGS, lambda mode, set_sourcemeter: (mode == "ResistanceMode" or mode == "CIMSMode") and set_sourcemeter != "none"))
-    address_multimeter=ListParameter("Multimeter address", default = parameters_from_file["address_multimeter"] if parameters_from_file["address_multimeter"] in finded_instruments else 'None', choices=finded_instruments, vis_cond=(SETTINGS, lambda mode, set_measdevice, set_multimeter, mode_resistance: ((mode == "FMRMode" and set_measdevice == "Multimeter") or (mode == "ResistanceMode" and mode_resistance == True)) and set_multimeter != "none"))
+    address_sourcemeter=ListParameter("Sourcemeter address", default = parameters_from_file["address_sourcemeter"] if parameters_from_file["address_sourcemeter"] in finded_instruments else 'None', choices=finded_instruments, vis_cond=(SETTINGS, lambda mode, set_sourcemeter, set_measdevice_qm: (mode == "ResistanceMode" or mode == "CIMSMode" or (mode == "QuickMeasurement" and set_measdevice_qm == "Sourcemeter")) and set_sourcemeter != "none"))
+    address_multimeter=ListParameter("Multimeter address", default = parameters_from_file["address_multimeter"] if parameters_from_file["address_multimeter"] in finded_instruments else 'None', choices=finded_instruments, vis_cond=(SETTINGS, lambda mode, set_measdevice_fmr, set_multimeter, mode_resistance, set_measdevice_qm: ((mode == "FMRMode" and set_measdevice_fmr == "Multimeter") or (mode == "ResistanceMode" and mode_resistance == True) or (mode == "QuickMeasurement" and set_measdevice_qm == "Multimeter")) and set_multimeter != "none"))
     address_gaussmeter=ListParameter("Gaussmeter address",default = parameters_from_file["address_gaussmeter"] if parameters_from_file["address_gaussmeter"] in finded_instruments else 'None',   choices=finded_instruments, vis_cond=(SETTINGS, lambda mode, set_gaussmeter: (mode == "ResistanceMode" or mode == "HarmonicMode" or mode == "FMRMode" or mode == "CalibrationFieldMode" or mode=="CIMSMode") and set_gaussmeter != "none"))
-    address_lockin=ListParameter("Lockin address", default = parameters_from_file["address_lockin"] if parameters_from_file["address_lockin"] in finded_instruments else 'None',  choices=finded_instruments, vis_cond=(SETTINGS, lambda mode, set_measdevice: mode == "HarmonicMode" or (mode == "FMRMode" and set_measdevice == "LockIn")))
+    address_lockin=ListParameter("Lockin address", default = parameters_from_file["address_lockin"] if parameters_from_file["address_lockin"] in finded_instruments else 'None',  choices=finded_instruments, vis_cond=(SETTINGS, lambda mode, set_measdevice_fmr: mode == "HarmonicMode" or (mode == "FMRMode" and set_measdevice_fmr == "LockIn")))
     address_switch=ListParameter("Switch address",default = parameters_from_file["address_switch"] if parameters_from_file["address_switch"] in finded_instruments else 'None',  choices=finded_instruments, vis_cond=(SETTINGS, lambda mode: mode == "ResistanceMode"))
     address_analyzer=ListParameter("Analyzer address",default = parameters_from_file["address_analyzer"] if parameters_from_file["address_analyzer"] in finded_instruments else 'None',  choices=finded_instruments, vis_cond=(SETTINGS, lambda mode: mode == "VSMMode"))
     address_generator=ListParameter("Generator address", default = parameters_from_file["address_generator"] if parameters_from_file["address_generator"] in finded_instruments else 'None',  choices=finded_instruments, vis_cond=(SETTINGS, lambda mode, set_generator: mode == "FMRMode" and set_generator != "none"))
@@ -109,14 +104,14 @@ class SpinLabMeasurement(Procedure):
     #MeasurementParameters
     sample_name = Parameter("Sample name", default = parameters_from_file["sample_name"], vis_cond=(NOT_VISIBLE)) 
     vector = Parameter("Vector", default = parameters_from_file["vector"], vis_cond=(PARAMETERS))
-    delay_field = FloatParameter("Delay Field", default = parameters_from_file["delay_field"], units="s", vis_cond=(PARAMETERS))
+    delay_field = FloatParameter("Delay Field", default = parameters_from_file["delay_field"], units="s", vis_cond=(PARAMETERS, lambda mode: mode != "QuickMeasurement"))
     delay_lockin = FloatParameter("Delay Lockin", default = parameters_from_file["delay_lockin"], units="s", vis_cond=(PARAMETERS, lambda mode: mode == "HarmonicMode" or mode == "FMRMode"))
     delay_bias = FloatParameter("Delay Bias", default = parameters_from_file["delay_bias"], units="s", vis_cond=(PARAMETERS, lambda mode: mode == "ResistanceMode"))
     delay_measurement = FloatParameter("Delay sourcemeter measurement", default = parameters_from_file["delay_measurement"], units="s", vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode"))
 
     #########  SETTINGS PARAMETERS ##############
     #SourcemeterParameters 
-    sourcemeter_params_vis_cond = (SETTINGS ,lambda mode, set_sourcemeter: (mode == "ResistanceMode" or mode == "CIMSMode") and set_sourcemeter != "none")
+    sourcemeter_params_vis_cond = (SETTINGS ,lambda mode, set_sourcemeter, address_sourcemeter, set_measdevice_qm: (mode == "ResistanceMode" or mode == "CIMSMode" or (mode == "QuickMeasurement" and set_measdevice_qm == "Sourcemeter")) and set_sourcemeter != "none" and address_sourcemeter != "None")
     sourcemter_source = ListParameter("Sourcemeter Source", default = parameters_from_file["sourcemter_source"], choices=["VOLT", "CURR"],  vis_cond=sourcemeter_params_vis_cond)
     sourcemeter_compliance = FloatParameter("Sourcemeter compliance", default = parameters_from_file["sourcemeter_compliance"],  vis_cond=sourcemeter_params_vis_cond)
     sourcemeter_channel = ListParameter("Sourcemeter CH", default = parameters_from_file["sourcemeter_channel"], choices = ["Channel A", "Channel B"],  vis_cond=sourcemeter_params_vis_cond)
@@ -126,7 +121,7 @@ class SpinLabMeasurement(Procedure):
     sourcemeter_bias = FloatParameter("Sourcemeter bias", default = parameters_from_file["sourcemeter_bias"],  vis_cond=sourcemeter_params_vis_cond)
 
     #MultimeterParameters
-    multimeter_params_vis_cond = (SETTINGS, lambda mode, set_measdevice, set_multimeter, address_multimeter, mode_resistance: set_multimeter != "none" and address_multimeter != "None" and (mode == "ResistanceMode" and mode_resistance == True) or (mode == "FMRMode" and set_measdevice == "Multimeter"))
+    multimeter_params_vis_cond = (SETTINGS, lambda mode, set_measdevice_fmr, set_multimeter, address_multimeter, mode_resistance, set_measdevice_qm: set_multimeter != "none" and address_multimeter != "None" and ((mode == "ResistanceMode" and mode_resistance == True) or (mode == "FMRMode" and set_measdevice_fmr == "Multimeter") or (mode == "QuickMeasurement" and set_measdevice_qm == "Multimeter")))
     multimeter_function = ListParameter("Multimeter function", default = parameters_from_file["multimeter_function"], choices=[ "DCV", "DCV_RATIO", "ACV", "DCI", "ACI", "R2W", "R4W", "FREQ", "PERIOD", "CONTINUITY", "DIODE"], vis_cond=multimeter_params_vis_cond)
     multimeter_resolution = FloatParameter("Multimeter resolution",default = parameters_from_file["multimeter_resolution"], vis_cond=multimeter_params_vis_cond)
     multimeter_autorange = BooleanParameter("Multimeter autorange", default = parameters_from_file["multimeter_autorange"], vis_cond=multimeter_params_vis_cond)
@@ -135,7 +130,7 @@ class SpinLabMeasurement(Procedure):
     multimeter_nplc = ListParameter("Multimeter NPLC", default = parameters_from_file["multimeter_nplc"], choices=[0.02, 0.2, 1, 10, 100, 'MIN', 'MAX'], vis_cond=multimeter_params_vis_cond)
     
     #LockinParameters
-    lockin_params_vis_cond = (SETTINGS ,lambda mode, set_measdevice, set_lockin, address_lockin: set_lockin != "none" and address_lockin != "None" and (mode == "HarmonicMode" or (mode == "FMRMode" and set_measdevice == "LockIn")))
+    lockin_params_vis_cond = (SETTINGS, lambda mode, set_measdevice_fmr, set_lockin, address_lockin: set_lockin != "none" and address_lockin != "None" and (mode == "HarmonicMode" or (mode == "FMRMode" and set_measdevice_fmr == "LockIn")))
     lockin_average = IntegerParameter("Lockin Average", default = parameters_from_file["lockin_average"], vis_cond=lockin_params_vis_cond)
     lockin_input_coupling = ListParameter("Lockin Input Coupling", default = parameters_from_file["lockin_input_coupling"], choices = ["AC", "DC"], vis_cond=lockin_params_vis_cond)
     lockin_reference_source = ListParameter("Lockin Reference Source", default = parameters_from_file["lockin_reference_source"], choices=["Internal", "External"], vis_cond=lockin_params_vis_cond)
@@ -147,16 +142,16 @@ class SpinLabMeasurement(Procedure):
     lockin_channel1 = ListParameter("Lockin Channel 1", default = parameters_from_file["lockin_channel1"], choices = ["X", "Y", "R", "Theta", "Aux In 1", "Aux In 2", "Aux In 3", "Aux In 4"], vis_cond=lockin_params_vis_cond)
     lockin_channel2 = ListParameter("Lockin Channel 2", default = parameters_from_file["lockin_channel2"], choices = ["X", "Y", "R", "Theta", "Aux In 1", "Aux In 2", "Aux In 3", "Aux In 4"], vis_cond=lockin_params_vis_cond)
     
-    lockin_frequency = FloatParameter("Lockin Frequency", default = parameters_from_file["lockin_frequency"], units="Hz", vis_cond = (SETTINGS ,lambda mode, set_measdevice, set_lockin, address_lockin, lockin_reference_source: set_lockin != "none" and address_lockin != "None" and (mode == "HarmonicMode" or (mode == "FMRMode" and set_measdevice == "LockIn")) and lockin_reference_source == "Internal"))
-    lockin_harmonic = IntegerParameter("Lockin Harmonic", default = parameters_from_file["lockin_harmonic"],vis_cond = (SETTINGS ,lambda mode, set_measdevice, set_lockin, address_lockin, lockin_reference_source: set_lockin != "none" and address_lockin != "None" and (mode == "HarmonicMode" or (mode == "FMRMode" and set_measdevice == "LockIn")) and lockin_reference_source == "Internal"))
-    lockin_sine_amplitude = FloatParameter("Lockin Sine Amplitude", default = parameters_from_file["lockin_sine_amplitude"], units="V", vis_cond = (SETTINGS ,lambda mode, set_measdevice, set_lockin, address_lockin, lockin_reference_source: set_lockin != "none" and address_lockin != "None" and (mode == "HarmonicMode" or (mode == "FMRMode" and set_measdevice == "LockIn")) and lockin_reference_source == "Internal"))
+    lockin_frequency = FloatParameter("Lockin Frequency", default = parameters_from_file["lockin_frequency"], units="Hz", vis_cond = (SETTINGS ,lambda mode, set_measdevice_fmr, set_lockin, address_lockin, lockin_reference_source: set_lockin != "none" and address_lockin != "None" and (mode == "HarmonicMode" or (mode == "FMRMode" and set_measdevice_fmr == "LockIn")) and lockin_reference_source == "Internal"))
+    lockin_harmonic = IntegerParameter("Lockin Harmonic", default = parameters_from_file["lockin_harmonic"],vis_cond = (SETTINGS ,lambda mode, set_measdevice_fmr, set_lockin, address_lockin, lockin_reference_source: set_lockin != "none" and address_lockin != "None" and (mode == "HarmonicMode" or (mode == "FMRMode" and set_measdevice_fmr == "LockIn")) and lockin_reference_source == "Internal"))
+    lockin_sine_amplitude = FloatParameter("Lockin Sine Amplitude", default = parameters_from_file["lockin_sine_amplitude"], units="V", vis_cond = (SETTINGS ,lambda mode, set_measdevice_fmr, set_lockin, address_lockin, lockin_reference_source: set_lockin != "none" and address_lockin != "None" and (mode == "HarmonicMode" or (mode == "FMRMode" and set_measdevice_fmr == "LockIn")) and lockin_reference_source == "Internal"))
 
     
     #FieldParameters 
-    field_constant = FloatParameter("Field Calibration Constant", default = parameters_from_file["field_constant"], vis_cond=(SETTINGS))
-    set_field_value_fmr = FloatParameter("Set Constant Field Value", default = parameters_from_file["set_field_value_fmr"], units="Oe", vis_cond = (PARAMETERS, lambda mode, mode_fmr: mode == "FMRMode" and mode_fmr == "ST-FMR"))
-    field_step = FloatParameter("Field sweep step", default = parameters_from_file["field_step"], units="Oe", vis_cond=(PARAMETERS, lambda mode: mode != "CalibrationFieldMode"))
-    constant_field_value =  FloatParameter("Set Constant Field Value", default = parameters_from_file["constant_field_value"], units="Oe", vis_cond=(SETTINGS, lambda set_rotationstation: set_rotationstation == True))
+    field_constant = FloatParameter("Field Calibration Constant", default = parameters_from_file["field_constant"], vis_cond=(SETTINGS, lambda mode: mode != "QuickMeasurement"))
+    set_field_value_fmr = FloatParameter("Set Constant Field Value", default = parameters_from_file["set_field_value_fmr"], units="Oe", vis_cond =(PARAMETERS, lambda mode, mode_fmr: mode == "FMRMode" and mode_fmr == "ST-FMR"))
+    field_step = FloatParameter("Field sweep step", default = parameters_from_file["field_step"], units="Oe", vis_cond=(PARAMETERS, lambda mode: mode != "CalibrationFieldMode" and mode != "QuickMeasurement"))
+    constant_field_value =  FloatParameter("Set Constant Field Value", default = parameters_from_file["constant_field_value"], units="Oe", vis_cond=(SETTINGS, lambda mode, set_rotationstation: set_rotationstation == True and mode != "QuickMeasurement"))
     field_bias_value= FloatParameter("Set Field Bias Value", default = parameters_from_file['field_bias_value'], units="Oe", vis_cond=(PARAMETERS, lambda mode: mode == "CIMSMode"))
 
     
@@ -247,7 +242,7 @@ class SpinLabMeasurement(Procedure):
             case "HarmonicMode":
                 self.selected_mode = HarmonicMode(self.set_automaticstation, self.set_lockin, self.set_field, self.set_gaussmeter,  self.set_rotationstation, self.address_lockin, self.address_gaussmeter, self.vector, self.delay_field, self.delay_lockin, self.delay_bias, self.lockin_average, self.lockin_input_coupling, self.lockin_reference_source, self.lockin_dynamic_reserve, self.lockin_input_connection, self.lockin_sensitivity, self.lockin_timeconstant, self.lockin_autophase, self.lockin_frequency, self.lockin_harmonic, self.lockin_sine_amplitude,  self.lockin_channel1, self.lockin_channel2, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.address_daq, self.field_step, self.set_rotationstation, self.address_rotationstation, self.constant_field_value, self.rotation_axis, self.rotation_polar_constant, self.rotation_azimuth_constant, self.set_polar_angle,self.set_azimuthal_angle, self.hold_the_field_after_measurement, self.return_the_rotationstation)
             case "FMRMode":
-                self.selected_mode = FMRMode(self.set_automaticstation, self.set_lockin, self.set_field, self.set_gaussmeter, self.set_generator, self.set_rotationstation, self.address_lockin, self.address_gaussmeter, self.vector, self.delay_field, self.delay_lockin, self.delay_bias, self.lockin_average, self.lockin_input_coupling, self.lockin_reference_source,self.lockin_dynamic_reserve, self.lockin_input_connection, self.lockin_sensitivity, self.lockin_timeconstant, self.lockin_autophase, self.lockin_frequency, self.lockin_harmonic, self.lockin_sine_amplitude, self.lockin_channel1, self.lockin_channel2, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.address_generator, self.set_field_value_fmr, self.generator_frequency, self.generator_power,  self.mode_fmr, self.address_daq, self.set_lfgen, self.address_lfgen, self.lfgen_freq, self.lfgen_amp, self.field_step, self.set_rotationstation, self.address_rotationstation, self.constant_field_value, self.rotation_axis, self.set_polar_angle_fmr, self.set_azimuthal_angle_fmr, self.hold_the_field_after_measurement, self.return_the_rotationstation, self.set_multimeter, self.address_multimeter, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.multimeter_nplc, self.set_measdevice)
+                self.selected_mode = FMRMode(self.set_automaticstation, self.set_lockin, self.set_field, self.set_gaussmeter, self.set_generator, self.set_rotationstation, self.address_lockin, self.address_gaussmeter, self.vector, self.delay_field, self.delay_lockin, self.delay_bias, self.lockin_average, self.lockin_input_coupling, self.lockin_reference_source,self.lockin_dynamic_reserve, self.lockin_input_connection, self.lockin_sensitivity, self.lockin_timeconstant, self.lockin_autophase, self.lockin_frequency, self.lockin_harmonic, self.lockin_sine_amplitude, self.lockin_channel1, self.lockin_channel2, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.address_generator, self.set_field_value_fmr, self.generator_frequency, self.generator_power,  self.mode_fmr, self.address_daq, self.set_lfgen, self.address_lfgen, self.lfgen_freq, self.lfgen_amp, self.field_step, self.set_rotationstation, self.address_rotationstation, self.constant_field_value, self.rotation_axis, self.set_polar_angle_fmr, self.set_azimuthal_angle_fmr, self.hold_the_field_after_measurement, self.return_the_rotationstation, self.set_multimeter, self.address_multimeter, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.multimeter_nplc, self.set_measdevice_fmr)
             case "CalibrationFieldMode": 
                 self.selected_mode = FieldCalibrationMode(self.set_field, self.set_gaussmeter, self.address_daq, self.address_gaussmeter, self.vector, self.delay_field)
             case "CIMSMode":
@@ -314,7 +309,7 @@ class MainWindow(ManagedDockWindow):
     def __init__(self):
         super().__init__(
             procedure_class= SpinLabMeasurement,
-            inputs = ['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'set_sourcemeter','set_pulsegenerator', 'set_measdevice', 'set_multimeter', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','address_rotationstation','rotation_axis', 'set_polar_angle','set_azimuthal_angle','set_polar_angle_fmr','set_azimuthal_angle_fmr', 'rotation_polar_constant', 'rotation_azimuth_constant','set_switch', 'set_kriostat', "kriostat_temperature", 'set_lfgen', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','address_pulsegenerator','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'constant_field_value', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias','mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','pulsegenerator_compliance','pulsegenerator_source_range','delay_measurement','field_bias_value','remanency_correction','remanency_correction_time','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','return_the_rotationstation', 'layout_type', 'point_meas_duration', 'number_of_points'],
+            inputs = ['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'set_measdevice_qm', 'set_sourcemeter','set_pulsegenerator', 'set_measdevice_fmr', 'set_multimeter', 'set_gaussmeter', 'set_field', 'set_lockin', 'set_automaticstation', 'set_rotationstation','address_rotationstation','rotation_axis', 'set_polar_angle','set_azimuthal_angle','set_polar_angle_fmr','set_azimuthal_angle_fmr', 'rotation_polar_constant', 'rotation_azimuth_constant','set_switch', 'set_kriostat', "kriostat_temperature", 'set_lfgen', 'set_analyzer', 'set_generator', 'address_sourcemeter', 'address_multimeter','address_daq' , 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_generator', 'address_lfgen','address_pulsegenerator','sourcemter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'constant_field_value', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power','lfgen_freq', 'lfgen_amp','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias','mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','pulsegenerator_compliance','pulsegenerator_source_range','delay_measurement','field_bias_value','remanency_correction','remanency_correction_time','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','return_the_rotationstation', 'layout_type', 'point_meas_duration', 'number_of_points'],
             x_axis=['Field (Oe)', 'Voltage (V)'],
             y_axis=['Field (Oe)', 'Resistance (ohm)'],
             # directory_input=True,  
@@ -331,7 +326,10 @@ class MainWindow(ManagedDockWindow):
         self.filename = self.procedure_class.parameters_from_file["sample_name"]
         self.store_measurement = False                              # Controls the 'Save data' toggle
         self.file_input.extensions = ["csv", "txt", "data"]         # Sets recognized extensions, first entry is the default extension
-        self.file_input.filename_fixed = False    
+        self.file_input.filename_fixed = False 
+        
+        self.tabs.currentChanged.connect(self.on_tab_change)
+        self.file_input.filename_fixed = False 
     
     def set_calibration_constant(self, value):
         self.inputs.field_constant.setValue(value)
@@ -354,16 +352,15 @@ class MainWindow(ManagedDockWindow):
             if old_address in choices:
                 input_widget.setValue(str(old_address))
                 continue
-            input_widget.setValue("None")
-    
-    def change_input_type(self): 
-        if self.inputs.layout_type.value():
-            self.inputs.layout_type.setValue(False)
-        else:
-            self.inputs.layout_type.setValue(True)
+            input_widget.setValue("None")         
     
     def set_sample_name(self, value):
         self.inputs.sample_name.setValue(value)
+        
+    def on_tab_change(self, index:int):
+        self.quick_measure_widget.on_tab_change(index)
+        if self.quick_measure_widget.tab_index == index:
+            self.change_layout_type(False)
     
     def filename_getter(self):
         return self.file_input.filename
