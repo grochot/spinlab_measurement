@@ -68,6 +68,9 @@ class GM700:
 
     def get_reference(self):
         return self.query("REF?")
+    
+    def reset(self):
+        self.write("*RST")
 
     def close(self):
         self.inst.close()
