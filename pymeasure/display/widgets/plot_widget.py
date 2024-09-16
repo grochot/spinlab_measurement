@@ -86,6 +86,8 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
         )
         self.updated = self.plot_frame.updated
         self.plot = self.plot_frame.plot
+        self.plot.ctrl.xGridCheck.setChecked(True)
+        self.plot.ctrl.yGridCheck.setChecked(True)
         self.columns_x.setCurrentIndex(0)
         self.columns_y.setCurrentIndex(1)
 
