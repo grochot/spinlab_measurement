@@ -120,6 +120,13 @@ class PlotFrame(QtWidgets.QFrame):
     def hide_vline(self):
         self.plot.removeItem(self.vline)
         self.isVlineVisible = False
+        
+    def collapse(self):
+        for item in self.plot.items:
+            if isinstance(item, self.ResultsClass):
+                item.offset = None
+                item.isExpanded = False
+                item.update_data(reload=True)
 
     def parse_axis(self, axis):
         """ Returns the units of an axis by searching the string
