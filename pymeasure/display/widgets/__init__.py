@@ -40,3 +40,4 @@ from .current_pt_widget import CurrentPointWidget
 from .clear_dialog import ClearDialog
 from .devices_widget import DevicesWidget
 from .quick_measure_widget import QuickMeasureWidget
+from .expand_dialog import ExpandDialog
