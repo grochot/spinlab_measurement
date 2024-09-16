@@ -46,7 +46,8 @@ from ..widgets import (
     EstimatorWidget,
     CurrentPointWidget,
     ClearDialog,
-    ParametersWidget
+    ParametersWidget,
+    ExpandDialog,
 )
 from ...experiment import Results, Procedure, unique_filename
 from packages.point_del_widget import PointDelWidget
@@ -254,8 +255,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             )
             
         self.pointWidget = PointDelWidget(parent=self)
-            
         self.clear_dialog = ClearDialog(parent=self)
+        self.expand_dialog = ExpandDialog(parent=self, procedure_class=self.procedure_class)
         
         self.parameters_widget = ParametersWidget()
         self.parameters_widget.sigSetParameter.connect(self.set_parameter_from_widget)
@@ -566,14 +567,21 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 if delete_files:
                     os.unlink(experiment.data_filename)
             else:
-                i += 1
+                i += 1  
             
-    def expand(self): 
-        self.is_expanded = not self.is_expanded
-        self.browser_widget.expand_button.setText('Collapse' if self.is_expanded else 'Expand')
-        
-        for plot_widget in self.dock_widget.plot_frames:
-            plot_widget.expand("RF Generator Frequency")
+    def expand(self):
+        if self.is_expanded:
+            for plot_widget in self.dock_widget.plot_frames:
+                plot_widget.collapse()
+            self.is_expanded = False
+        else:
+            if self.expand_dialog.exec():
+                param = self.expand_dialog.combo.currentText()
+                for plot_widget in self.dock_widget.plot_frames:
+                    plot_widget.expand(param)
+                self.is_expanded = True
+            
+        self.browser_widget.expand_button.setText('Collapse' if self.is_expanded else 'Expand')  
 
     def open_experiment(self):
         dialog = ResultsDialog(self.procedure_class,
