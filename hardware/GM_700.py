@@ -17,6 +17,21 @@ class GM700:
             write_termination=write_terminator,
         )
 
+    def write(self, command):
+        self.inst.write(command)
+
+    def query(self, command, query_delay=0.1):
+        self.inst.write(command)
+        time.sleep(query_delay)
+        echo = self.inst.read()
+        response = self.inst.read()
+        return response
+
+    def measure(self):
+        self.write("MEAS")
+        status = self.query("*STB?")
+        print(status)
+
 
 if __name__ == "__main__":
     gm = GM700("ASRL8::INSTR")
