@@ -36,7 +36,7 @@ class GM700:
         response = self.inst.read()
         return response
 
-    def measure(self):
+    def meas(self):
         self.write("MEAS")
         status = int(self.query("*STB?"))
         while not (status & 1):
@@ -68,9 +68,26 @@ class GM700:
 
     def get_reference(self):
         return self.query("REF?")
-    
+
     def reset(self):
         self.write("*RST")
+
+    def measure(self):
+        field, unit = self.meas().split(" ")
+        field = float(field)
+        if unit == "T":
+            field = field * 1e4
+        elif unit == "mT":
+            field = field * 10
+        elif unit == "kG":
+            field = field * 1e3
+        return field
+    
+    def range(self, range):
+        pass
+    
+    def resolution(self, resolution):
+        pass
 
     def close(self):
         self.inst.close()
@@ -81,5 +98,5 @@ if __name__ == "__main__":
     gm = GM700("ASRL3::INSTR")
     print(gm.set_unit("G"))
     sleep(1)
-    print(gm.measure())
+    print(gm.meas())
     gm.close()

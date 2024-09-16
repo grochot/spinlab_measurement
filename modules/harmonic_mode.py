@@ -5,7 +5,7 @@ import logging
 from hardware.daq import DAQ
 
 from hardware.lakeshore import Lakeshore
-
+from hardware.GM_700 import GM700
 from hardware.sr830 import SR830
 from hardware.dummy_lockin import DummyLockin
 from hardware.dummy_gaussmeter import DummyGaussmeter
@@ -139,6 +139,8 @@ class HarmonicMode():
         match self.set_gaussmeter: 
             case "Lakeshore": 
                 self.gaussmeter_obj = Lakeshore(self.address_gaussmeter)
+            case "GM700":
+                self.gaussmeter_obj = GM700(self.address_gaussmeter)
             case _:
                 self.gaussmeter_obj = DummyGaussmeter(self.address_gaussmeter)
                 log.warning('Used dummy Gaussmeter.')
