@@ -476,52 +476,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.browser_widget.clear_by_status_button.setEnabled(False)
             
     def expand(self): 
-        root = self.browser.invisibleRootItem()
         self.is_expanded = not self.is_expanded
         self.browser_widget.expand_button.setText('Collapse' if self.is_expanded else 'Expand')
-
-        if not self.is_expanded:
-            for i in range(root.childCount()):
-                experiment = self.manager.experiments.with_browser_item(root.child(i))
-                for curve in experiment.curve_list:
-                    if curve:
-                        curve.offset = None
-                        curve.update_data(reload=True)
-            return
-
-        amp_list = [None] * root.childCount()
-        param_list = []
-
-        for i in range(root.childCount()):
-            experiment = self.manager.experiments.with_browser_item(root.child(i))
-            for idx, curve in enumerate(experiment.curve_list):
-                if curve:
-                    amp = curve.get_amplitude()
-                    freq = curve.get_param_value('RF Generator Frequency')
-                    param_list.append((freq, i))
-                    if amp_list[idx] is None or amp > amp_list[idx]:
-                        amp_list[idx] = amp
-                        
-        param_list.sort()
         
-        offset_list = [0] * len(param_list)
-        
-        merged, i = 0, 0
-        while i < len(param_list):
-            while i < len(param_list) - 1 and param_list[i][0] == param_list[i+1][0]:
-                offset_list[param_list[i][1]] =  i - merged
-                merged += 1
-                i += 1
-            offset_list[param_list[i][1]] =  i - merged
-            i += 1  
-            
-
-        for i in range(root.childCount()):
-            experiment = self.manager.experiments.with_browser_item(root.child(i))
-            for idx, curve in enumerate(experiment.curve_list):
-                if curve and amp_list[idx]:
-                    curve.offset = offset_list[i] * amp_list[idx]
-                    curve.update_data()
+        for plot_widget in self.dock_widget.plot_frames:
+            plot_widget.expand("RF Generator Frequency")
 
     def open_experiment(self):
         dialog = ResultsDialog(self.procedure_class,

@@ -63,8 +63,12 @@ class ResultsCurve(pg.PlotDataItem):
         self.setData(xdata, ydata)
         
     def get_amplitude(self):
-        xdata, ydata = self.getData()
-        return np.max(ydata) - np.min(ydata)
+        _, ydata = self.getData()
+        try:
+            amp = np.max(ydata) - np.min(ydata)
+        except TypeError:
+            amp = 0
+        return amp
     
     def get_param_value(self, param):
         parameters = self.results.procedure.placeholder_objects()

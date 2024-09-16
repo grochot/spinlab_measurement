@@ -60,6 +60,9 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             self.plot_frame.change_y_axis(y_axis)
             
         self.pointWidget = None
+        self.isExpanded = False
+        self.expandParam = None
+        self.expandOffset = None
 
     def _setup_ui(self):
         self.columns_x_label = QtWidgets.QLabel(self)
@@ -168,6 +171,42 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
 
         axis = self.columns_y.itemText(index)
         self.plot_frame.change_y_axis(axis)
+        
+    def expand(self, param):
+        self.isExpanded = not self.isExpanded
+        curves = [item for item in self.plot.items if isinstance(item, ResultsCurve)]
+        if not self.isExpanded:
+            for curve in curves:
+                curve.offset = None
+                curve.update_data(reload=True)
+        else:
+            self.expandParam = param
+            max_amp = 0
+            param_list = []
+            for i, curve in enumerate(curves):
+                amp = curve.get_amplitude()
+                if amp > max_amp:
+                    max_amp = amp
+                param_value = curve.get_param_value(param)
+                param_list.append((param_value, i))
+                
+            self.expandOffset = max_amp
+                
+            param_list.sort()
+            offset_list = [0] * len(param_list)
+        
+            merged, i = 0, 0
+            while i < len(param_list):
+                while i < len(param_list) - 1 and param_list[i][0] == param_list[i+1][0]:
+                    offset_list[param_list[i][1]] =  i - merged
+                    merged += 1
+                    i += 1
+                offset_list[param_list[i][1]] =  i - merged
+                i += 1            
+
+            for i, curve in enumerate(curves):
+                curve.offset = offset_list[i] * self.expandOffset
+                curve.update_data()
 
     def load(self, curve):
         curve.x = self.columns_x.currentText()
