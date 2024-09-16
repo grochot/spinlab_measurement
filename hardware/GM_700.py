@@ -3,7 +3,7 @@ from time import sleep
 
 
 class GM700:
-    def __init__(self, port, read_terminator="\n", write_terminator="\r", delay = 0.1):
+    def __init__(self, port, read_terminator="\n", write_terminator="\r", delay=0.1):
         self.port = port
         self.rm = pyvisa.ResourceManager()
         self.inst = self.rm.open_resource(
@@ -18,6 +18,7 @@ class GM700:
         )
         self.delay = delay
         self.units = ["T", "mT", "G", "kG"]
+        self.modes = ["Relative", "Absolute"]
 
     def write(self, command):
         self.inst.write(command)
@@ -43,14 +44,31 @@ class GM700:
             status = int(self.query("*STB?"))
         field = self.query("MEAS?")
         return field
-    
+
     def set_unit(self, unit: str):
         if unit not in self.units:
-            raise Exception(f"Provided unit: '{unit}' is not supported. Aveilable units {self.units}!")
-        
+            raise Exception(f"Provided unit: '{unit}' is not supported. Supported units: {self.units}!")
+
         self.write(f"UNITS {unit}")
-        
-        
+
+    def get_unit(self):
+        return self.query("UNITS?")
+
+    def set_mode(self, mode: str):
+        if mode not in self.modes:
+            raise Exception(f"Provided mode: '{mode}' is not supported. Supported modes: {self.modes}!")
+
+        self.write(f"MODE {mode}")
+
+    def get_mode(self):
+        return self.query("MODE?")
+
+    def set_reference(self, reference: float):
+        self.write(f"REF {reference}")
+
+    def get_reference(self):
+        return self.query("REF?")
+
     def close(self):
         self.inst.close()
         self.rm.close()
@@ -62,4 +80,3 @@ if __name__ == "__main__":
     sleep(1)
     print(gm.measure())
     gm.close()
-    
