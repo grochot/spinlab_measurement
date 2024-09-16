@@ -1,9 +1,9 @@
 import pyvisa
-import time
+from time import sleep
 
 
 class GM700:
-    def __init__(self, port, read_terminator="\n", write_terminator="\r"):
+    def __init__(self, port, read_terminator="\n", write_terminator="\r", delay = 0.1):
         self.port = port
         self.rm = pyvisa.ResourceManager()
         self.inst = self.rm.open_resource(
@@ -16,29 +16,50 @@ class GM700:
             read_termination=read_terminator,
             write_termination=write_terminator,
         )
+        self.delay = delay
+        self.units = ["T", "mT", "G", "kG"]
 
     def write(self, command):
         self.inst.write(command)
-
-    def query(self, command, query_delay=0.1):
-        self.inst.write(command)
-        time.sleep(query_delay)
+        sleep(self.delay)
         echo = self.inst.read()
+        return echo
+
+    def query(self, command, query_delay=None):
+        if not query_delay:
+            query_delay = self.delay
+        self.inst.write(command)
+        sleep(query_delay)
+        echo = self.inst.read()
+        sleep(query_delay)
         response = self.inst.read()
         return response
 
     def measure(self):
         self.write("MEAS")
-        status = self.query("*STB?")
-        print(status)
+        status = int(self.query("*STB?"))
+        while not (status & 1):
+            sleep(self.delay)
+            status = int(self.query("*STB?"))
+        field = self.query("MEAS?")
+        return field
+    
+    def set_unit(self, unit: str):
+        if unit not in self.units:
+            raise Exception(f"Provided unit: '{unit}' is not supported. Aveilable units {self.units}!")
+        
+        self.write(f"UNITS {unit}")
+        
+        
+    def close(self):
+        self.inst.close()
+        self.rm.close()
 
 
 if __name__ == "__main__":
-    gm = GM700("ASRL8::INSTR")
-    gm.inst.write("")
-    time.sleep(1)
-    gm.inst.write("*IDN?")
-    print(gm.inst.read())
-    time.sleep(0.1)
-    print(gm.inst.read())
-    # gm.inst.close()
+    gm = GM700("ASRL3::INSTR")
+    print(gm.set_unit("G"))
+    sleep(1)
+    print(gm.measure())
+    gm.close()
+    
