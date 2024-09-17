@@ -20,7 +20,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
     def __init__(self):
         super(AutomaticStationGenerator, self).__init__()
         self.state = False
-        self.name = "Automatic Station Generator"
+        self.name = "Automatic Station"
         # self.icon_path = "modules\icons\AutomaticStationGenerator.ico"
         self.icon_path = path.join("modules", "icons", "AutomaticStationGenerator.ico")
         self.address_list = ["None"]
