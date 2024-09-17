@@ -11,6 +11,7 @@ from functools import partial
 from PyQt5.QtCore import Qt, QSettings
 from logic.map_generator import generate_coord
 import json
+from os import path
 
 class AutomaticStationGenerator(QtWidgets.QWidget):
     object_name = "automatic_station_generator"
@@ -20,7 +21,8 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         super(AutomaticStationGenerator, self).__init__()
         self.state = False
         self.name = "Automatic Station Generator"
-        self.icon_path = "modules\icons\AutomaticStationGenerator.ico"
+        # self.icon_path = "modules\icons\AutomaticStationGenerator.ico"
+        self.icon_path = path.join("modules", "icons", "AutomaticStationGenerator.ico")
         self.address_list = ["None"]
         self.address = "None"
         self.sequencer = None
