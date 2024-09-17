@@ -46,7 +46,7 @@ class ResultsCurve(pg.PlotDataItem):
         self.x, self.y = x, y
         self.force_reload = force_reload
         self.color = self.opts['pen'].color()
-        self.offset = None
+        self.offset = 0
         self.isExpanded = False
 
     def update_data(self, reload=False):
@@ -55,11 +55,11 @@ class ResultsCurve(pg.PlotDataItem):
             self.results.reload()
         data = self.results.data  # get the current snapshot
         
+        if reload:
+            self.isExpanded = False
+        
         xdata = data[self.x]
         ydata = data[self.y]
-        if self.offset and not self.isExpanded:
-            ydata += self.offset
-            self.isExpanded = True
 
         # Set x-y data
         self.setData(xdata, ydata)
@@ -76,6 +76,23 @@ class ResultsCurve(pg.PlotDataItem):
         parameters = self.results.procedure.placeholder_objects()
         placeholders = {param.name: param.value for param in parameters.values()}
         return placeholders[param]
+    
+    def expand(self, offset=0):
+        xdata, ydata = self.getData()
+        if self.isExpanded:
+            ydata -= self.offset
+        self.offset = offset
+        ydata += self.offset
+        self.setData(xdata, ydata)
+        self.isExpanded = True
+        
+    def collapse(self):
+        xdata, ydata = self.getData()
+        if self.isExpanded:
+            ydata -= self.offset
+            self.offset = 0
+            self.isExpanded = False
+            self.setData(xdata, ydata)
 
     def set_color(self, color):
         self.pen.setColor(color)
