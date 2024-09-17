@@ -26,7 +26,6 @@ import logging
 
 from ..widgets.dock_widget import DockWidget
 from ..widgets.log_widget import LogWidget
-from ..widgets.devices_widget import DevicesWidget
 from ..widgets.quick_measure_widget import QuickMeasureWidget
 from .managed_window import ManagedWindowBase
 
@@ -84,18 +83,12 @@ class ManagedDockWindow(ManagedWindowBase):
         self.log_widget = LogWidget("Experiment Log", fmt=log_fmt, datefmt=log_datefmt)
         self.dock_widget = DockWidget("Plot", procedure_class, self.x_axis_labels,
                                       self.y_axis_labels, linewidth=linewidth)
-        self.devices_widget = DevicesWidget("Devices Tab", kwargs["ext_devices"])
-        kwargs.pop("ext_devices")
-        self.quick_measure_widget = QuickMeasureWidget("Quick Measure")
 
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()
-        kwargs["widget_list"] = kwargs["widget_list"] + (self.dock_widget, self.log_widget, self.devices_widget, self.quick_measure_widget)
+        kwargs["widget_list"] = kwargs["widget_list"] + (self.dock_widget, self.log_widget)
 
         super().__init__(procedure_class, **kwargs)
-        
-        self.quick_measure_widget.inputs = self.inputs
-        self.quick_measure_widget.tab_index = self.tabs.indexOf(self.quick_measure_widget)
         
         for plot_widget in self.dock_widget.plot_frames:
             self.manager.running.connect(plot_widget.plot_frame.get_experiment)

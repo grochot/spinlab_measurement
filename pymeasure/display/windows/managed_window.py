@@ -45,7 +45,9 @@ from ..widgets import (
     FileInputWidget,
     EstimatorWidget,
     CurrentPointWidget,
-    ClearDialog
+    ClearDialog,
+    DevicesWidget,
+    QuickMeasureWidget
 )
 from ...experiment import Results, Procedure, unique_filename
 from packages.point_del_widget import PointDelWidget
@@ -127,12 +129,15 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     def __init__(self,
                  procedure_class,
                  widget_list=(),
+                 additional_widgets=(),
                  inputs=(),
                  displays=(),
                  log_channel='',
                  log_level=logging.INFO,
                  parent=None,
                  sequencer=False,
+                 quick_measure=False,
+                 show_current_point=False,
                  sequencer_inputs=None,
                  sequence_file=None,
                  inputs_in_scrollarea=False,
@@ -148,6 +153,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.hide_groups = hide_groups
         self.displays = displays
         self.use_sequencer = sequencer
+        self.use_quick_measure = quick_measure
+        self.show_current_point = show_current_point
         self.sequencer_inputs = sequencer_inputs
         self.sequence_file = sequence_file
         self.inputs_in_scrollarea = inputs_in_scrollarea
@@ -157,6 +164,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         log.setLevel(log_level)
         self.log.setLevel(log_level)
         self.widget_list = widget_list
+        self.additional_widgets = additional_widgets
 
         # Check if the get_estimates function is reimplemented
         self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
@@ -200,9 +208,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.browser.customContextMenuRequested.connect(self.browser_item_menu)
         self.browser.itemChanged.connect(self.browser_item_changed)
         self.browser.currentItemChanged.connect(self.browser_current_item_changed)
-        
-        
-        self.current_point = CurrentPointWidget(parent=self)
 
         self.inputs = InputsWidget(
             self.procedure_class,
@@ -233,7 +238,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.manager.finished.connect(self.finished)
         self.manager.log.connect(self.log.handle)
         
-        self.manager.update_point.connect(self.current_point.set_current_point)
+        if self.show_current_point:
+            self.current_point = CurrentPointWidget(parent=self)
+            self.manager.update_point.connect(self.current_point.set_current_point)
+            self.manager.abort_returned.connect(self.current_point.reset)
+            self.manager.finished.connect(self.current_point.reset)
 
         if self.use_sequencer:
             self.sequencer = SequencerWidget(
@@ -254,11 +263,12 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     def _layout(self):
         self.main = QtWidgets.QWidget(self)
         
-        current_pt_dock = QtWidgets.QDockWidget('Current Point')
-        current_pt_dock.setWidget(self.current_point)
-        current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
-        current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
-        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, current_pt_dock)
+        if self.show_current_point:
+            current_pt_dock = QtWidgets.QDockWidget('Current Point')
+            current_pt_dock.setWidget(self.current_point)
+            current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+            current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
+            self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, current_pt_dock)
 
         inputs_dock = QtWidgets.QWidget(self)
         inputs_vbox = QtWidgets.QVBoxLayout(self.main)
@@ -317,6 +327,15 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.tabs = QtWidgets.QTabWidget(self.main)
         for wdg in self.widget_list:
             self.tabs.addTab(wdg, wdg.name)
+            
+        if self.use_quick_measure:
+            self.quick_measure_widget = QuickMeasureWidget("Quick Measure", self.inputs)
+            self.tabs.addTab(self.quick_measure_widget, "Quick Measure")
+            self.quick_measure_widget.set_tab_index(self.tabs.indexOf(self.quick_measure_widget))
+            
+        if self.additional_widgets:
+            self.devices_widget = DevicesWidget("Devices Tab", self.additional_widgets)
+            self.tabs.addTab(self.devices_widget, "Additional Widgets")
 
         splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)
         splitter.addWidget(self.tabs)
@@ -714,8 +733,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.browser_widget.clear_by_status_button.setEnabled(False)
 
     def abort_returned(self, experiment):
-        self.current_point.reset()
-        
         if self.manager.experiments.has_next():
             self.abort_button.setText("Resume")
             self.abort_button.setEnabled(True)
@@ -725,8 +742,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.browser_widget.clear_by_status_button.setEnabled(True)
 
     def finished(self, experiment):
-        self.current_point.reset()
-        
         if not self.manager.experiments.has_next():
             self.abort_button.setEnabled(False)
             

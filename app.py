@@ -233,6 +233,7 @@ class SpinLabMeasurement(Procedure):
                 window.devices_widget.lakeshore336_control.set_setpoint_wait(self.kriostat_temperature, window.manager.aborted)
             except AttributeError as e:
                 logging.error("No kriostat control")
+                raise e
                 
         self.selected_mode = None
         
@@ -302,7 +303,7 @@ class SpinLabMeasurement(Procedure):
         return estimates
         
 
-class MainWindow(ManagedDockWindow):
+class MeasurementWindow(ManagedDockWindow):
     # last = False
     # wynik = 0
     # wynik_list = []
@@ -314,10 +315,11 @@ class MainWindow(ManagedDockWindow):
             y_axis=['Field (Oe)', 'Resistance (ohm)'],
             # directory_input=True,  
             sequencer=True,
-            
+            quick_measure=True,
+            show_current_point=True,
             sequencer_inputs=['constant_field_value',"generator_frequency", "kriostat_temperature", ""],
             inputs_in_scrollarea=True,
-            ext_devices = [CameraControl, WaterCoolerControl, Lakeshore336Control],
+            additional_widgets = [CameraControl, WaterCoolerControl, Lakeshore336Control],
             
         )
        
@@ -382,7 +384,7 @@ class MainWindow(ManagedDockWindow):
     
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    window = MainWindow()
+    window = MeasurementWindow()
     window.show()
     sys.exit(app.exec_())
 

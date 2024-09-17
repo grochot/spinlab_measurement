@@ -57,12 +57,12 @@ def round_sig(x: float, sig: int = 6):
 
 
 class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
-    def __init__(self, name, parent=None):
+    def __init__(self, name, inputs, parent=None,):
         super().__init__(name, parent)
 
         self.tab_index = None
 
-        self.inputs: InputsWidget = None
+        self.inputs: InputsWidget = inputs
         self.prev_mode: str = ""
 
         self.isRunning = False
@@ -120,6 +120,9 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
         main_layout.addStretch()
 
         self.setLayout(main_layout)
+        
+    def set_tab_index(self, index: int):
+        self.tab_index = index
 
     def clear_le(self):
         self.volt_le.setText("- [V]")
