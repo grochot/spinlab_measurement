@@ -60,6 +60,7 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             self.plot_frame.change_y_axis(y_axis)
             
         self.pointWidget = None
+        self.isExpanded = False
         self.expandParam = None
         self.expandOffset = None
 
@@ -164,6 +165,8 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             
         axis = self.columns_x.itemText(index)
         self.plot_frame.change_x_axis(axis)
+        if self.isExpanded:
+            self.expand(self.expandParam)
 
     def update_y_column(self, index):
         if self.pointWidget.enabled:
@@ -171,6 +174,8 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
 
         axis = self.columns_y.itemText(index)
         self.plot_frame.change_y_axis(axis)
+        if self.isExpanded:
+            self.expand(self.expandParam)
         
     def expand(self, param):
         curves = [item for item in self.plot.items if isinstance(item, ResultsCurve)]
@@ -199,17 +204,21 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             i += 1            
 
         for i, curve in enumerate(curves):
-            curve.offset = offset_list[i] * self.expandOffset
-            curve.update_data()  
+            curve.expand(offset_list[i] * self.expandOffset)
+            
+        self.isExpanded = True
                 
     def collapse(self):
-        self.plot_frame.collapse()  
+        self.plot_frame.collapse()
+        self.isExpanded = False
 
     def load(self, curve):
         curve.x = self.columns_x.currentText()
         curve.y = self.columns_y.currentText()
         curve.update_data()
         self.plot.addItem(curve)
+        if self.isExpanded:
+            self.expand(self.expandParam)
 
     def remove(self, curve):
         self.plot.removeItem(curve)
