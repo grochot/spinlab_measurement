@@ -1,5 +1,5 @@
 {
-    "mode": "ResistanceMode",
+    "mode": "HarmonicMode",
     "sample_name": "dfsdf",
     "vector": "0,20,2000",
     "mode_resistance": false,
