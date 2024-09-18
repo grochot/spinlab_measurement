@@ -68,9 +68,9 @@ class HarmonicMode(MeasurementMode):
         # hold_the_field_after_measurement: bool,
         # return_the_rotationstation: bool,
     ) -> None:
-        
+
         self.p = procedure
-        
+
         # self.set_automaticstation = set_automaticstation
         # self.set_lockin = set_lockin
         # self.set_field = set_field

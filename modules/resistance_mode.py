@@ -79,9 +79,9 @@ class ResistanceMode(MeasurementMode):
         # set_polar_angle,
         # set_azimuthal_angle,
     ) -> None:
-        
+
         self.p = procedure
-        
+
         ## parameter initialization
         # self.sourcemeter = sourcemeter
         # self.multimeter = multimeter

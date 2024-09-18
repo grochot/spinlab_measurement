@@ -19,13 +19,15 @@ log.addHandler(logging.NullHandler())
 
 
 class FieldCalibrationMode(MeasurementMode):
-    def __init__(self, procedure: SpinLabMeasurement,
-    # set_field,
-    # set_gaussmeter,
-    # address_daq,
-    # address_gaussmeter,
-    # vector,
-    # delay
+    def __init__(
+        self,
+        procedure: SpinLabMeasurement,
+        # set_field,
+        # set_gaussmeter,
+        # address_daq,
+        # address_gaussmeter,
+        # vector,
+        # delay
     ) -> None:
 
         self.p = procedure

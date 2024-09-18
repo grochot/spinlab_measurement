@@ -283,11 +283,17 @@ class CIMSMode(MeasurementMode):
                 sleep(self.p.remanency_correction_time)
 
                 self.actual_remanency = self.gaussmeter_obj.measure()
-                sweep_field_to_value(0, self.p.remagnetization_value - self.actual_remanency, self.p.field_constant, self.p.field_step, self.field_obj)
+                sweep_field_to_value(
+                    0, self.p.remagnetization_value - self.actual_remanency, self.p.field_constant, self.p.field_step, self.field_obj
+                )
                 sleep(self.p.remagnetization_time)
                 print("to zero:")
                 sweep_field_to_value(
-                    self.p.remagnetization_value - self.actual_remanency, self.p.field_bias_value, self.p.field_constant, self.p.field_step, self.field_obj
+                    self.p.remagnetization_value - self.actual_remanency,
+                    self.p.field_bias_value,
+                    self.p.field_constant,
+                    self.p.field_step,
+                    self.field_obj,
                 )
                 sleep(self.p.remanency_correction_time)
 

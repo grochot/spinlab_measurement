@@ -93,7 +93,7 @@ class FMRMode(MeasurementMode):
         # multimeter_nplc: str,
         # measdevice: str,
     ) -> None:
-        
+
         self.p = procedure
 
         # self.set_automaticstation = set_automaticstation
@@ -350,7 +350,7 @@ class FMRMode(MeasurementMode):
                     sleep(self.p.delay_field)
 
                 # measure field
-                
+
                 if self.p.set_gaussmeter == "none":
                     self.tmp_field = point
                 else:
