@@ -8,6 +8,7 @@ from hardware.daq import DAQ
 from hardware.keisight_e3600a import E3600a
 from hardware.keithley_2636 import Keithley2636
 from hardware.lakeshore import Lakeshore
+from hardware.GM_700 import GM700
 from hardware.autostation import AutoStation
 from hardware.kriostat import Kriostat
 from hardware.switch import Switch
@@ -121,6 +122,8 @@ class ResistanceMode():
         match self.gaussmeter: 
             case "Lakeshore": 
                 self.gaussmeter_obj = Lakeshore(self.address_gaussmeter)
+            case "GM700":
+                self.gaussmeter_obj = GM700(self.address_gaussmeter)
             case _:
                 self.gaussmeter_obj = DummyGaussmeter(self.address_gaussmeter)
                 log.warning('Used dummy Gaussmeter.')

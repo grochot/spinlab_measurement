@@ -27,6 +27,7 @@ import logging
 from ..widgets.dock_widget import DockWidget
 from ..widgets.log_widget import LogWidget
 from ..widgets.devices_widget import DevicesWidget
+from ..widgets.quick_measure_widget import QuickMeasureWidget
 from .managed_window import ManagedWindowBase
 
 log = logging.getLogger(__name__)
@@ -85,12 +86,26 @@ class ManagedDockWindow(ManagedWindowBase):
                                       self.y_axis_labels, linewidth=linewidth)
         self.devices_widget = DevicesWidget("Devices Tab", kwargs["ext_devices"])
         kwargs.pop("ext_devices")
+        self.quick_measure_widget = QuickMeasureWidget("Quick Measure")
 
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()
-        kwargs["widget_list"] = kwargs["widget_list"] + (self.dock_widget, self.log_widget, self.devices_widget)
+        kwargs["widget_list"] = kwargs["widget_list"] + (self.dock_widget, self.log_widget, self.devices_widget, self.quick_measure_widget)
 
         super().__init__(procedure_class, **kwargs)
+        
+        self.quick_measure_widget.inputs = self.inputs
+        self.quick_measure_widget.tab_index = self.tabs.indexOf(self.quick_measure_widget)
+        
+        for plot_widget in self.dock_widget.plot_frames:
+            self.manager.running.connect(plot_widget.plot_frame.get_experiment)
+            self.manager.update_point.connect(plot_widget.plot_frame.set_vline_pos)
+            self.manager.finished.connect(plot_widget.plot_frame.hide_vline)
+            self.manager.abort_returned.connect(plot_widget.plot_frame.hide_vline)
+                    
+            plot_widget.pointWidget = self.pointWidget
+            
+        self.dock_widget.sigCurveClicked.connect(self.curve_clicked)
 
         self.browser_widget.browser.measured_quantities.update(measure_quantities)
 

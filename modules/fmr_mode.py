@@ -5,6 +5,7 @@ import logging
 
 from hardware.daq import DAQ
 from hardware.lakeshore import Lakeshore
+from hardware.GM_700 import GM700
 from hardware.windfreak import Windfreak
 from hardware.sr830 import SR830
 from hardware.generator_agilent import FGenDriver
@@ -190,6 +191,8 @@ class FMRMode:
         match self.set_gaussmeter:
             case "Lakeshore":
                 self.gaussmeter_obj = Lakeshore(self.address_gaussmeter)
+            case "GM700":
+                self.gaussmeter_obj = GM700(self.address_gaussmeter)
             case _:
                 self.gaussmeter_obj = DummyGaussmeter(self.address_gaussmeter)
                 log.warning("Used dummy Gaussmeter.")
@@ -400,7 +403,7 @@ class FMRMode:
             "Frequency (Hz)": self.set_frequency_constant_value if self.generator_measurement_mode == "V-FMR" else point,
             "X (V)": self.result1 if self.lockin_channel1 == "X" else (self.result2 if self.lockin_channel2 == "X" else math.nan),
             "Y (V)": self.result1 if self.lockin_channel1 == "Y" else (self.result2 if self.lockin_channel2 == "Y" else math.nan),
-            "Phase": self.result1 if self.lockin_channel1 == "Phase" else (self.result2 if self.lockin_channel2 == "Phase" else math.nan),
+            "Phase": self.result1 if self.lockin_channel1 == "Theta" else (self.result2 if self.lockin_channel2 == "Theta" else math.nan),
             "Polar angle (deg)": self.polar_angle if self.rotationstation == True else math.nan,
             "Azimuthal angle (deg)": self.azimuthal_angle if self.rotationstation == True else math.nan,
         }
