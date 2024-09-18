@@ -99,7 +99,7 @@ class SpinLabMeasurement(Procedure):
   
     address_pulsegenerator=ListParameter("Pulse generator address", default = parameters_from_file["address_pulsegenerator"] if parameters_from_file["address_pulsegenerator"] in finded_instruments else 'None', choices=finded_instruments, vis_cond=(SETTINGS, lambda mode, set_pulsegenerator: mode == "CIMSMode" and set_pulsegenerator != "none"))
 
-    address_list = ["address_sourcemeter", "address_multimeter", "address_gaussmeter", "address_lockin", "address_switch", "address_analyzer", "address_generator", "address_daq", "address_lfgen", "address_pulsegenerator"]
+    address_list = ["address_sourcemeter", "address_multimeter", "address_gaussmeter", "address_lockin", "address_switch", "address_analyzer", "address_generator", "address_daq", "address_lfgen", "address_pulsegenerator", "address_automaticstation"]
    
     #MeasurementParameters
     sample_name = Parameter("Sample name", default = parameters_from_file["sample_name"], vis_cond=(NOT_VISIBLE)) 
