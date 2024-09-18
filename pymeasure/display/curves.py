@@ -80,6 +80,10 @@ class ResultsCurve(pg.PlotDataItem):
     
     def expand(self, offset=0):
         xdata, ydata = self.getData()
+        
+        if ydata is None or len(ydata) == 0:
+            return
+        
         if self.isExpanded:
             ydata -= self.offset
         self.offset = offset

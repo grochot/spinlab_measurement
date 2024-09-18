@@ -179,6 +179,7 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
         
     def expand(self, param):
         curves = [item for item in self.plot.items if isinstance(item, ResultsCurve)]
+        curves = [curve for curve in curves if curve.results.procedure.status != Procedure.RUNNING]
         self.expandParam = param
         max_amp = 0
         param_list = []
