@@ -2,6 +2,10 @@ from time import sleep
 import math
 import numpy as np
 import logging
+
+from app import SpinLabMeasurement
+from modules.measurement_mode import MeasurementMode
+
 from hardware.daq import DAQ
 from hardware.dummy_field import DummyField
 from hardware.lakeshore import Lakeshore
@@ -14,48 +18,57 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class FieldCalibrationMode:
-    def __init__(self, set_field, set_gaussmeter, address_daq, address_gaussmeter, vector, delay) -> None:
-        self.set_field = set_field
-        self.set_gaussmeter = set_gaussmeter
-        self.address_gaussmeter = address_gaussmeter
-        self.address_daq = address_daq
-        self.vector = vector
-        self.delay = delay
+class FieldCalibrationMode(MeasurementMode):
+    def __init__(self, procedure: SpinLabMeasurement,
+    # set_field,
+    # set_gaussmeter,
+    # address_daq,
+    # address_gaussmeter,
+    # vector,
+    # delay
+    ) -> None:
+
+        self.p = procedure
+        # self.set_field = set_field
+        # self.set_gaussmeter = set_gaussmeter
+        # self.address_gaussmeter = address_gaussmeter
+        # self.address_daq = address_daq
+        # self.vector = vector
+        # self.delay = delay
 
         ## parameter initialization
 
     def generate_points(self):
-        vector = self.vector.split(",")
+        vector = self.p.vector.split(",")
         self.start = float(vector[0])
         self.stop = float(vector[2])
         self.points = int(vector[1])
-        
-        vector = np.linspace(self.start, self.stop, self.points)
+
+        vector = list(np.linspace(self.start, self.stop, self.points))
 
         if len(vector) < 2:
             raise ValueError("The number of points must be greater than 1")
-        
+
         return vector
 
     def initializing(self):
-        if self.set_field == "none":
-            self.daq = DummyField(self.address_daq)
+        if self.p.set_field == "none":
+            self.daq = DummyField(self.p.address_daq)
             log.warning("Used dummy DAQ")
         else:
-            self.daq = DAQ(self.address_daq)
-        if self.set_gaussmeter == "none":
-            self.gaussmeter = DummyGaussmeter(self.address_gaussmeter)
+            self.daq = DAQ(self.p.address_daq)
+        if self.p.set_gaussmeter == "none":
+            self.gaussmeter = DummyGaussmeter(self.p.address_gaussmeter)
             log.warning("Used dummy Gaussmeter")
-        elif self.set_gaussmeter == "GM700":
-            self.gaussmeter = GM700(self.address_gaussmeter)
-        elif self.set_gaussmeter == "Lakeshore":
-            self.gaussmeter = Lakeshore(self.address_gaussmeter)
+        elif self.p.set_gaussmeter == "GM700":
+            self.gaussmeter = GM700(self.p.address_gaussmeter)
+        elif self.p.set_gaussmeter == "Lakeshore":
+            self.gaussmeter = Lakeshore(self.p.address_gaussmeter)
         else:
             raise ValueError("Gaussmeter not supported")
 
-    def operating(self):
-        self.calibration_constant = calibration(self, self.start, self.stop, self.points, self.daq, self.gaussmeter, self.delay)
+    def operating(self, point):
+        self.calibration_constant = calibration(self, self.start, self.stop, self.points, self.daq, self.gaussmeter, self.p.delay_field)
 
         data = {
             "Voltage (V)": math.nan,

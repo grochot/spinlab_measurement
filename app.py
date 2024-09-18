@@ -14,8 +14,6 @@ from pymeasure.experiment import (
 )
 from logic.unique_name import unique_name
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QMessageBox
-from modules.cims_mode import CIMSMode
-from modules.calibration_mode import FieldCalibrationMode
 from logic.find_instrument import FindInstrument
 from logic.save_parameters import SaveParameters
 
@@ -235,10 +233,10 @@ class SpinLabMeasurement(Procedure):
         from modules.resistance_mode import ResistanceMode
         from modules.harmonic_mode import HarmonicMode
         from modules.fmr_mode import FMRMode
+        from modules.calibration_mode import FieldCalibrationMode
+        from modules.cims_mode import CIMSMode
                 
         self.selected_mode: MeasurementMode = MeasurementMode(self)
-        
-        
         
         match self.mode:
             case "ResistanceMode":
@@ -252,8 +250,10 @@ class SpinLabMeasurement(Procedure):
                 self.selected_mode = FMRMode(self)
             case "CalibrationFieldMode": 
                 # self.selected_mode = FieldCalibrationMode(self.set_field, self.set_gaussmeter, self.address_daq, self.address_gaussmeter, self.vector, self.delay_field)
+                self.selected_mode = FieldCalibrationMode(self)
             case "CIMSMode":
-                self.CIMSmode = CIMSMode(self.vector, self.mode_cims_relays, self.sourcemeter_bias, self.set_sourcemeter, self.set_multimeter,self.set_pulsegenerator, self.set_gaussmeter, self.set_field, self.set_automaticstation, self.set_switch, self.set_kriostat, self.set_rotationstation,self.return_the_rotationstation, self.address_sourcemeter, self.address_multimeter,self.address_pulsegenerator, self.address_gaussmeter, self.address_switch, self.delay_field, self.delay_measurement, self.delay_bias, self.sourcemeter_source, self.sourcemeter_compliance, self.sourcemeter_channel, self.sourcemeter_limit, self.sourcemeter_nplc, self.sourcemeter_average, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.multimeter_nplc, self.address_daq, self.field_step, self.address_rotationstation, self.constant_field_value,self.rotation_axis, self.rotation_polar_constant, self.rotation_azimuth_constant,self.pulsegenerator_duration,self.pulsegenerator_offset,self.pulsegenerator_pulsetype,self.pulsegenerator_channel,self.pulsegenerator_compliance,self.pulsegenerator_source_range,self.field_bias_value,self.remagnetization,self. remagnetization_value,self.remagnetization_time,self.hold_the_field_after_measurement,self.remanency_correction,self.remanency_correction_time,self.set_polar_angle,self.set_azimuthal_angle)
+                # self.CIMSmode = CIMSMode(self.vector, self.mode_cims_relays, self.sourcemeter_bias, self.set_sourcemeter, self.set_multimeter,self.set_pulsegenerator, self.set_gaussmeter, self.set_field, self.set_automaticstation, self.set_switch, self.set_kriostat, self.set_rotationstation,self.return_the_rotationstation, self.address_sourcemeter, self.address_multimeter,self.address_pulsegenerator, self.address_gaussmeter, self.address_switch, self.delay_field, self.delay_measurement, self.delay_bias, self.sourcemeter_source, self.sourcemeter_compliance, self.sourcemeter_channel, self.sourcemeter_limit, self.sourcemeter_nplc, self.sourcemeter_average, self.multimeter_function, self.multimeter_resolution, self.multimeter_autorange, self.multimeter_range, self.multimeter_average, self.field_constant, self.gaussmeter_range, self.gaussmeter_resolution, self.multimeter_nplc, self.address_daq, self.field_step, self.address_rotationstation, self.constant_field_value,self.rotation_axis, self.rotation_polar_constant, self.rotation_azimuth_constant,self.pulsegenerator_duration,self.pulsegenerator_offset,self.pulsegenerator_pulsetype,self.pulsegenerator_channel,self.pulsegenerator_compliance,self.pulsegenerator_source_range,self.field_bias_value,self.remagnetization,self. remagnetization_value,self.remagnetization_time,self.hold_the_field_after_measurement,self.remanency_correction,self.remanency_correction_time,self.set_polar_angle,self.set_azimuthal_angle)
+                self.selected_mode = CIMSMode(self)
             case _:
                 raise NotImplementedError(f"Mode: '{self.mode}' is not implemented!")
              
@@ -265,8 +265,9 @@ class SpinLabMeasurement(Procedure):
 #################################### PROCEDURE##############################################
     def execute(self):
         
+        from modules.calibration_mode import FieldCalibrationMode
         if isinstance(self.selected_mode, FieldCalibrationMode):
-            self.result = self.selected_mode.operating()
+            self.result = self.selected_mode.operating(None)
             self.emit('results', self.result[0])
             window.set_calibration_constant(self.result[1])
             self.selected_mode.end()
