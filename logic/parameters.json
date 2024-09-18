@@ -1,5 +1,5 @@
 {
-    "mode": "FMRMode",
+    "mode": "ResistanceMode",
     "sample_name": "dfsdf",
     "vector": "0,20,2000",
     "mode_resistance": false,
@@ -29,7 +29,7 @@
     "address_generator": "None",
     "address_lfgen": "None",
     "address_pulsegenerator": "None",
-    "sourcemter_source": "CURR",
+    "sourcemeter_source": "CURR",
     "sourcemeter_compliance": 0.5,
     "sourcemeter_channel": "Channel A",
     "sourcemeter_limit": 0.0001,

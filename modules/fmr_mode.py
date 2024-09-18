@@ -160,15 +160,15 @@ class FMRMode(MeasurementMode):
 
         ## parameter initialization
 
-    def generate_points(self):
-        # Vector initialization
-        if self.p.vector != "":
-            self.vector_obj = Vector()
-            self.point_list = self.vector_obj.generate_vector(self.p.vector)
-        else:
-            log.error("Vector is not defined")
-            self.point_list = [1]
-        return self.point_list
+    # def generate_points(self):
+    #     # Vector initialization
+    #     if self.p.vector != "":
+    #         self.vector_obj = Vector()
+    #         self.point_list = self.vector_obj.generate_vector(self.p.vector)
+    #     else:
+    #         log.error("Vector is not defined")
+    #         self.point_list = [1]
+    #     return self.point_list
 
     def initializing(self):
         # Hardware objects initialization
