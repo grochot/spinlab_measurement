@@ -11,8 +11,10 @@ from hardware.dummy_field import DummyField
 from hardware.lakeshore import Lakeshore
 from hardware.GM_700 import GM700
 from hardware.dummy_gaussmeter import DummyGaussmeter
-from logic.field_calibration import calibration, set_calibrated_field
+
+# from logic.field_calibration import calibration, set_calibrated_field
 from logic.sweep_field_to_zero import sweep_field_to_zero
+from scipy.stats import linregress
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -31,6 +33,7 @@ class FieldCalibrationMode(MeasurementMode):
     ) -> None:
 
         self.p = procedure
+        self.field_vector = []
         # self.set_field = set_field
         # self.set_gaussmeter = set_gaussmeter
         # self.address_gaussmeter = address_gaussmeter
@@ -40,18 +43,18 @@ class FieldCalibrationMode(MeasurementMode):
 
         ## parameter initialization
 
-    def generate_points(self):
-        vector = self.p.vector.split(",")
-        self.start = float(vector[0])
-        self.stop = float(vector[2])
-        self.points = int(vector[1])
+    # def generate_points(self):
+    #     vector = self.p.vector.split(",")
+    #     self.start = float(vector[0])
+    #     self.stop = float(vector[2])
+    #     self.points = int(vector[1])
 
-        vector = list(np.linspace(self.start, self.stop, self.points))
+    #     vector = list(np.linspace(self.start, self.stop, self.points))
 
-        if len(vector) < 2:
-            raise ValueError("The number of points must be greater than 1")
+    #     if len(vector) < 2:
+    #         raise ValueError("The number of points must be greater than 1")
 
-        return vector
+    #     return vector
 
     def initializing(self):
         if self.p.set_field == "none":
@@ -70,13 +73,21 @@ class FieldCalibrationMode(MeasurementMode):
             raise ValueError("Gaussmeter not supported")
 
     def operating(self, point):
-        self.calibration_constant = calibration(self, self.start, self.stop, self.points, self.daq, self.gaussmeter, self.p.delay_field)
+        # self.calibration_constant = calibration(self, self.start, self.stop, self.points, self.daq, self.gaussmeter, self.p.delay_field)
+
+        self.daq.set_field(point)
+        sleep(self.p.delay_field)
+        result = self.gaussmeter.measure()
+        if type(result) != int and type(result) != float:
+            result = 0
+        self.field_vector.append(result)
+        log.info("Voltage: {}, Field: {}".format(point, result))
 
         data = {
-            "Voltage (V)": math.nan,
+            "Voltage (V)": point,
             "Current (A)": math.nan,
             "Resistance (ohm)": math.nan,
-            "Field (Oe)": math.nan,
+            "Field (Oe)": result,
             "Frequency (Hz)": math.nan,
             "X (V)": math.nan,
             "Y (V)": math.nan,
@@ -84,14 +95,19 @@ class FieldCalibrationMode(MeasurementMode):
             "Polar angle (deg)": math.nan,
             "Azimuthal angle (deg)": math.nan,
         }
-        return data, self.calibration_constant
+        return data
 
     def end(self):
+        slope, intercept, r, p, std_err = linregress(self.point_list, self.field_vector)
+        self.p.field_constant = 1 / slope
+        log.info("Field constant: {}".format(1 / slope))
+
         FieldCalibrationMode.idle(self)
+        # return 1/slope
 
     def idle(self):
         sweep_field_to_zero(
-            self.stop / self.calibration_constant, self.calibration_constant, int((self.stop / self.calibration_constant) / 10), self.daq
+            self.point_list[-1] / self.p.field_constant, self.p.field_constant, self.p.field_step, self.daq
         )  # czy tutaj nie powinno byc mnozenia?
 
 
