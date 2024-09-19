@@ -222,6 +222,8 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
 
     def remove(self, curve):
         self.plot.removeItem(curve)
+        if self.isExpanded:
+            self.expand(self.expandParam)
 
     def set_color(self, curve, color):
         """ Change the color of the pen of the curve """
