@@ -212,6 +212,10 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
     def collapse(self):
         self.plot_frame.collapse()
         self.isExpanded = False
+        
+    def on_finished(self):
+        if self.isExpanded:
+            self.expand(self.expandParam)
 
     def load(self, curve):
         curve.x = self.columns_x.currentText()

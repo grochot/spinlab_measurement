@@ -101,6 +101,9 @@ class ManagedDockWindow(ManagedWindowBase):
             self.manager.running.connect(plot_widget.plot_frame.get_experiment)
             self.manager.finished.connect(plot_widget.plot_frame.hide_vline)
             self.manager.abort_returned.connect(plot_widget.plot_frame.hide_vline)
+            
+            self.manager.finished.connect(plot_widget.on_finished)
+            self.manager.abort_returned.connect(plot_widget.on_finished)
                     
             plot_widget.pointWidget = self.pointWidget
             
