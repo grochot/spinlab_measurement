@@ -481,12 +481,14 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             for plot_widget in self.dock_widget.plot_frames:
                 plot_widget.collapse()
             self.is_expanded = False
+            self.browser_widget.expand_button.setStyleSheet('QPushButton {color: black;}')
         else:
             if self.expand_dialog.exec():
                 param = self.expand_dialog.combo.currentText()
                 for plot_widget in self.dock_widget.plot_frames:
                     plot_widget.expand(param)
                 self.is_expanded = True
+                self.browser_widget.expand_button.setStyleSheet('QPushButton {color: red;}')
             
         self.browser_widget.expand_button.setText('Collapse' if self.is_expanded else 'Expand')  
 
