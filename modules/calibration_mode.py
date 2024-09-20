@@ -5,6 +5,7 @@ import logging
 from hardware.daq import DAQ
 from hardware.dummy_field import DummyField
 from hardware.lakeshore import Lakeshore
+from hardware.GM_700 import GM700
 from hardware.dummy_gaussmeter import DummyGaussmeter
 from logic.field_calibration import calibration, set_calibrated_field
 from logic.sweep_field_to_zero import sweep_field_to_zero
@@ -46,8 +47,12 @@ class FieldCalibrationMode:
         if self.set_gaussmeter == "none":
             self.gaussmeter = DummyGaussmeter(self.address_gaussmeter)
             log.warning("Used dummy Gaussmeter")
-        else:
+        elif self.set_gaussmeter == "GM700":
+            self.gaussmeter = GM700(self.address_gaussmeter)
+        elif self.set_gaussmeter == "Lakeshore":
             self.gaussmeter = Lakeshore(self.address_gaussmeter)
+        else:
+            raise ValueError("Gaussmeter not supported")
 
     def operating(self):
         self.calibration_constant = calibration(self, self.start, self.stop, self.points, self.daq, self.gaussmeter, self.delay)

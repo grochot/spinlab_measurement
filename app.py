@@ -1,14 +1,8 @@
 from ast import Num
 from email.policy import default
 import logging
-import math
 import sys
-import random
-import os
-import requests
-import subprocess
 from time import sleep, time
-import traceback
 from logic.find_instrument import FindInstrument
 from logic.save_results_path import SaveFilePath
 from pymeasure.experiment.procedure import Procedure
@@ -74,7 +68,7 @@ class SpinLabMeasurement(Procedure):
     #Hardware
     set_sourcemeter=ListParameter("Sourcemeter", choices=["Keithley 2400", "Keithley 2636", "Agilent 2912", "none"], default = parameters_from_file["set_sourcemeter"], vis_cond=(SETTINGS, lambda mode, set_measdevice_qm: mode == "ResistanceMode" or mode == "CIMSMode" or (mode == "QuickMeasurement" and set_measdevice_qm == "Sourcemeter")))
     set_multimeter = ListParameter("Multimeter", choices=["Agilent 34400", "none"],default = parameters_from_file["set_multimeter"], vis_cond=(SETTINGS, lambda mode, mode_resistance, set_measdevice_fmr, set_measdevice_qm: (mode == "ResistanceMode" and mode_resistance == True) or (mode == "FMRMode" and set_measdevice_fmr == "Multimeter") or (mode == "QuickMeasurement" and set_measdevice_qm == "Multimeter")))
-    set_gaussmeter = ListParameter("Gaussmeter", default = parameters_from_file["set_gaussmeter"], choices=["Lakeshore", "none"], vis_cond=(SETTINGS, lambda mode: mode == "ResistanceMode" or mode == "HarmonicMode" or mode == "FMRMode" or mode == "CalibrationFieldMode" or mode=="CIMSMode"))
+    set_gaussmeter = ListParameter("Gaussmeter", default = parameters_from_file["set_gaussmeter"], choices=["Lakeshore", "GM700", "none"], vis_cond=(SETTINGS, lambda mode: mode == "ResistanceMode" or mode == "HarmonicMode" or mode == "FMRMode" or mode == "CalibrationFieldMode" or mode=="CIMSMode"))
     set_field = ListParameter("Magnetic Field Controller", default = parameters_from_file["set_field"], choices = ["DAQ", "Lockin", "none"], vis_cond=(SETTINGS, lambda mode: mode == "ResistanceMode" or mode == "HarmonicMode" or mode == "FMRMode" or mode == "CalibrationFieldMode" or mode=="CIMSMode"))
     set_lockin = ListParameter("Lockin", default = parameters_from_file["set_lockin"], choices = ["Zurich", "SR830", "none"], vis_cond=(SETTINGS, lambda mode, set_measdevice_fmr: mode == "HarmonicMode" or (mode == "FMRMode" and set_measdevice_fmr == "LockIn")))
     set_automaticstation = BooleanParameter("Automatic Station",  default = parameters_from_file["set_automaticstation"], vis_cond=(SETTINGS, lambda mode: mode != "CalibrationFieldMode" and mode != "HarmonicMode" and mode != "QuickMeasurement"))

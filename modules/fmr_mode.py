@@ -5,6 +5,7 @@ import logging
 
 from hardware.daq import DAQ
 from hardware.lakeshore import Lakeshore
+from hardware.GM_700 import GM700
 from hardware.windfreak import Windfreak
 from hardware.sr830 import SR830
 from hardware.generator_agilent import FGenDriver
@@ -190,6 +191,8 @@ class FMRMode:
         match self.set_gaussmeter:
             case "Lakeshore":
                 self.gaussmeter_obj = Lakeshore(self.address_gaussmeter)
+            case "GM700":
+                self.gaussmeter_obj = GM700(self.address_gaussmeter)
             case _:
                 self.gaussmeter_obj = DummyGaussmeter(self.address_gaussmeter)
                 log.warning("Used dummy Gaussmeter.")
