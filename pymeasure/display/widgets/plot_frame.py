@@ -146,7 +146,7 @@ class PlotFrame(QtWidgets.QFrame):
         for item in self.plot.items:
             if isinstance(item, self.ResultsClass):
                 item.x = axis
-                item.update_data()
+                item.update_data(reload=True)
         label, units = self.parse_axis(axis)
         self.plot.setLabel('bottom', label, units=units, **self.LABEL_STYLE)
         self.x_axis = axis
