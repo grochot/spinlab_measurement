@@ -199,6 +199,7 @@ class SpinLabMeasurement(Procedure):
     layout_type = BooleanParameter("Layout type", default=PARAMETERS, vis_cond=(NOT_VISIBLE))
     point_meas_duration = FloatParameter("Single measurement duration", default = 0, units="s", vis_cond=(NOT_VISIBLE))
     number_of_points = IntegerParameter("Number of points", default = 0, vis_cond=(NOT_VISIBLE))
+    iterator= IntegerParameter("iterator", default = 0, vis_cond=(NOT_VISIBLE))
 
     DEBUG = 1
     DATA_COLUMNS = ['Voltage (V)', 'Current (A)', 'Resistance (ohm)', 'Field (Oe)', 'Frequency (Hz)', 'X (V)', 'Y (V)', 'Phase', 'Polar angle (deg)', 'Azimuthal angle (deg)','Applied Voltage (V)' ]
