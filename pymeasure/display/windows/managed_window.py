@@ -421,6 +421,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                                                QtWidgets.QMessageBox.StandardButton.No)
         if reply == QtWidgets.QMessageBox.StandardButton.Yes:
             self.manager.remove(experiment)
+            
+            if len(self.manager.experiments.queue) == 0:
+                self.disable_clear_buttons()
 
     def delete_experiment_data(self, experiment):
         reply = QtWidgets.QMessageBox.question(self, 'Delete Data',
@@ -431,6 +434,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if reply == QtWidgets.QMessageBox.StandardButton.Yes:
             self.manager.remove(experiment)
             os.unlink(experiment.data_filename)
+            
+            if len(self.manager.experiments.queue) == 0:
+                self.disable_clear_buttons()
 
     def show_experiments(self):
         root = self.browser.invisibleRootItem()
@@ -448,8 +454,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.manager.clear()
         
         if len(self.manager.experiments.queue) == 0:
-            self.browser_widget.clear_button.setEnabled(False)
-            self.browser_widget.clear_by_status_button.setEnabled(False)
+            self.disable_clear_buttons()
         
     def open_clear_dialog(self):
         self.clear_dialog.show()
@@ -469,9 +474,24 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         
         self.manager.clear_filtered(to_clear, delete_files)
         
+        if status[4]:
+            self.clear_selected(delete_files)
+        
         if len(self.manager.experiments.queue) == 0:
-            self.browser_widget.clear_button.setEnabled(False)
-            self.browser_widget.clear_by_status_button.setEnabled(False)
+            self.disable_clear_buttons()
+            
+    def clear_selected(self, delete_files:bool=False):
+        root = self.browser.invisibleRootItem()
+        i = 0
+        while i < root.childCount():
+            item = root.child(i)
+            if item.checkState(0) == QtCore.Qt.CheckState.Checked:
+                experiment = self.manager.experiments.with_browser_item(item)
+                self.manager.remove(experiment)
+                if delete_files:
+                    os.unlink(experiment.data_filename)
+            else:
+                i += 1
 
     def open_experiment(self):
         dialog = ResultsDialog(self.procedure_class,
@@ -500,8 +520,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                     self.browser_widget.hide_button.setEnabled(True)
         
                     if not self.manager.is_running():
-                        self.browser_widget.clear_button.setEnabled(True)
-                        self.browser_widget.clear_by_status_button.setEnabled(True)
+                        self.enable_clear_buttons()
 
     def save_experiment_copy(self, source_filename):
         """Save a copy of the datafile to a selected folder and file.
@@ -699,6 +718,14 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.manager.resume()
         else:
             self.abort_button.setEnabled(False)
+            
+    def enable_clear_buttons(self):
+        self.browser_widget.clear_button.setEnabled(True)
+        self.browser_widget.clear_by_status_button.setEnabled(True)
+        
+    def disable_clear_buttons(self):
+        self.browser_widget.clear_button.setEnabled(False)
+        self.browser_widget.clear_by_status_button.setEnabled(False)
 
     def queued(self, experiment):
         self.abort_button.setEnabled(True)
@@ -706,12 +733,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.browser_widget.hide_button.setEnabled(True)
         
         if not self.manager.is_running():
-            self.browser_widget.clear_button.setEnabled(True)
-            self.browser_widget.clear_by_status_button.setEnabled(True)
+            self.enable_clear_buttons()
 
     def running(self, experiment):
-        self.browser_widget.clear_button.setEnabled(False)
-        self.browser_widget.clear_by_status_button.setEnabled(False)
+        self.disable_clear_buttons()
 
     def abort_returned(self, experiment):
         self.current_point.reset()
@@ -721,8 +746,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.abort_button.setEnabled(True)
         
         if len(self.manager.experiments.queue) > 0:
-            self.browser_widget.clear_button.setEnabled(True)
-            self.browser_widget.clear_by_status_button.setEnabled(True)
+            self.enable_clear_buttons()
 
     def finished(self, experiment):
         self.current_point.reset()
@@ -731,8 +755,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.abort_button.setEnabled(False)
             
         if len(self.manager.experiments.queue) > 0:
-            self.browser_widget.clear_button.setEnabled(True)
-            self.browser_widget.clear_by_status_button.setEnabled(True)
+            self.enable_clear_buttons()
             
     def curve_clicked(self, curve):
         for experiment in self.manager.experiments.queue:
