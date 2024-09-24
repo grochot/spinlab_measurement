@@ -652,10 +652,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         if self.store_measurement:
             try:
+                automaticstation_suffix='_{0}_{1}'.format(procedure.mode,procedure.global_xyname[2]) if procedure.set_automaticstation else '_{0}'.format(procedure.mode)
                 filename = unique_filename(
                     self.directory,
-                    prefix=self.file_input.filename_base,
-                    suffix='_{0}_{1}'.format(procedure.mode,procedure.global_xyname[2]) if procedure.set_automaticstation else '_{0}'.format(procedure.mode),
+                    prefix=self.file_input.filename_base + automaticstation_suffix,
                     datetimeformat="",
                     procedure=procedure,
                     ext=self.file_input.filename_extension,
