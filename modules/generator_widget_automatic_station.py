@@ -1,7 +1,7 @@
 import pyvisa as visa
 from pymeasure.display.Qt import QtCore, QtWidgets, QtGui
 import sys
-sys.path.append("/home/mariusz/moje_pliki/programowanie/python/spinlab_measurement/")
+#sys.path.append("/home/mariusz/moje_pliki/programowanie/python/spinlab_measurement/")
 sys.path.append("C:\\Users\\IE\\git\\spinlab_measurement")
 from logic.find_instrument import FindInstrument
 from hardware.dummy_motion_driver import DummyMotionDriver
@@ -10,6 +10,7 @@ from hardware.keithley2400 import Keithley2400
 from functools import partial
 from PyQt5.QtCore import Qt, QSettings
 from logic.map_generator import generate_coord
+from element_selection import ElementSelection
 import json
 from os import path
 
@@ -128,7 +129,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.read_for_go_button_button=QtWidgets.QPushButton("Read")
         self.read_for_go_button_button.clicked.connect(self.read_for_go_button)
 
-        self.sample_in_plane_checkbox=QtWidgets.QCheckBox("Sample in plane",self)
+        self.sample_in_plane_checkbox=QtWidgets.QCheckBox("Perpendicular?",self)
         self.connect_with_sample(False)
         #self.sample_in_plane_checkbox.stateChanged()
 
@@ -191,6 +192,9 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         self.generate_map_button=QtWidgets.QPushButton('Generate sequence', self)
         self.generate_map_button.clicked.connect(self.generate_sequence)
+
+        self.element_selection_button=QtWidgets.QPushButton('Element selection', self)
+        self.element_selection_button.clicked.connect(self.element_selection)
 
         #Devices connection
         self.make_connection_with_devices_button.clicked.connect(self.make_connection_with_devices)
@@ -272,6 +276,9 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
             self.enable_motors_checkable_button.setText("Enable")
 
 
+    def element_selection(self):
+        widget=ElementSelection()
+        widget.open_widget()
 
     def generate_sequence(self):
         number_of_element_in_the_x_axis=int(self.number_of_element_in_the_x_axis_textbox.text())
@@ -438,11 +445,11 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout2.addWidget(self.name_patern_name,9,0)
         grid_layout2.addWidget(self.name_patern_textbox,9,1)
 
-        grid_layout2.addWidget(self.initial_row_name,10,0)
-        grid_layout2.addWidget(self.initial_row_textbox,10,1)
+        grid_layout2.addWidget(self.initial_column_name,10,0)
+        grid_layout2.addWidget(self.initial_column_textbox,10,1)
 
-        grid_layout2.addWidget(self.initial_column_name,11,0)
-        grid_layout2.addWidget(self.initial_column_textbox,11,1)
+        grid_layout2.addWidget(self.initial_row_name,11,0)
+        grid_layout2.addWidget(self.initial_row_textbox,11,1)
 
         grid_layout2.addWidget(self.column_name_pattern_iterator_name,12,0)
         grid_layout2.addWidget(self.column_name_pattern_iterator_textbox,12,1)
@@ -451,6 +458,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout2.addWidget(self.row_name_pattern_iterator_textbox,13,1)
 
         grid_layout2.addWidget(self.generate_map_button,14,1)
+        grid_layout2.addWidget(self.element_selection_button,14,2)
 
         layout.addLayout(grid_layout2)
 
