@@ -10,7 +10,7 @@ from hardware.keithley2400 import Keithley2400
 from functools import partial
 from PyQt5.QtCore import Qt, QSettings
 from logic.map_generator import generate_coord
-from element_selection import ElementSelection
+from modules.element_selection import ElementSelection
 import json
 from os import path
 
@@ -98,12 +98,12 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.make_connection_with_devices_label=QtWidgets.QLabel('Make connection with devices')
         self.make_connection_with_devices_button=QtWidgets.QPushButton("connect")
 
-        self.make_connection_label=QtWidgets.QLabel('connect distance [mm]')
+        self.make_connection_label=QtWidgets.QLabel('Take off distance [mm]')
         self.make_connection_textbox=QtWidgets.QLineEdit(self)
         self.make_connection_textbox.setFixedSize(100,20)
         self.make_connection_textbox.setAlignment(Qt.AlignLeft)
 
-        self.connect_checkable_button=self.checkable_button = QtWidgets.QPushButton("disconnect")
+        self.connect_checkable_button=self.checkable_button = QtWidgets.QPushButton("Take off")
         self.connect_checkable_button.setCheckable(True)
         self.led_indicator_label=QtWidgets.QLabel()
         self.led_indicator_label.setFixedSize(35,35)
@@ -131,62 +131,66 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         self.sample_in_plane_checkbox=QtWidgets.QCheckBox("Perpendicular?",self)
         self.connect_with_sample(False)
+
+        self.go_to_initialize_posotion_button=QtWidgets.QPushButton("Go to initialize position")
+        self.go_to_initialize_posotion_button.clicked.connect(self.go_to_initialize_posotion)
+
         #self.sample_in_plane_checkbox.stateChanged()
 
     
         #main part of widget
-        self.number_of_element_in_the_x_axis_name=QtWidgets.QLabel('number of elements on the x axis')
+        self.number_of_element_in_the_x_axis_name=QtWidgets.QLabel('number of elements on the x axis [int]')
         self.number_of_element_in_the_x_axis_textbox=QtWidgets.QLineEdit(self)
 
-        self.number_of_element_in_the_y_axis_name=QtWidgets.QLabel('number of elements on the y axis')
+        self.number_of_element_in_the_y_axis_name=QtWidgets.QLabel('number of elements on the y axis [int]')
         self.number_of_element_in_the_y_axis_textbox=QtWidgets.QLineEdit(self)
 
-        self.first_element_x_name=QtWidgets.QLabel('First element on x axis')
+        self.first_element_x_name=QtWidgets.QLabel('First element on x axis [mm]')
         self.first_element_x_textbox=QtWidgets.QLineEdit(self)
 
-        self.first_element_y_name=QtWidgets.QLabel('First element on y axis')
+        self.first_element_y_name=QtWidgets.QLabel('First element on y axis [mm]')
         self.first_element_y_textbox=QtWidgets.QLineEdit(self)
 
         self.first_element_xy_read_button=QtWidgets.QPushButton('Read', self)
         self.first_element_xy_read_button.clicked.connect(partial(self.read_coordinates,self.first_element_x_textbox,self.first_element_y_textbox))
 
-        self.dx_calculation_name=QtWidgets.QLabel('Dx')
+        self.dx_calculation_name=QtWidgets.QLabel('Dx [mm]')
         self.dx_calculation_textbox=QtWidgets.QLineEdit(self)
 
-        self.dy_calculation_name=QtWidgets.QLabel('Dy')
+        self.dy_calculation_name=QtWidgets.QLabel('Dy [mm]')
         self.dy_calculation_textbox=QtWidgets.QLineEdit(self)
 
-        self.last_element_x_name=QtWidgets.QLabel('Last element on x axis')
+        self.last_element_x_name=QtWidgets.QLabel('Last element on x axis [mm]')
         self.last_element_x_textbox=QtWidgets.QLineEdit(self)
 
-        self.last_element_y_name=QtWidgets.QLabel('Last element on y axis')
+        self.last_element_y_name=QtWidgets.QLabel('Last element on y axis [mm]')
         self.last_element_y_textbox=QtWidgets.QLineEdit(self)
 
         self.last_element_xy_read_button=QtWidgets.QPushButton('Read', self)
         self.last_element_xy_read_button.clicked.connect(partial(self.read_coordinates,self.last_element_x_textbox,self.last_element_y_textbox))
 
-        self.theta_name=QtWidgets.QLabel('Calculated theta angle')
+        self.theta_name=QtWidgets.QLabel('Calculated theta angle [rad]')
         self.theta_value_name=QtWidgets.QLabel('??')
 
-        self.name_patern_name=QtWidgets.QLabel('Name pattern')
+        self.name_patern_name=QtWidgets.QLabel('Name pattern [string]')
         self.name_patern_textbox=QtWidgets.QLineEdit(self)
         self.name_patern_textbox.setToolTip("{col} - column marker (number) \n{col_char} - column marker (char) \n{row} - row marker (number) \n{row_char} - row marker (char)")
 
-        self.initial_row_name=QtWidgets.QLabel('First row')
+        self.initial_row_name=QtWidgets.QLabel('First row [int/char]')
         self.initial_row_textbox=QtWidgets.QLineEdit(self)
         self.initial_row_textbox.setToolTip("Type column of element which you start")
 
-        self.initial_column_name=QtWidgets.QLabel('First column')
+        self.initial_column_name=QtWidgets.QLabel('First column [int/char]')
         self.initial_column_textbox=QtWidgets.QLineEdit(self)
         self.initial_column_textbox.setToolTip("Type column of element which you start")
 
 
-        self.column_name_pattern_iterator_name=QtWidgets.QLabel('Column name iterator')
+        self.column_name_pattern_iterator_name=QtWidgets.QLabel('Column name iterator [int]')
         self.column_name_pattern_iterator_textbox=QtWidgets.QLineEdit(self)
         self.column_name_pattern_iterator_textbox.setToolTip("Type value of which program will increment name")
 
 
-        self.row_name_pattern_iterator_name=QtWidgets.QLabel('row name iterator')
+        self.row_name_pattern_iterator_name=QtWidgets.QLabel('row name iterator [int]')
         self.row_name_pattern_iterator_textbox=QtWidgets.QLineEdit(self)
         self.row_name_pattern_iterator_textbox.setToolTip("Type value of which program will increment name")
 
@@ -250,6 +254,10 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         event.accept() 
 
 
+    def go_to_initialize_posotion(self):
+        self.MotionDriver.goTo_1(0)
+        self.MotionDriver.goTo_2(0)
+        self.MotionDriver.goTo_3(0)
 
 
     def get_motor_status(self):
@@ -309,14 +317,14 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         if self.sequencer is not None:
             self.sequencer.load_sequence(filename='./example_sequence')
 
-        #data migration
+        '''#data migration
         with open('./logic/parameters.json', 'r+') as file:
             data = json.load(file)
             data['disconnect_length']=float(self.make_connection_textbox.text())
             data['sample_in_plane']=float(self.sample_in_plane_checkbox.isChecked())
             file.seek(0)
             json.dump(data,file,indent=4)
-            file.truncate()
+            file.truncate()'''
 
             
 
@@ -344,14 +352,14 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
             else:
                 self.MotionDriver.goTo_1(self.z_pos-float(self.make_connection_textbox.text()))
             self.led_indicator_label.setStyleSheet("background-color: green; border-radius: 10px;")
-            self.connect_checkable_button.setText("Connect")
+            self.connect_checkable_button.setText("Approach")
         else:
             if self.sample_in_plane_checkbox.isChecked():
                 self.MotionDriver.goTo_3(self.z_pos)
             else:
                 self.MotionDriver.goTo_1(self.z_pos)
             self.led_indicator_label.setStyleSheet("background-color: red; border-radius: 10px;")
-            self.connect_checkable_button.setText("Disconnect")
+            self.connect_checkable_button.setText("Take off")
     
     def enable_motors_function(self, checked):
         
@@ -399,9 +407,12 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout.addWidget(self.go_y_textbox, 1, 6)
         grid_layout.addWidget(self.go_z_textbox, 2, 6)
 
-        grid_layout.addWidget(self.go_button, 2, 7)
-        grid_layout.addWidget(self.read_for_go_button_button,1,7)
 
+
+        grid_layout.addWidget(self.read_for_go_button_button,1,7)
+        grid_layout.addWidget(self.go_button, 2, 7)
+        
+        grid_layout.addWidget(self.go_to_initialize_posotion_button, 0, 8)
         grid_layout.addWidget(self.sample_in_plane_checkbox,1,8)
         layout.addLayout(grid_layout)
 

@@ -232,7 +232,7 @@ class SpinLabMeasurement(Procedure):
             param = getattr(self, param_name)
             self.parameters[param_name] = param
         
-        self.save_parameter.WriteFile(self.parameters)
+        self.save_parameter.WriteFile(self.parameters,window.directory)
 
         if self.set_kriostat:
             try:
@@ -321,7 +321,7 @@ class MainWindow(ManagedDockWindow):
             # directory_input=True,  
             sequencer=True,
             
-            sequencer_inputs=['constant_field_value',"generator_frequency", "kriostat_temperature", "global_xyname"],
+            sequencer_inputs=['constant_field_value',"generator_frequency", "kriostat_temperature", "global_xyname","iterator"],
             inputs_in_scrollarea=True,
             ext_devices = [CameraControl, WaterCoolerControl, Lakeshore336Control, AutomaticStationGenerator],
             
@@ -330,7 +330,7 @@ class MainWindow(ManagedDockWindow):
         self.setWindowTitle('SpinLabAPP v.1.00')
         self.directory = self.procedure_class.path_file.ReadFile()
         self.filename = self.procedure_class.parameters_from_file["sample_name"]
-        self.store_measurement = False                              # Controls the 'Save data' toggle
+        self.store_measurement = True                              # Controls the 'Save data' toggle
         self.file_input.extensions = ["csv", "txt", "data"]         # Sets recognized extensions, first entry is the default extension
         self.file_input.filename_fixed = False 
         self.tabs.currentChanged.connect(self.on_tab_change)

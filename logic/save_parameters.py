@@ -20,13 +20,13 @@ class SaveParameters():
 
 
 
-    def WriteFile(self, data): 
+    def WriteFile(self, data,file_path): 
         # Znajdź lokalizację pliku exe
         executable_path = self.get_executable_path()
 
          # Stwórz nazwę pliku logów
         parameters_file_path = os.path.join(executable_path, 'parameters.json')
-        data["path"]="C://"
+        data["path"]=file_path
         json_object = json.dumps(data, indent=4)
         with open(parameters_file_path, "w") as outfile:
             outfile.write(json_object)     
