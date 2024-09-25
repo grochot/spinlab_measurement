@@ -1,7 +1,5 @@
-(half)-Geerate sequence ma też wykonywać "migrate data" do parameters.json tak aby uwzgledniac niekrote parametry (in-plane oraz dz) - trzeba dać refresj parameter.json w app.py (juz jest sample in plane zostalo dz)
--automatyczne ladowanie do sequencera
 -warinig ussing dummy !! dodaj nad sample in plane taki komunikat
-
+-okienko go to element
 
 
 pomysly:
