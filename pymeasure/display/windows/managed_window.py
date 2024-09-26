@@ -379,7 +379,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         dialog.setOkButtonText("Repeat")
         dialog.setCancelButtonText("Cancel")
         if dialog.exec():
-            print(dialog.intValue())
+            for i in range(dialog.intValue()):
+                procedure = self.make_procedure()
+                procedure.iterator = i
+                self.queue(procedure)
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)
