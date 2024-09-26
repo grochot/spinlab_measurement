@@ -13,6 +13,8 @@ from logic.map_generator import generate_coord
 from modules.element_selection import ElementSelection
 import json
 from os import path
+import ast
+
 
 class AutomaticStationGenerator(QtWidgets.QWidget):
     object_name = "automatic_station_generator"
@@ -200,6 +202,10 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.element_selection_button=QtWidgets.QPushButton('Element selection', self)
         self.element_selection_button.clicked.connect(self.element_selection)
 
+        self.go_to_element_textbox=QtWidgets.QLineEdit(self)
+        self.go_to_element_button=QtWidgets.QPushButton('Go to element', self)
+        self.go_to_element_button.clicked.connect(self.go_to_element)
+
         #Devices connection
         self.make_connection_with_devices_button.clicked.connect(self.make_connection_with_devices)
 
@@ -252,6 +258,60 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
     def closeEvent(self, event):
         self.save_settings()  # Zapisanie ustawień
         event.accept() 
+    
+
+
+    def go_to_element(self):
+
+        if  path.isfile("./example_sequence"):
+             with open("./example_sequence", "r") as f:
+                sequence=ast.literal_eval(f.read().split('"')[5])
+        else:
+            print("Sequence doesn't exist - please generate it")
+            return -2
+
+        #print(f.read())
+        
+        print("seq",sequence)
+        is_finded=False
+        for sublist in sequence:
+            if sublist[2]==self.go_to_element_textbox.text():
+                print("FINDED")
+                finded=sublist
+                is_finded=True
+                if self.sample_in_plane_checkbox.isChecked():
+                    self.z_pos=self.MotionDriver.pos_3()
+
+                    self.MotionDriver.goTo_3(self.z_pos-float(self.make_connection_textbox.text())) #Disconnecting
+                    
+                    self.MotionDriver.goTo_2(float(finded[0]))
+                    self.MotionDriver.goTo_1(float(finded[1]))
+
+                    self.MotionDriver.goTo_3(self.z_pos) #Connecting
+
+                    self.MotionDriver.pos_1() #Non sense reading position to stop program
+                else:
+                    self.z_pos=self.MotionDriver.pos_1()
+
+                    self.MotionDriver.goTo_1(self.z_pos-float(self.make_connection_textbox.text())) #Disconnecting
+                    
+                    self.MotionDriver.goTo_2(float(finded[0]))
+                    self.MotionDriver.goTo_3(float(finded[1]))
+
+                    self.MotionDriver.goTo_1(self.z_pos) #Connecting
+
+                    self.MotionDriver.pos_1() #Non sense reading position to stop program
+                break
+            else:
+                pass
+        
+        if is_finded==False:
+            print("Element not finded")
+        return 0
+
+
+
+       
 
 
     def go_to_initialize_posotion(self):
@@ -411,9 +471,13 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         grid_layout.addWidget(self.read_for_go_button_button,1,7)
         grid_layout.addWidget(self.go_button, 2, 7)
-        
+
         grid_layout.addWidget(self.go_to_initialize_posotion_button, 0, 8)
         grid_layout.addWidget(self.sample_in_plane_checkbox,1,8)
+
+        grid_layout.addWidget(self.go_to_element_textbox, 0, 9)
+        grid_layout.addWidget(self.go_to_element_button,1,9)
+
         layout.addLayout(grid_layout)
 
         line=QtWidgets.QFrame()
