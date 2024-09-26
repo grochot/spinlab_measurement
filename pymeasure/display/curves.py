@@ -77,6 +77,12 @@ class ResultsCurve(pg.PlotDataItem):
         self.opts['pen'].setWidth(pen_size)
         self.opts['symbolSize'] = symbol_size
         self.updateItems(styleUpdate=True)
+        
+    def get_last_x(self):
+        xdata, _ = self.getData()
+        if xdata is None or len(xdata) == 0 or np.isnan(xdata[-1]):
+            return None
+        return xdata[-1]
 
 # TODO: Add method for changing x and y
 
