@@ -363,7 +363,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     def repeat_menu(self, position):
         menu = QtWidgets.QMenu(self)
         action = QtGui.QAction(menu)
-        action.setText("Repeat")
+        action.setText("Multiple")
         action.triggered.connect(self.repeat_experiment)
         menu.addAction(action)
         menu.exec(self.queue_button.mapToGlobal(position))
@@ -376,7 +376,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         dialog.setIntValue(1)
         dialog.setWindowTitle("Repeat Experiment")
         dialog.setLabelText("Number of times to repeat the experiment:")
-        dialog.setOkButtonText("Repeat")
+        dialog.setOkButtonText("Queue")
         dialog.setCancelButtonText("Cancel")
         if dialog.exec():
             for i in range(dialog.intValue()):
