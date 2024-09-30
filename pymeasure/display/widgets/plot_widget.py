@@ -226,6 +226,7 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             self.expand(self.expandParam)
 
     def remove(self, curve):
+        curve.isExpanded = False
         self.plot.removeItem(curve)
         if self.isExpanded:
             self.expand(self.expandParam)
