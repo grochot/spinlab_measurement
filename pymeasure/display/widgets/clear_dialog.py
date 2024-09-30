@@ -4,7 +4,7 @@ from ..Qt import QtWidgets
 class ClearDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedSize(300, 150)
+        self.setFixedSize(300, 175)
         self.setWindowTitle("Clear")
 
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -20,11 +20,13 @@ class ClearDialog(QtWidgets.QDialog):
         self.finished_checkbox = QtWidgets.QCheckBox("Finished")
         self.aborted_checkbox = QtWidgets.QCheckBox("Aborted")
         self.failed_checkbox = QtWidgets.QCheckBox("Failed")
+        self.selected_checkbox = QtWidgets.QCheckBox("Selected graphs")
 
         grid_layout.addWidget(self.queued_checkbox, 0, 0)
         grid_layout.addWidget(self.finished_checkbox, 0, 1)
         grid_layout.addWidget(self.aborted_checkbox, 1, 0)
         grid_layout.addWidget(self.failed_checkbox, 1, 1)
+        grid_layout.addWidget(self.selected_checkbox, 2, 0)
 
         group_box.setLayout(grid_layout)
 
@@ -50,6 +52,7 @@ class ClearDialog(QtWidgets.QDialog):
             self.finished_checkbox.isChecked(),
             self.aborted_checkbox.isChecked(),
             self.failed_checkbox.isChecked(),
+            self.selected_checkbox.isChecked(),
         )
         delete_files = self.delete_files_checkbox.isChecked()
 

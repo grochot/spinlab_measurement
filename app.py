@@ -194,6 +194,7 @@ class SpinLabMeasurement(Procedure):
     layout_type = BooleanParameter("Layout type", default=PARAMETERS, vis_cond=(NOT_VISIBLE))
     point_meas_duration = FloatParameter("Single measurement duration", default = 0, units="s", vis_cond=(NOT_VISIBLE))
     number_of_points = IntegerParameter("Number of points", default = 0, vis_cond=(NOT_VISIBLE))
+    iterator= IntegerParameter("Iterator", default = 0, vis_cond=(NOT_VISIBLE))
 
     DEBUG = 1
     DATA_COLUMNS = ['Voltage (V)', 'Current (A)', 'Resistance (ohm)', 'Field (Oe)', 'Frequency (Hz)', 'X (V)', 'Y (V)', 'Phase', 'Polar angle (deg)', 'Azimuthal angle (deg)','Applied Voltage (V)' ]
@@ -226,7 +227,7 @@ class SpinLabMeasurement(Procedure):
             param = getattr(self, param_name)
             self.parameters[param_name] = param
         
-        self.save_parameter.WriteFile(self.parameters)
+        self.save_parameter.WriteFile(self.parameters, window.directory, window.file_input.filename_base)
 
         if self.set_kriostat:
             try:
@@ -322,8 +323,9 @@ class MainWindow(ManagedDockWindow):
         )
        
         self.setWindowTitle('SpinLabAPP v.1.00')
-        self.directory = self.procedure_class.path_file.ReadFile()
-        self.filename = self.procedure_class.parameters_from_file["sample_name"]
+        directory, filename = self.procedure_class.path_file.ReadFile()
+        self.directory = directory
+        self.filename = filename
         self.store_measurement = False                              # Controls the 'Save data' toggle
         self.file_input.extensions = ["csv", "txt", "data"]         # Sets recognized extensions, first entry is the default extension
         self.file_input.filename_fixed = False 
