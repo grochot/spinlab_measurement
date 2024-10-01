@@ -88,6 +88,7 @@ class FMRMode:
         multimeter_average: int,
         multimeter_nplc: str,
         measdevice: str,
+        generator_channel: str,
     ) -> None:
 
         self.set_automaticstation = set_automaticstation
@@ -151,6 +152,7 @@ class FMRMode:
         self.multimeter_nplc = multimeter_nplc
 
         self.measdevice = measdevice
+        self.generator_channel = generator_channel
 
         ## parameter initialization
 
@@ -214,7 +216,8 @@ class FMRMode:
             case "Agilent":
                 self.generator_obj = FGenDriver(self.address_generator)
             case "Windfreak":
-                self.generator_obj = Windfreak(self.address_generator)
+                channel = 0 if self.generator_channel == "A" else 1
+                self.generator_obj = Windfreak(self.address_generator, channel=channel)
             case _:
                 self.generator_obj = DummyFgenDriver()
                 log.warning("Used dummy Frequency Generator.")
