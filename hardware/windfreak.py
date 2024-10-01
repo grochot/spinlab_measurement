@@ -3,9 +3,14 @@ from windfreak import SynthHD
 
 class Windfreak:
     def __init__(self, address, channel=None):
-        self.address = address
+        if address.startswith("ASRL") and address.endswith("::INSTR"):
+            self.address = "COM" + address[4:address.index("::")]
+        elif address.startswith("COM"):
+            self.address = address
+        else:
+            raise ValueError("Windfreak: Invalid address: '{}'".format(address))
         self.channel = 0 if channel is None else channel
-        self.rfgen = SynthHD(address)
+        self.rfgen = SynthHD(self.address)
 
     def __enter__(self):
         self.rfgen.init()
@@ -46,3 +51,4 @@ class Windfreak:
             self.enable()
         else:
             self.disable()
+            self.rfgen.close()
