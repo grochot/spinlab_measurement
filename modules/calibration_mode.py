@@ -1,6 +1,5 @@
 from time import sleep
-import math
-import numpy as np
+from numpy import nan
 import logging
 
 from app import SpinLabMeasurement
@@ -81,26 +80,27 @@ class FieldCalibrationMode(MeasurementMode):
         if type(result) != int and type(result) != float:
             result = 0
         self.field_vector.append(result)
-        log.info("Voltage: {}, Field: {}".format(point, result))
+        # log.info("Voltage: {}, Field: {}".format(point, result))
 
         data = {
             "Voltage (V)": point,
-            "Current (A)": math.nan,
-            "Resistance (ohm)": math.nan,
+            "Current (A)": nan,
+            "Resistance (ohm)": nan,
             "Field (Oe)": result,
-            "Frequency (Hz)": math.nan,
-            "X (V)": math.nan,
-            "Y (V)": math.nan,
-            "Phase": math.nan,
-            "Polar angle (deg)": math.nan,
-            "Azimuthal angle (deg)": math.nan,
+            "Frequency (Hz)": nan,
+            "X (V)": nan,
+            "Y (V)": nan,
+            "Phase": nan,
+            "Polar angle (deg)": nan,
+            "Azimuthal angle (deg)": nan,
         }
         return data
 
     def end(self):
         slope, intercept, r, p, std_err = linregress(self.point_list, self.field_vector)
+        log.info("Previous field constant: {} [V/Oe]".format(self.p.field_constant))
         self.p.field_constant = 1 / slope
-        log.info("Field constant: {}".format(1 / slope))
+        log.info("Field constant: {} [V/Oe]".format(1 / slope))
 
         FieldCalibrationMode.idle(self)
         # return 1/slope
