@@ -26,11 +26,13 @@ from hardware.rotation_stage_dummy import RotationStageDummy
 from logic.vector import Vector
 from logic.sweep_field_to_zero import sweep_field_to_zero 
 from logic.sweep_field_to_value import sweep_field_to_value
+from hardware.esp300_simple import Esp300
+from hardware.dummy_motion_driver import DummyMotionDriver
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 
 
 class CIMSMode():
-    def __init__(self, vector:str, mode_cims_relays:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str,pulsegenerator:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool,return_the_rotationstation:bool, address_sourcemeter:str, address_multimeter:str,address_pulsegenerator:str, address_gaussmeter:str, address_switch:str, delay_field:float, delay_measurement:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float, rotation_axis:str, rotation_polar_constant:float, rotation_azimuth_constant:float,pulsegenerator_duration,pulsegenerator_offset,pulsegenerator_pulsetype,pulsegenerator_channel,pulsegenerator_compliance,pulsegenerator_source_range,field_bias_value,remagnetization,remagnetization_value,remagnetization_time,hold_the_field_after_measurement,remanency_correction,remanency_correction_time,set_polar_angle,set_azimuthal_angle) -> None:
+    def __init__(self, vector:str, mode_cims_relays:bool,  sourcemeter_bias:float, sourcemeter:str, multimeter:str,pulsegenerator:str, gaussmeter:str, field:str, automaticstation:bool, switch: bool, kriostat:bool, rotationstation: bool,return_the_rotationstation:bool, address_sourcemeter:str, address_multimeter:str,address_pulsegenerator:str, address_gaussmeter:str, address_switch:str,address_automaticstation:str, delay_field:float, delay_measurement:float, delay_bias:float, sourcemeter_source:str, sourcemeter_compliance:float, sourcemter_channel: str, sourcemeter_limit:str, sourcemeter_nplc:float, sourcemeter_average:str, multimeter_function:str, multimeter_resolution:float, multimeter_autorange:bool, multimeter_range:int, multimeter_average:int, field_constant:float, gaussmeter_range:str, gaussmeter_resolution:str, multimeter_nplc:str, address_daq:str, field_step:float, rotationstation_port:str, constant_field_value:float, rotation_axis:str, rotation_polar_constant:float, rotation_azimuth_constant:float,pulsegenerator_duration,pulsegenerator_offset,pulsegenerator_pulsetype,pulsegenerator_channel,pulsegenerator_compliance,pulsegenerator_source_range,field_bias_value,remagnetization,remagnetization_value,remagnetization_time,hold_the_field_after_measurement,remanency_correction,remanency_correction_time,set_polar_angle,set_azimuthal_angle,global_xyname,disconnect_length,sample_in_plane) -> None:
     
         ## parameter initialization
         self.sourcemeter = sourcemeter
@@ -48,6 +50,7 @@ class CIMSMode():
         self.address_pulsegenerator=address_pulsegenerator
         self.address_gaussmeter = address_gaussmeter
         self.address_switch = address_switch
+        self.address_automaticstation=address_automaticstation
         self.delay_field = delay_field
         self.delay_measurement = delay_measurement
         self.delay_bias = delay_bias
@@ -95,6 +98,10 @@ class CIMSMode():
         self.remanency_correction_time=remanency_correction_time
 
         self.field_bias_value=field_bias_value
+
+        self.global_xyname=global_xyname
+        self.disconnect_length=disconnect_length
+        self.sample_in_plane=sample_in_plane
 
     def generate_points(self):
         #Vector initialization
@@ -252,6 +259,41 @@ class CIMSMode():
             self.pulsegenerator_obj.generator_compliance_current=self.pulsegenerator_compliance
         else:
             self.pulsegenerator_obj.generator_compliance_voltage=self.pulsegenerator_compliance
+
+
+
+        #MotionDriver
+        if self.automaticstation:
+            if self.address_automaticstation=='None':
+                self.MotionDriver=DummyMotionDriver("sth")
+            else:
+                pass
+                self.MotionDriver=Esp300(self.address_automaticstation)
+            
+
+
+            if self.sample_in_plane:
+                self.z_pos=self.MotionDriver.pos_3()
+
+                self.MotionDriver.goTo_3(self.z_pos-self.disconnect_length) #Disconnecting
+                
+                self.MotionDriver.goTo_2(float(self.global_xyname[0]))
+                self.MotionDriver.goTo_1(float(self.global_xyname[1]))
+
+                self.MotionDriver.goTo_3(self.z_pos) #Connecting
+
+            else:
+                self.z_pos=self.MotionDriver.pos_1()
+
+                self.MotionDriver.goTo_1(self.z_pos-self.disconnect_length) #Disconnecting
+                
+                self.MotionDriver.goTo_2(float(self.global_xyname[0]))
+                self.MotionDriver.goTo_3(float(self.global_xyname[1]))
+
+                self.MotionDriver.goTo_1(self.z_pos) #Connecting
+
+
+            self.MotionDriver.pos_1() #Non sense reading position to stop program
 
 
     def operating(self, point):
