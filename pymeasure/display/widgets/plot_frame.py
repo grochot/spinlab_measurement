@@ -82,8 +82,6 @@ class PlotFrame(QtWidgets.QFrame):
         self.crosshairs.coordinates.connect(self.update_coordinates)
         
         self.vline = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen(color='r', width=1, style=QtCore.Qt.PenStyle.DashLine))
-        self.vline_pos = 0
-        self.isVlineVisible = False
 
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_curves)
@@ -102,24 +100,23 @@ class PlotFrame(QtWidgets.QFrame):
                         item.update_data()
                 else:
                     item.update_data()
-        self.vline.setPos(self.vline_pos)
+                    
+                if item.results.procedure.status == Procedure.RUNNING:
+                    last_x = item.get_last_x()
+                    if last_x is not None:
+                        if self.vline not in self.plot.items:
+                            self.plot.addItem(self.vline)
+                        self.vline.setPos(last_x)
                     
     def get_experiment(self, experiment):
         color = experiment.curve_list[0].color
         self.set_vline_color(color)
-                    
-    def set_vline_pos(self, x):
-        if not self.isVlineVisible:
-            self.plot.addItem(self.vline)
-            self.isVlineVisible = True
-        self.vline_pos = x
         
     def set_vline_color(self, color):
         self.vline.setPen(pg.mkPen(color=color, width=1, style=QtCore.Qt.PenStyle.DashLine))
         
     def hide_vline(self):
         self.plot.removeItem(self.vline)
-        self.isVlineVisible = False
 
     def parse_axis(self, axis):
         """ Returns the units of an axis by searching the string
