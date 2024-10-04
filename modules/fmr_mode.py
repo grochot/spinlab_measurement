@@ -21,7 +21,7 @@ from hardware.rotation_stage import RotationStage
 from hardware.rotation_stage_dummy import RotationStageDummy
 
 from logic.vector import Vector
-from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity
+from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity, _lockin_filter_slope
 from logic.sweep_field_to_zero import sweep_field_to_zero
 from logic.sweep_field_to_value import sweep_field_to_value
 
@@ -89,6 +89,7 @@ class FMRMode:
         multimeter_nplc: str,
         measdevice: str,
         generator_channel: str,
+        lockin_slope: str,
     ) -> None:
 
         self.set_automaticstation = set_automaticstation
@@ -153,6 +154,8 @@ class FMRMode:
 
         self.measdevice = measdevice
         self.generator_channel = generator_channel
+        
+        self.lockin_slope = lockin_slope
 
         ## parameter initialization
 
@@ -240,6 +243,7 @@ class FMRMode:
         else:
             self.lockin_obj.sensitivity = _lockin_sensitivity(self.lockin_sensitivity)
         self.lockin_obj.time_constant = _lockin_timeconstant(self.lockin_timeconstant)
+        self.lockin_obj.filter_slope = _lockin_filter_slope(self.lockin_slope)
         self.lockin_obj.harmonic = self.lockin_harmonic
         self.lockin_obj.sine_voltage = self.lockin_sine_amplitude
         self.lockin_obj.channel1 = self.lockin_channel1
