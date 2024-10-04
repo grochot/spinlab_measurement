@@ -55,7 +55,7 @@
     "lockin_harmonic": 1,
     "lockin_sine_amplitude": 5.0,
     "lockin_timeconstant": "30 ms",
-    "lockin_slope": "24 dB/oct",
+    "lockin_slope": "24 dB/Oct",
     "lockin_channel1": "X",
     "lockin_channel2": "Y",
     "lockin_autophase": false,
