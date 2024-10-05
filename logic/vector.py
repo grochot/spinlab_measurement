@@ -5,7 +5,7 @@ class Vector:
     def __init__(self):
         pass
 
-    def generate_vector(self, vec):
+    def generate_vector(self, vec: str) -> list:
         ranges = vec.split(",")
         numbers = []
         if len(ranges) == 3:
