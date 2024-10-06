@@ -96,6 +96,8 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
         self.res_le.setReadOnly(True)
         self.res_le.setAlignment(QtCore.Qt.AlignCenter)
         self.res_le.setFixedHeight(100)
+        
+        self.le_map = {"V": self.volt_le, "A": self.curr_le, "Ω": self.res_le}
 
         self.single_btn = QtWidgets.QPushButton("Single")
         self.single_btn.clicked.connect(self.single_measure)
@@ -127,14 +129,11 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
         self.res_le.setText("- [Ω]")
 
     def set_le(self, value, unit: str):
+        line_edit = self.le_map[unit]
         text_to_set = to_prefix(value) + f"{unit}]"
-        match unit:
-            case "V":
-                self.volt_le.setText(text_to_set)
-            case "A":
-                self.curr_le.setText(text_to_set)
-            case "Ω":
-                self.res_le.setText(text_to_set)
+        line_edit.setText(text_to_set)
+        line_edit.setStyleSheet("border: 3px solid red;")
+        QtCore.QTimer.singleShot(400, lambda: line_edit.setStyleSheet(""))
 
     def on_tab_change(self, index: int):
         if self.tab_index is None:
