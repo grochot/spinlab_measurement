@@ -47,22 +47,15 @@ class ResultsCurve(pg.PlotDataItem):
         self.force_reload = force_reload
         self.color = self.opts['pen'].color()
         self.offset = 0
-        self.isExpanded = False
 
-    def update_data(self, reload=False):
+    def update_data(self):
         """Updates the data by polling the results"""
-        if self.force_reload or reload:
+        if self.force_reload:
             self.results.reload()
         data = self.results.data  # get the current snapshot
-        
-        if reload:
-            self.isExpanded = False
-        
-        xdata = data[self.x]
-        ydata = data[self.y]
 
         # Set x-y data
-        self.setData(xdata, ydata)
+        self.setData(data[self.x], data[self.y])
         
     def get_amplitude(self):
         _, ydata = self.getData()
@@ -76,27 +69,6 @@ class ResultsCurve(pg.PlotDataItem):
         parameters = self.results.procedure.placeholder_objects()
         placeholders = {param.name: param.value for param in parameters.values()}
         return placeholders[param]
-    
-    def expand(self, offset=0):
-        xdata, ydata = self.getData()
-        
-        if ydata is None or len(ydata) == 0:
-            return
-        
-        if self.isExpanded:
-            ydata -= self.offset
-        self.offset = offset
-        ydata += self.offset
-        self.setData(xdata, ydata)
-        self.isExpanded = True
-        
-    def collapse(self):
-        xdata, ydata = self.getData()
-        if self.isExpanded:
-            ydata -= self.offset
-            self.offset = 0
-            self.isExpanded = False
-            self.setData(xdata, ydata)
 
     def set_color(self, color):
         self.pen.setColor(color)

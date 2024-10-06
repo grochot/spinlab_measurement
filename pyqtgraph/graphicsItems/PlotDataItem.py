@@ -332,6 +332,7 @@ class PlotDataItem(GraphicsObject):
             'phasemapMode': False,
             'alphaHint': 1.0,
             'alphaMode': False,
+            'offset': 0.0,
 
             'pen': (200,200,200),
             'shadowPen': None,
@@ -407,6 +408,15 @@ class PlotDataItem(GraphicsObject):
         self.opts['alphaMode'] = auto
         self.setOpacity(alpha)
         #self.update()
+        
+    def setOffset(self, offset):
+        if self.opts['offset'] == offset:
+            return
+        self.opts['offset'] = offset
+        self._datasetMapped  = None
+        self._datasetDisplay = None
+        self.updateItems(styleUpdate=False)
+        self.informViewBoundsChanged()
         
     def setNormalizeMode(self, state):
         """
@@ -964,6 +974,8 @@ class PlotDataItem(GraphicsObject):
             if self.opts['phasemapMode']:  # plot dV/dt vs V
                 x = self._dataset.y[:-1]
                 y = np.diff(self._dataset.y)/np.diff(self._dataset.x)
+               
+            y = y + self.opts['offset']
 
             dataset = PlotDataset(x,y)
             dataset.containsNonfinite = self._dataset.containsNonfinite

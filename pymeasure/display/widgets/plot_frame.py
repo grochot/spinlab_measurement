@@ -121,7 +121,7 @@ class PlotFrame(QtWidgets.QFrame):
     def collapse(self):
         for item in self.plot.items:
             if isinstance(item, self.ResultsClass):
-                item.collapse()
+                item.setOffset(0)
 
     def parse_axis(self, axis):
         """ Returns the units of an axis by searching the string
@@ -143,7 +143,7 @@ class PlotFrame(QtWidgets.QFrame):
         for item in self.plot.items:
             if isinstance(item, self.ResultsClass):
                 item.x = axis
-                item.update_data(reload=True)
+                item.update_data()
         label, units = self.parse_axis(axis)
         self.plot.setLabel('bottom', label, units=units, **self.LABEL_STYLE)
         self.x_axis = axis
@@ -153,7 +153,7 @@ class PlotFrame(QtWidgets.QFrame):
         for item in self.plot.items:
             if isinstance(item, self.ResultsClass):
                 item.y = axis
-                item.update_data(reload=True)
+                item.update_data()
         label, units = self.parse_axis(axis)
         self.plot.setLabel('left', label, units=units, **self.LABEL_STYLE)
         self.y_axis = axis
