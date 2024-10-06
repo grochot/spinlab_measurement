@@ -205,7 +205,7 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             i += 1            
 
         for i, curve in enumerate(curves):
-            curve.expand(offset_list[i] * self.expandOffset)
+            curve.setOffset(offset_list[i] * self.expandOffset)
             
         self.isExpanded = True
                 
