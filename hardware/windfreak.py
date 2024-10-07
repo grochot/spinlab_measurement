@@ -2,9 +2,15 @@ from windfreak import SynthHD
 
 
 class Windfreak:
-    def __init__(self, address):
-        self.address = address
-        self.rfgen = SynthHD(address)
+    def __init__(self, address, channel=None):
+        if address.startswith("ASRL") and address.endswith("::INSTR"):
+            self.address = "COM" + address[4:address.index("::")]
+        elif address.startswith("COM"):
+            self.address = address
+        else:
+            raise ValueError("Windfreak: Invalid address: '{}'".format(address))
+        self.channel = 0 if channel is None else channel
+        self.rfgen = SynthHD(self.address)
 
     def __enter__(self):
         self.rfgen.init()
@@ -12,23 +18,37 @@ class Windfreak:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        print("########### RFGen close method ###########\n"
-              "    disabling and closing communication\n"
-              "###########################################")
-        self.disable(0)
-        self.disable(1)
+        self.rfgen[0].enable = False
+        self.rfgen[1].enable = False
         self.rfgen.close()
 
-    def enable(self, channel: int):
-        self.rfgen[channel].enable = True
+    def enable(self):
+        self.rfgen[self.channel].enable = True
 
-    def disable(self, channel: int):
-        self.rfgen[channel].enable = False
+    def disable(self):
+        self.rfgen[self.channel].enable = False
 
-    def set_frequency(self, channel, frequency):
-        self.rfgen[channel].frequency = frequency
+    def setChannel(self, channel: int):
+        if channel not in [0, 1]:
+            raise ValueError("Channel must be 0 or 1. You entered: {}".format(channel))
 
-    def set_power(self, channel, power):
-        self.rfgen[channel].power = power
+        self.channel = channel
 
+    def setFreq(self, frequency: float):
+        self.rfgen[self.channel].frequency = frequency
 
+    def setPower(self, power: float):
+        self.rfgen[self.channel].power = power
+
+    def initialization(self):
+        self.rfgen.init()
+
+    def set_lf_signal(self):
+        pass
+
+    def setOutput(self, on: bool, mod: bool = False):
+        if on:
+            self.enable()
+        else:
+            self.disable()
+            self.rfgen.close()

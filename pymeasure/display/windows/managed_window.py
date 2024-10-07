@@ -171,6 +171,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         self.queue_button = QtWidgets.QPushButton('Queue', self)
         self.queue_button.clicked.connect(self._queue)
+        self.queue_button.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.queue_button.customContextMenuRequested.connect(self.repeat_menu)
 
         self.abort_button = QtWidgets.QPushButton('Abort', self)
         self.settings_button = QtWidgets.QPushButton('Settings', self)
@@ -357,6 +359,29 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         previous_experiment = self.manager.experiments.with_browser_item(previous)
         if previous_experiment:
                 previous_experiment.setSelected(False)
+                
+    def repeat_menu(self, position):
+        menu = QtWidgets.QMenu(self)
+        action = QtGui.QAction(menu)
+        action.setText("Multiple")
+        action.triggered.connect(self.repeat_experiment)
+        menu.addAction(action)
+        menu.exec(self.queue_button.mapToGlobal(position))
+        
+    def repeat_experiment(self):
+        dialog = QtWidgets.QInputDialog(self)
+        dialog.setInputMode(QtWidgets.QInputDialog.InputMode.IntInput)
+        dialog.setIntRange(1, 100)
+        dialog.setIntValue(1)
+        dialog.setWindowTitle("Repeat")
+        dialog.setLabelText("Number of times to repeat the experiment:")
+        dialog.setOkButtonText("Queue")
+        dialog.setCancelButtonText("Cancel")
+        if dialog.exec():
+            for i in range(dialog.intValue()):
+                procedure = self.make_procedure()
+                procedure.iterator = i
+                self.queue(procedure)
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)
