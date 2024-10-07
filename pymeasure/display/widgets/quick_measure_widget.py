@@ -65,13 +65,14 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
         self.inputs: InputsWidget = None
         self.prev_mode: str = ""
 
+        self.isMeasuring = False
         self.isRunning = False
 
         self.device = None
         self.meas_device = None
 
         self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.measure)
+        self.timer.timeout.connect(self.on_timer)
 
         self._setup_ui()
         self._layout()
@@ -96,7 +97,7 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
         self.res_le.setReadOnly(True)
         self.res_le.setAlignment(QtCore.Qt.AlignCenter)
         self.res_le.setFixedHeight(100)
-        
+
         self.le_map = {"V": self.volt_le, "A": self.curr_le, "Ω": self.res_le}
 
         self.single_btn = QtWidgets.QPushButton("Single")
@@ -132,8 +133,8 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
         line_edit = self.le_map[unit]
         text_to_set = to_prefix(value) + f"{unit}]"
         line_edit.setText(text_to_set)
-        line_edit.setStyleSheet("border: 3px solid red;")
-        QtCore.QTimer.singleShot(400, lambda: line_edit.setStyleSheet(""))
+        line_edit.setStyleSheet("border: 3px solid black;")
+        QtCore.QTimer.singleShot(250, lambda: line_edit.setStyleSheet(""))
 
     def on_tab_change(self, index: int):
         if self.tab_index is None:
@@ -232,6 +233,12 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
             self.device.nplc = self.get("multimeter_nplc")
         else:
             raise ValueError("Invalid measurement device!")
+
+    def on_timer(self):
+        if not self.isMeasuring:
+            self.isMeasuring = True
+            self.measure()
+            self.isMeasuring = False
 
     def measure(self):
         if self.device is None:
