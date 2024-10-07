@@ -163,7 +163,7 @@ class SpinLabMeasurement(Procedure):
     generator_channel = ListParameter("RF Generator Channel", default = parameters_from_file["generator_channel"], choices=["A", "B"], vis_cond=(SETTINGS, lambda mode, set_generator: mode == "FMRMode" and set_generator != "none"))
 
     #GaussmeterParameters
-    gaussmeter_params_vis_cond =  (SETTINGS, lambda set_gaussmeter: set_gaussmeter == "Lakeshore")
+    gaussmeter_params_vis_cond =  (SETTINGS, lambda mode, set_gaussmeter: mode != "QuickMeasurement" and set_gaussmeter == "Lakeshore")
     gaussmeter_range = ListParameter("Gaussmeter Range", default = parameters_from_file["gaussmeter_range"], choices=[1,2,3,4,5], vis_cond =gaussmeter_params_vis_cond)
     gaussmeter_resolution = ListParameter("Gaussmeter Resolution", default = parameters_from_file["gaussmeter_resolution"],choices=["3 digits", "4 digits", "5 digits"], vis_cond =gaussmeter_params_vis_cond)
 
