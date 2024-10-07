@@ -70,6 +70,11 @@ class Experiment(QtCore.QObject):
                 continue
                 
             curve.set_size(pen_size=3, symbol_size=7) if self.isSelected else curve.set_size()
+            if self.isSelected:
+                curve.prevZValue = curve.zValue()
+                curve.setZValue(100)
+            else:
+                curve.setZValue(curve.prevZValue)
 
 
 class ExperimentQueue(QtCore.QObject):

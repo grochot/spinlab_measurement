@@ -369,8 +369,9 @@ class ListParameter(Parameter):
         if str(value) in self._choices.keys():
             value = self._choices[str(value)]
         else:
-            raise ValueError("Invalid choice for parameter. "
-                             "Must be one of %s" % str(self._choices))
+            raise ValueError("Invalid choice for parameter: '%s'. " % str(self.name) + 
+                             "Must be one of %s. " % str(self._choices) + 
+                             "Got '%s' instead." % str(value))
 
         return value
 

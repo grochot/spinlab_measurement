@@ -146,3 +146,27 @@ class Browser(QtWidgets.QTreeWidget):
         self.addTopLevelItem(item)
         self.setItemWidget(item, 2, item.progressbar)
         return item
+    
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Space:
+            selected = self.selectedItems()
+            if selected:
+                item = selected[0]
+                if isinstance(item, BrowserItem):
+                    current_state = item.checkState(0)
+                    new_state = QtCore.Qt.CheckState.Unchecked if current_state == QtCore.Qt.CheckState.Checked else QtCore.Qt.CheckState.Checked
+                    item.setCheckState(0, new_state)     
+        elif event.key() == QtCore.Qt.Key_S:
+            selected = self.selectedItems()
+            if selected:
+                item = selected[0]
+                if isinstance(item, BrowserItem):
+                    current_state = item.checkState(0)
+                    new_state = QtCore.Qt.CheckState.Checked
+                    item.setCheckState(0, new_state)
+                    root = self.invisibleRootItem()
+                    for i in range(root.childCount()):
+                        if root.child(i) != item:
+                            root.child(i).setCheckState(0, QtCore.Qt.CheckState.Unchecked)
+        else:
+            super().keyPressEvent(event)
