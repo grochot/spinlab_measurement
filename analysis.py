@@ -10,6 +10,7 @@ import sys
 from analyze_lib.a_browser_widget import BrowserWidget
 from analyze_lib.a_plot_widget import PlotWidget
 from analyze_lib.a_splitter import Splitter
+from analyze_lib.a_results import Results
 
 
 class AnalysisWindow(QtWidgets.QMainWindow):
@@ -62,9 +63,13 @@ class AnalysisWindow(QtWidgets.QMainWindow):
         if dialog.exec():
             filenames = dialog.selectedFiles()
             for filename in map(str, filenames):
+                #! Pymeasure also checks if the filename not already exists in manager.experiments
+                #! anylisis does not yet have a manager
+                # TODO: implement duplicate check
                 if filename == "":
                     continue
                 else:
+                    results = Results(filename)
                     color = pg.intColor(self.browser.topLevelItemCount() % 10)
                     item = self.browser.add(filename, color)
 
