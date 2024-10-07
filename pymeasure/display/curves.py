@@ -47,7 +47,6 @@ class ResultsCurve(pg.PlotDataItem):
         self.force_reload = force_reload
         self.color = self.opts['pen'].color()
         self.prevZValue = self.zValue()
-        self.offset = 0
 
     def update_data(self):
         """Updates the data by polling the results"""
