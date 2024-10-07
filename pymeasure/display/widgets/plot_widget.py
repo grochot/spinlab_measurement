@@ -190,7 +190,7 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             param_value = curve.get_param_value(param)
             param_list.append((param_value, i))
             
-        self.expandOffset = max_amp
+        self.expandOffset = max_amp * 1.1
             
         param_list.sort()
         offset_list = [0] * len(param_list)
