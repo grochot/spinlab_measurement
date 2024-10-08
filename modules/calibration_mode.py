@@ -15,13 +15,16 @@ log.addHandler(logging.NullHandler())
 
 
 class FieldCalibrationMode:
-    def __init__(self, set_field, set_gaussmeter, address_daq, address_gaussmeter, vector, delay) -> None:
+    def __init__(self, set_field, set_gaussmeter, address_daq, address_gaussmeter, vector, delay, polarity_control_enabled, address_polarity_control) -> None:
         self.set_field = set_field
         self.set_gaussmeter = set_gaussmeter
         self.address_gaussmeter = address_gaussmeter
         self.address_daq = address_daq
         self.vector = vector
         self.delay = delay
+        
+        self.polarity_control_enabled = polarity_control_enabled
+        self.address_polarity_control = address_polarity_control
 
         ## parameter initialization
 
@@ -43,7 +46,7 @@ class FieldCalibrationMode:
             self.daq = DummyField(self.address_daq)
             log.warning("Used dummy DAQ")
         else:
-            self.daq = DAQ(self.address_daq)
+            self.daq = DAQ(self.address_daq, self.polarity_control_enabled, self.address_polarity_control)
         if self.set_gaussmeter == "none":
             self.gaussmeter = DummyGaussmeter(self.address_gaussmeter)
             log.warning("Used dummy Gaussmeter")
