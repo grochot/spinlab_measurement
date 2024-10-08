@@ -18,7 +18,12 @@ class ExpandDialog(QtWidgets.QDialog):
         self.label = QtWidgets.QLabel("Select parameter:")
 
         self.combo = QtWidgets.QComboBox()
+        self.combo.setEditable(True)
         self.combo.addItems(self.params)
+
+        completer = QtWidgets.QCompleter(self.params)
+        completer.setCaseSensitivity(0)
+        self.combo.setCompleter(completer)
 
         self.ok_button = QtWidgets.QPushButton("OK")
         self.cancel_button = QtWidgets.QPushButton("Cancel")
@@ -39,3 +44,18 @@ class ExpandDialog(QtWidgets.QDialog):
         main_layout.addLayout(h_layout)
 
         self.setLayout(main_layout)
+
+    def validate(self):
+        self.combo.setCurrentText(self.combo.currentText().strip())
+        if not self.combo.currentText() in self.params:
+            msg = QtWidgets.QMessageBox()
+            msg.setIcon(QtWidgets.QMessageBox.Critical)
+            msg.setText("Invalid parameter")
+            msg.setWindowTitle("Error")
+            msg.exec_()
+            return False
+        return True
+
+    def accept(self):
+        if self.validate():
+            super().accept()
