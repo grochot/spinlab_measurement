@@ -45,7 +45,7 @@
     "field_constant": 0.000728,
     "gaussmeter_range": 5,
     "gaussmeter_resolution": "4 digits",
-    "lockin_average": 4,
+    "lockin_average": 20,
     "lockin_input_coupling": "AC",
     "lockin_reference_source": "Internal",
     "lockin_dynamic_reserve": "Normal",

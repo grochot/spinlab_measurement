@@ -255,15 +255,27 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.pointWidget = PointDelWidget(parent=self)
         self.clear_dialog = ClearDialog(parent=self)
         self.expand_dialog = ExpandDialog(parent=self, procedure_class=self.procedure_class)
+        
+        self.dockShowWidget = QtWidgets.QWidget(self)
+        dockShowLayout = QtWidgets.QHBoxLayout()
+        dockShowLayout.setContentsMargins(-1, 0, -1, 0)
+        self.dockShowWidget.setLayout(dockShowLayout)
+        self.dockShowWidget.setMaximumHeight(30)
 
     def _layout(self):
         self.main = QtWidgets.QWidget(self)
+        
+        self.show_dock = QtWidgets.QDockWidget('Show/Hide')
+        self.show_dock.setWidget(self.dockShowWidget)
+        self.show_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.show_dock)
         
         current_pt_dock = QtWidgets.QDockWidget('Current Point')
         current_pt_dock.setWidget(self.current_point)
         current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
         current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, current_pt_dock)
+        current_pt_dock.setVisible(False)
 
         inputs_dock = QtWidgets.QWidget(self)
         inputs_vbox = QtWidgets.QVBoxLayout(self.main)
@@ -302,6 +314,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             sequencer_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
             sequencer_dock.setVisible(False)
             self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, sequencer_dock)
+            
+            showSequencerButton = QtWidgets.QPushButton('Sequencer', self.dockShowWidget)
+            self.dockShowWidget.layout().addWidget(showSequencerButton)
+            showSequencerButton.clicked.connect(lambda: sequencer_dock.setVisible(not sequencer_dock.isVisible()))
 
         if self.use_estimator:
             estimator_dock = QtWidgets.QDockWidget('Estimator')
@@ -311,6 +327,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             estimator_dock.setVisible(False)
             self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, estimator_dock)
             
+            showEstimatorButton = QtWidgets.QPushButton('Estimator', self.dockShowWidget)
+            self.dockShowWidget.layout().addWidget(showEstimatorButton)
+            showEstimatorButton.clicked.connect(lambda: estimator_dock.setVisible(not estimator_dock.isVisible()))
+            
         self.point_dock = QtWidgets.QDockWidget('Point Removal')
         self.point_dock.setWidget(self.pointWidget)
         self.point_dock.visibilityChanged.connect(self.pointWidget.setMode)
@@ -318,6 +338,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.point_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.point_dock.setVisible(False)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.point_dock)
+        
+        showPointButton = QtWidgets.QPushButton('Point Removal', self.dockShowWidget)
+        self.dockShowWidget.layout().addWidget(showPointButton)
+        showPointButton.clicked.connect(lambda: self.point_dock.setVisible(not self.point_dock.isVisible()))
 
         self.tabs = QtWidgets.QTabWidget(self.main)
         for wdg in self.widget_list:

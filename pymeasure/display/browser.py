@@ -148,15 +148,7 @@ class Browser(QtWidgets.QTreeWidget):
         return item
     
     def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Space:
-            selected = self.selectedItems()
-            if selected:
-                item = selected[0]
-                if isinstance(item, BrowserItem):
-                    current_state = item.checkState(0)
-                    new_state = QtCore.Qt.CheckState.Unchecked if current_state == QtCore.Qt.CheckState.Checked else QtCore.Qt.CheckState.Checked
-                    item.setCheckState(0, new_state)     
-        elif event.key() == QtCore.Qt.Key_S:
+        if event.key() == QtCore.Qt.Key_Space and event.modifiers() == QtCore.Qt.ControlModifier:
             selected = self.selectedItems()
             if selected:
                 item = selected[0]
@@ -168,5 +160,13 @@ class Browser(QtWidgets.QTreeWidget):
                     for i in range(root.childCount()):
                         if root.child(i) != item:
                             root.child(i).setCheckState(0, QtCore.Qt.CheckState.Unchecked)
+        elif event.key() == QtCore.Qt.Key_Space:
+            selected = self.selectedItems()
+            if selected:
+                item = selected[0]
+                if isinstance(item, BrowserItem):
+                    current_state = item.checkState(0)
+                    new_state = QtCore.Qt.CheckState.Unchecked if current_state == QtCore.Qt.CheckState.Checked else QtCore.Qt.CheckState.Checked
+                    item.setCheckState(0, new_state)
         else:
             super().keyPressEvent(event)

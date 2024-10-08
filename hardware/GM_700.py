@@ -73,7 +73,8 @@ class GM700:
         self.write("*RST")
 
     def measure(self):
-        field, unit = self.meas().split(" ")
+        result = self.meas().strip()
+        field, unit = result.split(" ")
         field = float(field)
         if unit == "T":
             field = field * 1e4
