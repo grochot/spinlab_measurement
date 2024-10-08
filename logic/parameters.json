@@ -96,7 +96,7 @@
     "set_polar_angle_fmr": 0.0,
     "set_azimuthal_angle_fmr": 0.0,
     "remanency_correction_time": 5.0,
-    "layout_type": true,
+    "layout_type": false,
     "kriostat_temperature": 306.0,
     "path": "C:/SPINLAB/pomiary/CoPt",
     "filename": "31-Co-Pt_{RF Generator Power}_{RF Generator Frequency:.2E}"
