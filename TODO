@@ -1,9 +1,7 @@
--warinig ussing dummy !! dodaj nad sample in plane taki komunikat
--okienko go to element
-
+-warinig ussing dummy !! niech zmienia przycisk connect na taki tekst
+-pod go to element dodaj komnuikaty ze nie zanalaz elementu
 
 pomysly:
--read ciagle odczytuje do momentu w ktorym nie wycisniesz spowrotem (sens less)
 -Zrob zeby wywalal blad gdy esp300 sie nie polaczy
 -zabebzpieczenie tak aby sprawdził czy naprawde odjechal sondami od probki (na jakis epsilon jednym if to zalatwisz)
 

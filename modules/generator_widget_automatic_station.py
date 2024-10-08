@@ -14,6 +14,9 @@ from modules.element_selection import ElementSelection
 import json
 from os import path
 import ast
+import logging
+log = logging.getLogger(__name__) 
+log.addHandler(logging.NullHandler()) 
 
 
 class AutomaticStationGenerator(QtWidgets.QWidget):
@@ -328,7 +331,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
             self.MotionDriver=Esp300(self.drive_motion_adresses_combo.currentText())
         else:
             self.MotionDriver=DummyMotionDriver(self.drive_motion_adresses_combo.currentText())
-            print("DummyMotionDriver")
+            log.warning('Used dummy MotionDriver.')
 
         self.read_for_go_button()
 
