@@ -255,10 +255,17 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         
         self.dockShowWidget = QtWidgets.QWidget(self)
         dockShowLayout = QtWidgets.QHBoxLayout()
+        dockShowLayout.setContentsMargins(-1, 0, -1, 0)
         self.dockShowWidget.setLayout(dockShowLayout)
+        self.dockShowWidget.setMaximumHeight(30)
 
     def _layout(self):
         self.main = QtWidgets.QWidget(self)
+        
+        self.show_dock = QtWidgets.QDockWidget('Show/Hide')
+        self.show_dock.setWidget(self.dockShowWidget)
+        self.show_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.show_dock)
         
         current_pt_dock = QtWidgets.QDockWidget('Current Point')
         current_pt_dock.setWidget(self.current_point)
@@ -332,11 +339,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         showPointButton = QtWidgets.QPushButton('Point Removal', self.dockShowWidget)
         self.dockShowWidget.layout().addWidget(showPointButton)
         showPointButton.clicked.connect(lambda: self.point_dock.setVisible(not self.point_dock.isVisible()))
-        
-        self.show_dock = QtWidgets.QDockWidget('Show/Hide')
-        self.show_dock.setWidget(self.dockShowWidget)
-        self.show_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
-        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.show_dock)
 
         self.tabs = QtWidgets.QTabWidget(self.main)
         for wdg in self.widget_list:
