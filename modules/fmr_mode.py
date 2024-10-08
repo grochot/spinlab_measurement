@@ -90,6 +90,8 @@ class FMRMode:
         measdevice: str,
         generator_channel: str,
         lockin_slope: str,
+        polarity_control_enabled: bool,
+        address_polarity_control: str,
     ) -> None:
 
         self.set_automaticstation = set_automaticstation
@@ -156,6 +158,9 @@ class FMRMode:
         self.generator_channel = generator_channel
         
         self.lockin_slope = lockin_slope
+        
+        self.polarity_control_enabled = polarity_control_enabled
+        self.address_polarity_control = address_polarity_control
 
         ## parameter initialization
 
@@ -204,7 +209,7 @@ class FMRMode:
 
         match self.set_field:
             case "DAQ":
-                self.field_obj = DAQ(self.address_daq)
+                self.field_obj = DAQ(self.address_daq, polarity_control_enabled=self.polarity_control_enabled, address_polarity_control=self.address_polarity_control)
             case _:
                 self.field_obj = DummyField(self.address_daq)
                 log.warning("Used dummy DAQ.")
