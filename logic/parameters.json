@@ -1,7 +1,7 @@
 {
     "mode": "CIMSMode",
     "sample_name": "dfsdf",
-    "vector": "-1000,10,-100,100,100,10,1000,15,-500,100,-700,2,-1000",
+    "vector": "1,2,3",
     "mode_resistance": false,
     "mode_fmr": "V-FMR",
     "set_measdevice_fmr": "LockIn",
@@ -12,7 +12,7 @@
     "set_gaussmeter": "none",
     "set_field": "none",
     "set_lockin": "none",
-    "set_automaticstation": false,
+    "set_automaticstation": true,
     "set_rotationstation": false,
     "set_switch": false,
     "set_kriostat": false,
@@ -97,5 +97,6 @@
     "kriostat_temperature": 306.0,
     "disconnect_length": 0.5,
     "sample_in_plane": true,
-    "path": "C:/SPINLAB/pomiary_mariusz/19196/G5"
+    "path": "C:/SPINLAB/pomiary_mariusz/19196/G5",
+    "filename": "DATA"
 }
