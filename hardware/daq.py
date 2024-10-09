@@ -15,20 +15,30 @@ class DAQ:
         self.adapter = adapter
         self.polarity_control_enabled = polarity_control_enabled
         self.address_polarity = address_polarity_control
+        self.polarity = False
 
     def set_field(self, value=1):
         if self.polarity_control_enabled:
+            polarity_changed = False
             if self.address_polarity is None:
                 raise ValueError("Address polarity must be specified if polarity control is enabled")
+            
             if value < 0:
                 value = -value
+                if not self.polarity:
+                    self.polarity = True
+                    with nidaqmx.Task() as task:
+                        task.do_channels.add_do_chan(self.address_polarity)
+                        task.write(self.polarity)
+                    polarity_changed = True
+            elif value >= 0 and self.polarity:
+                self.polarity = False
                 with nidaqmx.Task() as task:
                     task.do_channels.add_do_chan(self.address_polarity)
-                    task.write(True)
-            else:
-                with nidaqmx.Task() as task:
-                    task.do_channels.add_do_chan(self.address_polarity)
-                    task.write(False)
+                    task.write(self.polarity)
+                polarity_changed = True
+            if polarity_changed:
+                time.sleep(2)
         
         with nidaqmx.Task() as task:
             task.ao_channels.add_ao_voltage_chan(self.adapter)
