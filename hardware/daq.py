@@ -21,6 +21,7 @@ class DAQ:
         self.address_polarity_control = None
         self.prev_value = 0
         self.field_step = 100
+        self.polarity = False
 
     def set_field(self, value: float) -> float:
         """Convert field value to voltage using field constant and set voltage
@@ -58,21 +59,31 @@ class DAQ:
         if self.polarity_control_enabled:
             if self.address_polarity_control is None:
                 raise ValueError("Address polarity must be specified if polarity control is enabled")
+            
+            polarity_changed = False
 
             if self.prev_value * sign(value) == -1:
+                print("Sweeping to zero")
                 sweep_field_to_zero(self.prev_value, self.field_constant, self.field_step, self)
 
             self.prev_value = value
 
             if value < 0:
                 value = -value
+                if not self.polarity:
+                    self.polarity = True
+                    with nidaqmx.Task() as task:
+                        task.do_channels.add_do_chan(self.address_polarity_control)
+                        task.write(self.polarity)
+                    polarity_changed = True
+            elif value >= 0 and self.polarity:
+                self.polarity = False
                 with nidaqmx.Task() as task:
                     task.do_channels.add_do_chan(self.address_polarity_control)
-                    task.write(True)
-            else:
-                with nidaqmx.Task() as task:
-                    task.do_channels.add_do_chan(self.address_polarity_control)
-                    task.write(False)
+                    task.write(self.polarity)
+                polarity_changed = True
+            if polarity_changed:
+                time.sleep(2)
 
         with nidaqmx.Task() as task:
             task.ao_channels.add_ao_voltage_chan(self.adapter)
