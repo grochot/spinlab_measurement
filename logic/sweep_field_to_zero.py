@@ -7,9 +7,9 @@ def sweep_field_to_zero(start_value, field_constant, step, daq):
 
         print("start_value",start_value)
         if start_value<0:
-            vector = np.arange(start_value*field_constant, 0, step*field_constant)
+            vector = np.arange(start_value, 0, step)
         else:
-            vector = np.arange(start_value*field_constant, 0, -1*step*field_constant)
+            vector = np.arange(start_value, 0, -1*step)
 
 
         print("sweep_field_to_zero()-vector",vector)
