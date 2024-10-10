@@ -45,7 +45,8 @@ from ..widgets import (
     FileInputWidget,
     EstimatorWidget,
     CurrentPointWidget,
-    ClearDialog
+    ClearDialog,
+    ParametersWidget
 )
 from ...experiment import Results, Procedure, unique_filename
 from packages.point_del_widget import PointDelWidget
@@ -254,6 +255,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             
         self.clear_dialog = ClearDialog(parent=self)
         
+        self.parameters_widget = ParametersWidget()
+        self.parameters_widget.sigSetParameter.connect(self.set_parameter_from_widget)
+        
         self.dockShowWidget = QtWidgets.QWidget(self)
         dockShowLayout = QtWidgets.QHBoxLayout()
         dockShowLayout.setContentsMargins(-1, 0, -1, 0)
@@ -436,6 +440,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             action_save.triggered.connect(
                 lambda: self.save_experiment_copy(experiment.results.data_filename))
             menu.addAction(action_save)
+            
+            menu.addSeparator()
 
             # Change Color
             action_change_color = QtGui.QAction(menu)
@@ -461,6 +467,16 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                     action_delete.setEnabled(False)
             action_delete.triggered.connect(lambda: self.delete_experiment_data(experiment))
             menu.addAction(action_delete)
+            
+            menu.addSeparator()
+            
+            # Show parameters
+            action_show = QtGui.QAction(menu)
+            action_show.setText("Show Parameters")
+            action_show.triggered.connect(
+                lambda: self.show_parameters(experiment.procedure))
+            menu.addAction(action_show)
+            
 
             # Use parameters
             action_use = QtGui.QAction(menu)
@@ -661,6 +677,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         browser_item = BrowserItem(results, curve_color)
         return Experiment(results, curve_list, browser_item)
+    
+    def show_parameters(self, procedure):
+       self.parameters_widget.procedure = procedure
+       self.parameters_widget.show()
 
     def set_parameters(self, parameters):
         """ This method should be overwritten by the child class. The
@@ -671,8 +691,15 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if not isinstance(self.inputs, InputsWidget):
             raise Exception("ManagedWindow can not set parameters"
                             " without a InputsWidget")
+        
         self.change_layout_type(parameters["layout_type"].value)
         self.inputs.set_parameters(parameters)
+        
+    def set_parameter_from_widget(self, parameter_tuple):
+        if parameter_tuple is None:
+            return
+        key, parameter = parameter_tuple
+        getattr(self.inputs, key).set_parameter(parameter)
 
     def refresh(self):
         raise NotImplementedError("Refresh method must be overwritten by the child class.")
