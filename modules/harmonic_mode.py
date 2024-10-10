@@ -209,6 +209,7 @@ class HarmonicMode():
                 self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
       
 #Field initialization 
+        self.field_obj.field_constant = self.field_constant
         if self.rotationstation:
             sweep_field_to_value(0.0, float(self.constant_field_value), self.field_constant, self.field_step, self.field_obj)
         else:

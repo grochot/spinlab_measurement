@@ -182,7 +182,8 @@ class ResistanceMode():
         self.gaussmeter_obj.resolution(self.gaussmeter_resolution)
       
 
-        #Field initialization 
+        #Field initialization
+        self.field_obj.field_constant = self.field_constant
         if self.rotationstation:
             sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
         else:

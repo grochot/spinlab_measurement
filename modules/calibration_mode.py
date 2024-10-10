@@ -46,7 +46,8 @@ class FieldCalibrationMode:
             self.daq = DummyField(self.address_daq)
             log.warning("Used dummy DAQ")
         else:
-            self.daq = DAQ(self.address_daq, self.polarity_control_enabled, self.address_polarity_control)
+            self.daq = DAQ(self.address_daq)
+            
         if self.set_gaussmeter == "none":
             self.gaussmeter = DummyGaussmeter(self.address_gaussmeter)
             log.warning("Used dummy Gaussmeter")
@@ -56,6 +57,10 @@ class FieldCalibrationMode:
             self.gaussmeter = Lakeshore(self.address_gaussmeter)
         else:
             raise ValueError("Gaussmeter not supported")
+        
+        self.daq.field_step = int((self.stop / self.calibration_constant) / 10)
+        self.daq.polarity_control_enabled = self.polarity_control_enabled
+        self.daq.address_polarity_control = self.address_polarity_control
 
     def operating(self):
         self.calibration_constant = calibration(self, self.start, self.stop, self.points, self.daq, self.gaussmeter, self.delay)
