@@ -40,8 +40,8 @@ class DAQ:
             raise ValueError("Field constant must be set before setting field")
 
         # Convert field value to voltage
-        value = value * self.field_constant
-        voltage = self.set_voltage(value)
+        voltage = value * self.field_constant
+        voltage = self.set_voltage(voltage)
         return voltage
         
 
@@ -62,8 +62,9 @@ class DAQ:
             polarity_changed = False
             
 
-            if self.prev_value * sign(value) == -1:
-                sweep_field_to_zero(self.prev_value, self.field_constant, self.field_step, self)
+            if sign(self.prev_value) * sign(value) == -1:
+                sweep_field_to_zero(self.prev_value/self.field_constant, self.field_constant, self.field_step, self)
+                time.sleep(1)
 
             self.prev_value = value
 
