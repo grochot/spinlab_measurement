@@ -209,6 +209,8 @@ class CIMSMode():
         #Lakeshore initalization 
         self.gaussmeter_obj.range(self.gaussmeter_range)
         self.gaussmeter_obj.resolution(self.gaussmeter_resolution)
+        
+        self.field_obj.field_constant = self.field_constant
 
         #Field remagnetization
         if self.remagnetization:

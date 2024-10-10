@@ -209,7 +209,7 @@ class FMRMode:
 
         match self.set_field:
             case "DAQ":
-                self.field_obj = DAQ(self.address_daq, polarity_control_enabled=self.polarity_control_enabled, address_polarity_control=self.address_polarity_control)
+                self.field_obj = DAQ(self.address_daq)
             case _:
                 self.field_obj = DummyField(self.address_daq)
                 log.warning("Used dummy DAQ.")
@@ -274,6 +274,12 @@ class FMRMode:
             self.lfgen_obj.set_shape("SIN")
             self.lfgen_obj.set_freq(self.lfgen_freq)
             self.lfgen_obj.set_amp(self.lfgen_amp)
+            
+        # Field initialization
+        self.field_obj.field_constant = self.field_constant
+        self.field_step = self.field_step
+        self.field_obj.polarity_control_enabled = self.polarity_control_enabled
+        self.field_obj.address_polarity_control = self.address_polarity_control
 
         # Lakeshore initalization
         self.gaussmeter_obj.range(self.gaussmeter_range)
@@ -352,7 +358,7 @@ class FMRMode:
                                 sleep(0.01)
 
                 else:
-                    self.actual_set_field = self.field_obj.set_field(point * self.field_constant)
+                    self.set_voltage = self.field_obj.set_field(point)
                     sleep(self.delay_field)
 
                 # measure field
