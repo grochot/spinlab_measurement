@@ -91,7 +91,7 @@ class SpinLabMeasurement(Procedure):
     address_analyzer=ListParameter("Analyzer address",default = parameters_from_file["address_analyzer"] if parameters_from_file["address_analyzer"] in finded_instruments else 'None',  choices=finded_instruments, vis_cond=(SETTINGS, lambda mode: mode == "VSMMode"))
     address_generator=ListParameter("Generator address", default = parameters_from_file["address_generator"] if parameters_from_file["address_generator"] in finded_instruments else 'None',  choices=finded_instruments, vis_cond=(SETTINGS, lambda mode, set_generator: mode == "FMRMode" and set_generator != "none"))
     address_daq = ListParameter("DAQ address", default = parameters_from_file["address_daq"] if parameters_from_file["address_daq"] in daq_channels else "None",  choices=["None"] + daq_channels, vis_cond=(SETTINGS, lambda mode, set_field: (mode == "ResistanceMode" or mode == "HarmonicMode" or mode == "FMRMode" or mode == "CalibrationFieldMode" or mode=="CIMSMode") and set_field != "none"))
-    address_polarity_control = ListParameter("Polarity control address", default = parameters_from_file["address_polarity_control"] if parameters_from_file["address_polarity_control"] in daq_channels else 'None',  choices=["None"] + daq_channels, vis_cond=(SETTINGS, lambda mode, polarity_control_enabled: polarity_control_enabled == True and (mode == "CIMSMode" or mode=="HarmonicMode" or mode=="FMRMode" or mode=="ResistanceMode" or mode=="CalibrationFieldMode")))
+    address_polarity_control = ListParameter("Polarity control address", default = parameters_from_file["address_polarity_control"] if parameters_from_file["address_polarity_control"] in daq_channels else 'None',  choices=["None"] + daq_channels, vis_cond=(SETTINGS, lambda mode, polarity_control_enabled: polarity_control_enabled == True and (mode=="FMRMode" or mode=="CalibrationFieldMode")))
     address_lfgen = ListParameter("LF Generator address", default = parameters_from_file["address_lfgen"] if parameters_from_file["address_lfgen"] in finded_instruments else 'None',  choices=finded_instruments, vis_cond=(SETTINGS, lambda mode, set_lfgen: mode == "FMRMode" and set_lfgen != "none" and set_lfgen != "SR830"))
     
     if set_rotationstation:
@@ -155,7 +155,7 @@ class SpinLabMeasurement(Procedure):
     field_step = FloatParameter("Field sweep step", default = parameters_from_file["field_step"], units="Oe", vis_cond=(PARAMETERS, lambda mode: mode != "CalibrationFieldMode" and mode != "QuickMeasurement"))
     constant_field_value =  FloatParameter("Set Constant Field Value", default = parameters_from_file["constant_field_value"], units="Oe", vis_cond=(SETTINGS, lambda mode, set_rotationstation: set_rotationstation == True and mode != "QuickMeasurement"))
     field_bias_value= FloatParameter("Set Field Bias Value", default = parameters_from_file['field_bias_value'], units="Oe", vis_cond=(PARAMETERS, lambda mode: mode == "CIMSMode"))
-    polarity_control_enabled = BooleanParameter("Polarity control", default = parameters_from_file["polarity_control_enabled"], vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode" or mode=="HarmonicMode" or mode=="FMRMode" or mode=="ResistanceMode" or mode=="CalibrationFieldMode"))
+    polarity_control_enabled = BooleanParameter("Polarity control", default = parameters_from_file["polarity_control_enabled"], vis_cond=(SETTINGS, lambda mode: mode=="FMRMode" or mode=="CalibrationFieldMode"))
     
     
     #GeneratorParameters 
