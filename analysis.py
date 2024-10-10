@@ -63,13 +63,14 @@ class AnalysisWindow(QtWidgets.QMainWindow):
         if dialog.exec():
             filenames = dialog.selectedFiles()
             for filename in map(str, filenames):
-                #! Pymeasure also checks if the filename not already exists in manager.experiments
+                #! Pymeasure also checks if the filename already exists in manager.experiments
                 #! anylisis does not yet have a manager
                 # TODO: implement duplicate check
                 if filename == "":
                     continue
                 else:
                     results = Results(filename)
+                    print(Results.parse_header(filename))
                     color = pg.intColor(self.browser.topLevelItemCount() % 10)
                     item = self.browser.add(filename, color)
 

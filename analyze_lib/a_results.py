@@ -9,6 +9,9 @@ class Results:
     CHUNK_SIZE = 1000
 
     def __init__(self, data_filename) -> None:
+        self._header_count = -1
+        self._metadata_count = -1
+
         if isinstance(data_filename, (list, tuple)):
             data_filenames, data_filename = data_filename, data_filename[0]
         else:
@@ -38,7 +41,39 @@ class Results:
             self._data = pd.concat(chunks, ignore_index=True)
         except Exception:
             self._data = chunks.read()
-            
+
+    @staticmethod
+    def load(data_filename):
+        header = ""
+        header_done = False
+        header_count = 0
+        with open(data_filename) as f:
+            while not header_done:
+                line = f.readline()
+                if line.startswith(Results.COMMENT):
+                    header += line.strip("\t\v\n\r\f") + Results.LINE_BREAK
+                    header_count += 1
+                else:
+                    header_done = True
+        results = Results(data_filename)
+        results._header_count = header_count
+        return results
+
+    @staticmethod
+    def parse_header(data_filename):
+        header = ""
+        header_done = False
+        header_count = 0
+        with open(data_filename) as f:
+            while not header_done:
+                line = f.readline()
+                if line.startswith(Results.COMMENT):
+                    header += line.strip("\t\v\n\r\f") + Results.LINE_BREAK
+                    header_count += 1
+                else:
+                    header_done = True
+        return header, header_count
+
     @property
     def data(self):
         return self._data
