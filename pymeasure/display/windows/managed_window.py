@@ -49,6 +49,7 @@ from ..widgets import (
 )
 from ...experiment import Results, Procedure, unique_filename
 from packages.point_del_widget import PointDelWidget
+from logic.open_in_explorer import open_in_explorer
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -421,6 +422,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             action_open.triggered.connect(
                 lambda: self.open_file_externally(experiment.results.data_filename))
             menu.addAction(action_open)
+            
+            # Open in Explorer
+            action_open_explorer = QtGui.QAction(menu)
+            action_open_explorer.setText("Reveal in File Explorer")
+            action_open_explorer.triggered.connect(
+                lambda: open_in_explorer(experiment.results.data_filename))
+            menu.addAction(action_open_explorer)
 
             # Save a copy of the datafile
             action_save = QtGui.QAction(menu)
