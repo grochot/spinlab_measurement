@@ -58,12 +58,12 @@ class FieldCalibrationMode:
         else:
             raise ValueError("Gaussmeter not supported")
         
-        self.daq.field_step = int((self.stop / self.calibration_constant) / 10)
         self.daq.polarity_control_enabled = self.polarity_control_enabled
         self.daq.address_polarity_control = self.address_polarity_control
 
     def operating(self):
         self.calibration_constant = calibration(self, self.start, self.stop, self.points, self.daq, self.gaussmeter, self.delay)
+        self.daq.field_constant = self.calibration_constant
 
         data = {
             "Voltage (V)": math.nan,

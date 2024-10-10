@@ -62,8 +62,9 @@ class DAQ:
             polarity_changed = False
 
             if sign(self.prev_value) * sign(value) == -1:
+                log.info("Field Controller: Sweeping field to 0 for polarity switch...")
                 sweep_field_to_zero(self.prev_value/self.field_constant, self.field_constant, self.field_step, self)
-                time.sleep(1)
+                time.sleep(3)
 
             self.prev_value = value
 
@@ -82,7 +83,9 @@ class DAQ:
                     task.write(self.polarity)
                 polarity_changed = True
             if polarity_changed:
-                time.sleep(2)
+                log.info("Field Controller: Switching polarity.")
+                time.sleep(5)
+                polarity_changed = False
 
         with nidaqmx.Task() as task:
             task.ao_channels.add_ao_voltage_chan(self.adapter)
