@@ -60,7 +60,6 @@ class DAQ:
                 raise ValueError("Address polarity must be specified if polarity control is enabled")
             
             polarity_changed = False
-            
 
             if sign(self.prev_value) * sign(value) == -1:
                 log.info("Field Controller: Sweeping field to 0 for polarity switch...")
@@ -69,7 +68,6 @@ class DAQ:
 
             self.prev_value = value
 
-            
             if value < 0:
                 value = -value
                 if not self.polarity:
