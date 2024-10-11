@@ -441,6 +441,15 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 lambda: self.save_experiment_copy(experiment.results.data_filename))
             menu.addAction(action_save)
             
+            # Delete
+            action_delete = QtGui.QAction(menu)
+            action_delete.setText("Delete Data File")
+            if self.manager.is_running():
+                if self.manager.running_experiment() == experiment:  # Experiment running
+                    action_delete.setEnabled(False)
+            action_delete.triggered.connect(lambda: self.delete_experiment_data(experiment))
+            menu.addAction(action_delete)
+            
             menu.addSeparator()
 
             # Change Color
@@ -458,15 +467,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                     action_remove.setEnabled(False)
             action_remove.triggered.connect(lambda: self.remove_experiment(experiment))
             menu.addAction(action_remove)
-
-            # Delete
-            action_delete = QtGui.QAction(menu)
-            action_delete.setText("Delete Data File")
-            if self.manager.is_running():
-                if self.manager.running_experiment() == experiment:  # Experiment running
-                    action_delete.setEnabled(False)
-            action_delete.triggered.connect(lambda: self.delete_experiment_data(experiment))
-            menu.addAction(action_delete)
             
             menu.addSeparator()
             

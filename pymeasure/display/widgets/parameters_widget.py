@@ -30,16 +30,16 @@ class ParametersWidget(QtWidgets.QWidget):
 
         self.search_line_edit.textChanged.connect(self.filter_parameters)
 
-        self.parameters = QtWidgets.QTableWidget(self)
-        self.parameters.setColumnCount(2)
-        self.parameters.setHorizontalHeaderLabels(["PARAMETER", "VALUE"])
-        self.parameters.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-        self.parameters.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
-        self.parameters.verticalHeader().hide()
-        self.parameters.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.parameters.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.parameters_table = QtWidgets.QTableWidget(self)
+        self.parameters_table.setColumnCount(2)
+        self.parameters_table.setHorizontalHeaderLabels(["PARAMETER", "VALUE"])
+        self.parameters_table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        self.parameters_table.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        self.parameters_table.verticalHeader().hide()
+        self.parameters_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.parameters_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
 
-        self.parameters.itemDoubleClicked.connect(self.use_parameter)
+        self.parameters_table.itemDoubleClicked.connect(self.use_parameter)
 
         self.setMinimumSize(750, 500)
         self.resize(750, 500)
@@ -47,11 +47,11 @@ class ParametersWidget(QtWidgets.QWidget):
     def _layout(self):
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.addWidget(self.search_line_edit)
-        vbox.addWidget(self.parameters)
+        vbox.addWidget(self.parameters_table)
         self.setLayout(vbox)
 
     def clear_parameters(self):
-        self.parameters.setRowCount(0)
+        self.parameters_table.setRowCount(0)
 
     def set_parameters(self, parameters):
         self.clear_parameters()
@@ -60,36 +60,38 @@ class ParametersWidget(QtWidgets.QWidget):
 
         self.completer.setModel(QtCore.QStringListModel(self.parameter_names))
 
-        self.parameters.setRowCount(len(parameters))
+        self.parameters_table.setRowCount(len(parameters))
         for i, (key, param) in enumerate(parameters.items()):
-            self.parameters.setItem(i, 0, QtWidgets.QTableWidgetItem(param.name))
+            self.parameters_table.setItem(i, 0, QtWidgets.QTableWidgetItem(param.name))
             font = QtGui.QFont()
             font.setBold(True)
-            self.parameters.item(i, 0).setFont(font)
-            self.parameters.setItem(i, 1, QtWidgets.QTableWidgetItem(str(param)))
+            self.parameters_table.item(i, 0).setFont(font)
+            self.parameters_table.setItem(i, 1, QtWidgets.QTableWidgetItem(str(param)))
 
     def filter_parameters(self, text):
-        self.clear_parameters()
-
         filtered_params = {k: v for k, v in self.all_parameters.items() if text.lower() in v.name.lower()}
+        self.parameters_table.setRowCount(len(filtered_params))
 
-        self.parameters.setRowCount(len(filtered_params))
         for i, (key, param) in enumerate(filtered_params.items()):
-            self.parameters.setItem(i, 0, QtWidgets.QTableWidgetItem(param.name))
-            self.parameters.setItem(i, 1, QtWidgets.QTableWidgetItem(str(param)))
+            self.parameters_table.setItem(i, 0, QtWidgets.QTableWidgetItem(param.name))
+            font = QtGui.QFont()
+            font.setBold(True)
+            self.parameters_table.item(i, 0).setFont(font)
+            self.parameters_table.setItem(i, 1, QtWidgets.QTableWidgetItem(str(param)))
+
+        log.debug(f"Filtered parameters with text '{text}'")
 
     def use_parameter(self):
-        selected = self.parameters.selectedItems()
+        selected = self.parameters_table.selectedItems()
         if selected:
             name = selected[0].text()
-            parameter = None
-            parameter_tuple = None
-            for key, parameter in self.all_parameters.items():
-                if parameter.name == name:
-                    parameter_tuple = (key, parameter)
-                    break
+            parameter_tuple = next(((key, param) for key, param in self.all_parameters.items() if param.name == name), None)
 
+            if not parameter_tuple:
+                log.error(f"Parameter '{name}' not found.")
+                return
 
+            parameter = parameter_tuple[1]
             msg = QtWidgets.QMessageBox()
             msg.setIcon(QtWidgets.QMessageBox.Icon.Question)
             msg.setText(f"Use the parameter: '{name}' with value: {str(parameter)}?")
@@ -97,6 +99,7 @@ class ParametersWidget(QtWidgets.QWidget):
             msg.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
             msg.setDefaultButton(QtWidgets.QMessageBox.StandardButton.No)
             ret = msg.exec_()
+
             if ret == QtWidgets.QMessageBox.StandardButton.Yes:
                 self.sigSetParameter.emit(parameter_tuple)
 
