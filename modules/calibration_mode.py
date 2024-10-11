@@ -35,6 +35,10 @@ class FieldCalibrationMode:
         self.points = int(vector[1])
         
         vector = np.linspace(self.start, self.stop, self.points)
+    
+        if self.polarity_control_enabled:
+            if any(i < 0 for i in vector):
+                raise ValueError("All points must be greater than 0")
 
         if len(vector) < 2:
             raise ValueError("The number of points must be greater than 1")
