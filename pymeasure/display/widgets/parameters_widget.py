@@ -14,11 +14,16 @@ class ParametersWidget(QtWidgets.QWidget):
         self._layout()
 
         self._procedure = None
+        self._filename = None
         self.all_parameters = {}
         self.parameter_names = []
 
     def _setup_ui(self):
         self.setWindowTitle("Parameters")
+        
+        self.filename_line_edit = QtWidgets.QLineEdit(self)
+        self.filename_line_edit.setReadOnly(True)
+        self.filename_line_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
         self.search_line_edit = QtWidgets.QLineEdit(self)
         self.search_line_edit.setPlaceholderText("Search parameter names...")
@@ -46,6 +51,7 @@ class ParametersWidget(QtWidgets.QWidget):
 
     def _layout(self):
         vbox = QtWidgets.QVBoxLayout(self)
+        vbox.addWidget(self.filename_line_edit)
         vbox.addWidget(self.search_line_edit)
         vbox.addWidget(self.parameters_table)
         self.setLayout(vbox)
@@ -114,3 +120,12 @@ class ParametersWidget(QtWidgets.QWidget):
         self.parameter_names = []
         self._procedure = procedure
         self.set_parameters(procedure.parameter_objects())
+        
+    @property
+    def filename(self):
+        return self._filename
+    
+    @filename.setter
+    def filename(self, filename):
+        self._filename = filename
+        self.filename_line_edit.setText(filename)

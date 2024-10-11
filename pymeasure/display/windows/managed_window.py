@@ -474,7 +474,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             action_show = QtGui.QAction(menu)
             action_show.setText("Show Parameters")
             action_show.triggered.connect(
-                lambda: self.show_parameters(experiment.procedure))
+                lambda: self.show_parameters(experiment.results.data_filename, experiment.procedure))
             menu.addAction(action_show)
             
 
@@ -678,9 +678,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         browser_item = BrowserItem(results, curve_color)
         return Experiment(results, curve_list, browser_item)
     
-    def show_parameters(self, procedure):
-       self.parameters_widget.procedure = procedure
-       self.parameters_widget.show()
+    def show_parameters(self, filename, procedure):
+        self.parameters_widget.filename = os.path.basename(filename)
+        self.parameters_widget.procedure = procedure
+        self.parameters_widget.show()
 
     def set_parameters(self, parameters):
         """ This method should be overwritten by the child class. The
