@@ -19,78 +19,95 @@ class DAQ:
         self.field_constant = None
         self.polarity_control_enabled = False
         self.address_polarity_control = None
-        self.prev_value = 0
+        self.prev_voltage = 0
         self.field_step = 100
         self.polarity = False
 
-    def set_field(self, value: float) -> float:
-        """Convert field value to voltage using field constant and set voltage
+    def set_field(self, field: float) -> float:
+        """
+        Convert a magnetic field value to a voltage using the field constant [V/Oe], then set the corresponding voltage.
+
+        The field value is multiplied by the field constant to calculate the voltage. If polarity control is enabled,
+        the voltage may be adjusted accordingly.
 
         Args:
-            value (float): Field value to set
+            field (float): The magnetic field value to set, in Oersteds (Oe).
 
         Raises:
-            ValueError: If field constant is not set before setting field or if polarity control is enabled and address polarity is not set
+            ValueError: If the field constant is not set before setting the field, or if polarity control is enabled
+                        but the address for polarity control is not set.
 
         Returns:
-            float: Field value set
+            float: The voltage value that was set.
         """
 
         if self.field_constant is None:
             raise ValueError("Field constant must be set before setting field")
 
         # Convert field value to voltage
-        voltage = value * self.field_constant
+        voltage = field * self.field_constant  # field_constant is in [V/Oe]
         voltage = self.set_voltage(voltage)
         return voltage
-        
 
-    def set_voltage(self, value: float) -> float:
-        """Set the voltage value on specified analog output channel. If polarity control is enabled, set the address polarity control digital port to high if value is negative, low otherwise.
+    def set_voltage(self, voltage: float) -> float:
+        """
+        Set the voltage on the analog output channel specified by the /self.adapter/ address.
+        If polarity control is enabled and the voltage is negative, the digital port specified by
+        /self.address_polarity_control/ is set to high; otherwise, it is set to low.
+
+        If the polarity needs to be switched (i.e., if the sign of the new voltage is different
+        from the previous voltage), the field is swept to zero before switching to avoid abrupt changes.
 
         Args:
-            value (float): Voltage value to set
+            voltage (float): The voltage value to set.
 
         Returns:
-            float: Voltage value set
+            float: The voltage value that was set.
+
+        Raises:
+            ValueError: If polarity control is enabled but no address for polarity control is specified.
         """
 
+        # Handle polarity control if enabled
         if self.polarity_control_enabled:
             if self.address_polarity_control is None:
                 raise ValueError("Address polarity must be specified if polarity control is enabled")
-            
-            polarity_changed = False
 
-            if sign(self.prev_value) * sign(value) == -1:
-                log.info("Field Controller: Sweeping field to 0 for polarity switch...")
-                sweep_field_to_zero(self.prev_value/self.field_constant, self.field_constant, self.field_step, self)
-                time.sleep(3)
+            # If voltage is 0, ensure polarity is set to False (positive)
+            if voltage == 0:
+                if self.polarity:
+                    self._switch_polarity(False)  # Switch to positive polarity if it's currently negative
+                self.prev_voltage = 0  # Set previous voltage to 0
+            else:
+                # If voltage sign changes, sweep the field to zero before switching polarity
+                if sign(self.prev_voltage) * sign(voltage) == -1:
+                    log.info("Field Controller: Sweeping field to 0 for polarity switch...")
+                    sweep_field_to_zero(self.prev_voltage / self.field_constant, self.field_constant, self.field_step, self)
+                    time.sleep(3)
 
-            self.prev_value = value
+                # Update polarity if necessary
+                new_polarity = voltage < 0
+                if new_polarity != self.polarity:
+                    self._switch_polarity(new_polarity)
+                    log.info("Field Controller: Switching polarity.")
+                    time.sleep(5)
 
-            if value < 0:
-                value = -value
-                if not self.polarity:
-                    self.polarity = True
-                    with nidaqmx.Task() as task:
-                        task.do_channels.add_do_chan(self.address_polarity_control)
-                        task.write(self.polarity)
-                    polarity_changed = True
-            elif value >= 0 and self.polarity:
-                self.polarity = False
-                with nidaqmx.Task() as task:
-                    task.do_channels.add_do_chan(self.address_polarity_control)
-                    task.write(self.polarity)
-                polarity_changed = True
-            if polarity_changed:
-                log.info("Field Controller: Switching polarity.")
-                time.sleep(5)
-                polarity_changed = False
+                self.prev_voltage = voltage
+                voltage = abs(voltage)  # Use positive voltage after polarity adjustment
 
+        # Set the voltage on the analog output channel
         with nidaqmx.Task() as task:
             task.ao_channels.add_ao_voltage_chan(self.adapter)
-            task.write(value)
-        return value
+            task.write(voltage)
+
+        return voltage
+
+    def _switch_polarity(self, new_polarity: bool):
+        """Helper function to switch polarity on the control channel."""
+        with nidaqmx.Task() as task:
+            task.do_channels.add_do_chan(self.address_polarity_control)
+            task.write(new_polarity)
+        self.polarity = new_polarity
 
     def shutdown(self):
         """Disable output, call parent function"""

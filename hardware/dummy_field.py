@@ -5,11 +5,11 @@ class DummyField:
         self.polarity_control_enabled = False
         self.address_polarity_control = None
 
-    def set_field(self, field):
-        pass
-    
-    def set_voltage(self, voltage):
-        pass
+    def set_field(self, field: float) -> float:
+        return 0
+
+    def set_voltage(self, voltage: float) -> float:
+        return 0
 
     def shutdown(self):
         pass

@@ -15,34 +15,30 @@ log.addHandler(logging.NullHandler())
 
 
 class FieldCalibrationMode:
-    def __init__(self, set_field, set_gaussmeter, address_daq, address_gaussmeter, vector, delay, polarity_control_enabled, address_polarity_control) -> None:
+    def __init__(self, set_field, set_gaussmeter, address_daq, address_gaussmeter, vector, delay) -> None:
         self.set_field = set_field
         self.set_gaussmeter = set_gaussmeter
         self.address_gaussmeter = address_gaussmeter
         self.address_daq = address_daq
         self.vector = vector
         self.delay = delay
-        
-        self.polarity_control_enabled = polarity_control_enabled
-        self.address_polarity_control = address_polarity_control
 
         ## parameter initialization
 
     def generate_points(self):
         vector = self.vector.split(",")
-        self.start = float(vector[0])
-        self.stop = float(vector[2])
-        self.points = int(vector[1])
-        
-        vector = np.linspace(self.start, self.stop, self.points)
-    
-        if self.polarity_control_enabled:
-            if any(i < 0 for i in vector):
-                raise ValueError("All points must be greater than 0")
+        self.start_volt = float(vector[0])
+        self.stop_volt = float(vector[2])
+        self.num_points = int(vector[1])
+
+        vector = np.linspace(self.start_volt, self.stop_volt, self.num_points)
+
+        if any(i < 0 for i in vector):
+            raise ValueError("All voltages must be greater or equal to 0")
 
         if len(vector) < 2:
             raise ValueError("The number of points must be greater than 1")
-        
+
         return vector
 
     def initializing(self):
@@ -51,7 +47,7 @@ class FieldCalibrationMode:
             log.warning("Used dummy DAQ")
         else:
             self.daq = DAQ(self.address_daq)
-            
+
         if self.set_gaussmeter == "none":
             self.gaussmeter = DummyGaussmeter(self.address_gaussmeter)
             log.warning("Used dummy Gaussmeter")
@@ -61,12 +57,9 @@ class FieldCalibrationMode:
             self.gaussmeter = Lakeshore(self.address_gaussmeter)
         else:
             raise ValueError("Gaussmeter not supported")
-        
-        self.daq.polarity_control_enabled = self.polarity_control_enabled
-        self.daq.address_polarity_control = self.address_polarity_control
 
     def operating(self):
-        self.calibration_constant = calibration(self, self.start, self.stop, self.points, self.daq, self.gaussmeter, self.delay)
+        self.calibration_constant = calibration(self, self.start_volt, self.stop_volt, self.num_points, self.daq, self.gaussmeter, self.delay)
         self.daq.field_constant = self.calibration_constant
 
         data = {
@@ -88,7 +81,7 @@ class FieldCalibrationMode:
 
     def idle(self):
         sweep_field_to_zero(
-            self.stop / self.calibration_constant, self.calibration_constant, int((self.stop / self.calibration_constant) / 10), self.daq
+            self.stop_volt / self.calibration_constant, self.calibration_constant, int((self.stop_volt / self.calibration_constant) / 10), self.daq
         )  # czy tutaj nie powinno byc mnozenia?
 
 

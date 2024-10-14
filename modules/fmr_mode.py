@@ -311,18 +311,18 @@ class FMRMode:
                 self.generator_obj.setPower(self.generator_power)
                 # Field initialization
                 if self.rotationstation:
-                    sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
+                    sweep_field_to_value(0, self.constant_field_value, self.field_step, self.field_obj)
                 else:
-                    sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
+                    sweep_field_to_value(0, self.point_list[0], self.field_step, self.field_obj)
             case "ST-FMR":
                 # Generator initialization
                 self.generator_obj.setFreq(self.point_list[0])
                 self.generator_obj.setPower(self.generator_power)
                 # Field initialization
                 if self.rotationstation:
-                    sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
+                    sweep_field_to_value(0, self.constant_field_value, self.field_step, self.field_obj)
                 else:
-                    sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
+                    sweep_field_to_value(0, self.constant_field_value, self.field_step, self.field_obj)
 
         self.generator_obj.set_lf_signal()
         self.generator_obj.setOutput(True, True if (self.set_lfgen == "none" and self.measdevice == "LockIn") else False)
@@ -358,7 +358,7 @@ class FMRMode:
                                 sleep(0.01)
 
                 else:
-                    self.set_voltage = self.field_obj.set_field(point)
+                    self.field_obj.set_field(point)
                     sleep(self.delay_field)
 
                 # measure field
