@@ -1,7 +1,4 @@
--warinig ussing dummy !! niech zmienia przycisk connect na taki tekst
--pod go to element dodaj komnuikaty ze nie zanalaz elementu
-
-pomysly:
+-pomysly:
 -Zrob zeby wywalal blad gdy esp300 sie nie polaczy
 -zabebzpieczenie tak aby sprawdził czy naprawde odjechal sondami od probki (na jakis epsilon jednym if to zalatwisz)
 

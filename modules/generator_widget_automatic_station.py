@@ -10,7 +10,7 @@ from hardware.keithley2400 import Keithley2400
 from functools import partial
 from PyQt5.QtCore import Qt, QSettings
 from logic.map_generator import generate_coord
-from modules.element_selection import ElementSelection
+#from modules.element_selection import ElementSelection
 import json
 from os import path
 import ast
@@ -96,7 +96,10 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.make_connection_textbox.setFixedSize(100,20)
         self.make_connection_textbox.setAlignment(Qt.AlignLeft)
 
-        self.connect_checkable_button=self.checkable_button = QtWidgets.QPushButton("Take off")
+        self.connect_checkable_button=QtWidgets.QPushButton("Take off")
+        self.force_approach_button=QtWidgets.QPushButton("Force approach")
+        self.force_approach_button.clicked.connect(self.force_approach_button_dialog)
+
         self.connect_checkable_button.setCheckable(True)
         self.led_indicator_label=QtWidgets.QLabel()
         self.led_indicator_label.setFixedSize(35,35)
@@ -254,6 +257,27 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         event.accept() 
     
 
+    def force_approach_button_dialog(self):
+        reply = QtWidgets.QMessageBox.question(self, 'Confirmation', 
+                                     "Do to really want to force approach? - It can damage sample or connectors", 
+                                     QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+
+        if reply == QtWidgets.QMessageBox.Yes:
+            self.force_approach()
+
+
+    def force_approach(self):
+        if self.get_motor_status():
+            if self.sample_in_plane_checkbox.isChecked():
+                self.MotionDriver.goTo_3(self.z_pos-float(self.make_connection_textbox.text()))
+            else:
+                self.MotionDriver.goTo_1(self.z_pos-float(self.make_connection_textbox.text()))
+        else:
+            if self.sample_in_plane_checkbox.isChecked():
+                self.MotionDriver.goTo_3(self.z_pos)
+            else:
+                self.MotionDriver.goTo_1(self.z_pos)
+
 
     def go_to_element(self):
 
@@ -267,7 +291,6 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         is_finded=False
         for sublist in sequence:
             if sublist[2]==self.go_to_element_textbox.text():
-                print("FINDED")
                 finded=sublist
                 is_finded=True
                 if self.sample_in_plane_checkbox.isChecked():
@@ -341,8 +364,9 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
 
     def element_selection(self):
-        widget=ElementSelection()
-        widget.open_widget()
+        out=self.generate_sequence()
+        self.element_selection_widget=ElementSelection(*out)
+        self.element_selection_widget.show()
 
     def generate_sequence(self):
         number_of_element_in_the_x_axis=int(self.number_of_element_in_the_x_axis_textbox.text())
@@ -367,12 +391,14 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         #sequence generation
         seq_vector='- "Global "[x,y,name]"", "{0}"'.format(gc['move_vectors_prim'])
 
-        with open('./example_sequence','w') as f:
+        with open('./sequence','w') as f:
             f.write(seq_vector)
             
         if self.sequencer is not None:
-            self.sequencer.load_sequence(filename='./example_sequence')
+            self.sequencer.load_sequence(filename='./sequence')
 
+        return [number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,gc['move_vectors_prim'],self.sequencer]
+    
     def read_coordinates(self,write_axes1,write_axes2):
         #z=pos1
         #x=pos2
@@ -436,8 +462,10 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout.addWidget(self.make_connection_textbox, 0, 2)
         grid_layout.addWidget(self.make_connection_label, 1, 2)
 
-        grid_layout.addWidget(self.connect_checkable_button, 0, 3)
-        grid_layout.addWidget(self.led_indicator_label, 1, 3)
+
+        grid_layout.addWidget(self.force_approach_button, 0, 3)
+        grid_layout.addWidget(self.connect_checkable_button, 1, 3)
+        grid_layout.addWidget(self.led_indicator_label, 2, 3)
 
         grid_layout.addWidget(self.enable_motors_checkable_button, 0, 4)
         grid_layout.addWidget(self.enable_motors_checkable_label, 1, 4)
@@ -521,6 +549,81 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         self.setLayout(layout)
         self.setWindowTitle('automatic station generator')
+
+
+
+class ElementSelection(QtWidgets.QWidget):
+    def __init__(self,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,moves_vectors_prim,sequencer):
+        super().__init__()
+        self.number_of_element_in_the_x_axis=number_of_element_in_the_x_axis
+        self.number_of_element_in_the_y_axis=number_of_element_in_the_y_axis
+        self.moves_vectors_prim=moves_vectors_prim
+        self.sequencer=sequencer
+        self.initUI()
+
+
+
+    def extract_checked(self):
+        new_sequence=[]
+        for i in range(len(self.checkboxes)):
+            if self.checkboxes[i].isChecked():
+                new_sequence.append(self.moves_vectors_prim[i])
+
+        #sequence generation
+        seq_vector='- "Global "[x,y,name]"", "{0}"'.format(new_sequence)
+
+        with open('./sequence','w') as f:
+            f.write(seq_vector)
+            
+        if self.sequencer is not None:
+            self.sequencer.load_sequence(filename='./sequence')
+
+
+    def mark_unmark_all(self,checked):
+        for i in range(len(self.checkboxes)):
+            self.checkboxes[i].setChecked(checked)
+
+
+
+    def initUI(self):
+        main_layout = QtWidgets.QVBoxLayout()
+        grid = QtWidgets.QGridLayout()
+        self.checkboxes=[]
+
+
+        new_sequence_button = QtWidgets.QPushButton('Generate new sequence')
+        mark_unmark_all_checkable_button = QtWidgets.QPushButton('Mark/unmark all')
+        mark_unmark_all_checkable_button.setCheckable(True)
+        self.mark_unmark_all(False)
+        
+        mark_unmark_all_checkable_button.toggled.connect(self.mark_unmark_all)
+        new_sequence_button.clicked.connect(self.extract_checked)
+
+        for row in range(self.number_of_element_in_the_y_axis):
+            for col in range(self.number_of_element_in_the_x_axis):
+                hbox = QtWidgets.QHBoxLayout()
+
+                checkbox = QtWidgets.QCheckBox()
+                self.checkboxes.append(checkbox)
+
+                index=(row*self.number_of_element_in_the_x_axis+col)
+                label = QtWidgets.QLabel(self.moves_vectors_prim[index][2])
+                
+                hbox.addWidget(checkbox)
+                hbox.addWidget(label)
+
+                grid.addLayout(hbox, self.number_of_element_in_the_x_axis-row, col)
+
+        
+        main_layout.addWidget(mark_unmark_all_checkable_button)
+        main_layout.addLayout(grid)
+        main_layout.addWidget(new_sequence_button)
+        
+
+        self.setLayout(main_layout)
+
+        self.setWindowTitle('Element selection')
+        self.setGeometry(300, 300, 400, 300)
 
 
 if __name__ == "__main__":
