@@ -24,7 +24,7 @@ from hardware.rotation_stage import RotationStage
 from hardware.rotation_stage_dummy import RotationStageDummy
 
 from logic.vector import Vector
-from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity
+from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity, _lockin_filter_slope
 from logic.sweep_field_to_zero import sweep_field_to_zero
 from logic.sweep_field_to_value import sweep_field_to_value
 
@@ -86,7 +86,8 @@ class FMRMode(MeasurementMode):
             case "Agilent":
                 self.generator_obj = FGenDriver(self.p.address_generator)
             case "Windfreak":
-                self.generator_obj = Windfreak(self.p.address_generator)
+                channel = 0 if self.p.generator_channel == "A" else 1
+                self.generator_obj = Windfreak(self.p.address_generator, channel=channel)
             case _:
                 self.generator_obj = DummyFgenDriver()
                 log.warning("Used dummy Frequency Generator.")
@@ -109,6 +110,7 @@ class FMRMode(MeasurementMode):
         else:
             self.lockin_obj.sensitivity = _lockin_sensitivity(self.p.lockin_sensitivity)
         self.lockin_obj.time_constant = _lockin_timeconstant(self.p.lockin_timeconstant)
+        self.lockin_obj.filter_slope = _lockin_filter_slope(self.p.lockin_slope)
         self.lockin_obj.harmonic = self.p.lockin_harmonic
         self.lockin_obj.sine_voltage = self.p.lockin_sine_amplitude
         self.lockin_obj.channel1 = self.p.lockin_channel1

@@ -45,10 +45,12 @@ from ..widgets import (
     FileInputWidget,
     EstimatorWidget,
     CurrentPointWidget,
-    ClearDialog
+    ClearDialog,
+    ParametersWidget
 )
 from ...experiment import Results, Procedure, unique_filename
 from packages.point_del_widget import PointDelWidget
+from logic.open_in_explorer import open_in_explorer
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -171,6 +173,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         self.queue_button = QtWidgets.QPushButton('Queue', self)
         self.queue_button.clicked.connect(self._queue)
+        self.queue_button.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.queue_button.customContextMenuRequested.connect(self.repeat_menu)
 
         self.abort_button = QtWidgets.QPushButton('Abort', self)
         self.settings_button = QtWidgets.QPushButton('Settings', self)
@@ -250,15 +254,30 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.pointWidget = PointDelWidget(parent=self)
             
         self.clear_dialog = ClearDialog(parent=self)
+        
+        self.parameters_widget = ParametersWidget()
+        self.parameters_widget.sigSetParameter.connect(self.set_parameter_from_widget)
+        
+        self.dockShowWidget = QtWidgets.QWidget(self)
+        dockShowLayout = QtWidgets.QHBoxLayout()
+        dockShowLayout.setContentsMargins(-1, 0, -1, 0)
+        self.dockShowWidget.setLayout(dockShowLayout)
+        self.dockShowWidget.setMaximumHeight(30)
 
     def _layout(self):
         self.main = QtWidgets.QWidget(self)
+        
+        self.show_dock = QtWidgets.QDockWidget('Show/Hide')
+        self.show_dock.setWidget(self.dockShowWidget)
+        self.show_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.show_dock)
         
         current_pt_dock = QtWidgets.QDockWidget('Current Point')
         current_pt_dock.setWidget(self.current_point)
         current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
         current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, current_pt_dock)
+        current_pt_dock.setVisible(False)
 
         inputs_dock = QtWidgets.QWidget(self)
         inputs_vbox = QtWidgets.QVBoxLayout(self.main)
@@ -297,6 +316,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             sequencer_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
             sequencer_dock.setVisible(False)
             self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, sequencer_dock)
+            
+            showSequencerButton = QtWidgets.QPushButton('Sequencer', self.dockShowWidget)
+            self.dockShowWidget.layout().addWidget(showSequencerButton)
+            showSequencerButton.clicked.connect(lambda: sequencer_dock.setVisible(not sequencer_dock.isVisible()))
 
         if self.use_estimator:
             estimator_dock = QtWidgets.QDockWidget('Estimator')
@@ -306,6 +329,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             estimator_dock.setVisible(False)
             self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, estimator_dock)
             
+            showEstimatorButton = QtWidgets.QPushButton('Estimator', self.dockShowWidget)
+            self.dockShowWidget.layout().addWidget(showEstimatorButton)
+            showEstimatorButton.clicked.connect(lambda: estimator_dock.setVisible(not estimator_dock.isVisible()))
+            
         self.point_dock = QtWidgets.QDockWidget('Point Removal')
         self.point_dock.setWidget(self.pointWidget)
         self.point_dock.visibilityChanged.connect(self.pointWidget.setMode)
@@ -313,6 +340,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.point_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.point_dock.setVisible(False)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.point_dock)
+        
+        showPointButton = QtWidgets.QPushButton('Point Removal', self.dockShowWidget)
+        self.dockShowWidget.layout().addWidget(showPointButton)
+        showPointButton.clicked.connect(lambda: self.point_dock.setVisible(not self.point_dock.isVisible()))
 
         self.tabs = QtWidgets.QTabWidget(self.main)
         for wdg in self.widget_list:
@@ -357,6 +388,29 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         previous_experiment = self.manager.experiments.with_browser_item(previous)
         if previous_experiment:
                 previous_experiment.setSelected(False)
+                
+    def repeat_menu(self, position):
+        menu = QtWidgets.QMenu(self)
+        action = QtGui.QAction(menu)
+        action.setText("Multiple")
+        action.triggered.connect(self.repeat_experiment)
+        menu.addAction(action)
+        menu.exec(self.queue_button.mapToGlobal(position))
+        
+    def repeat_experiment(self):
+        dialog = QtWidgets.QInputDialog(self)
+        dialog.setInputMode(QtWidgets.QInputDialog.InputMode.IntInput)
+        dialog.setIntRange(1, 100)
+        dialog.setIntValue(1)
+        dialog.setWindowTitle("Repeat")
+        dialog.setLabelText("Number of times to repeat the experiment:")
+        dialog.setOkButtonText("Queue")
+        dialog.setCancelButtonText("Cancel")
+        if dialog.exec():
+            for i in range(dialog.intValue()):
+                procedure = self.make_procedure()
+                procedure.iterator = i
+                self.queue(procedure)
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)
@@ -372,6 +426,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             action_open.triggered.connect(
                 lambda: self.open_file_externally(experiment.results.data_filename))
             menu.addAction(action_open)
+            
+            # Open in Explorer
+            action_open_explorer = QtGui.QAction(menu)
+            action_open_explorer.setText("Reveal in File Explorer")
+            action_open_explorer.triggered.connect(
+                lambda: open_in_explorer(experiment.results.data_filename))
+            menu.addAction(action_open_explorer)
 
             # Save a copy of the datafile
             action_save = QtGui.QAction(menu)
@@ -379,6 +440,17 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             action_save.triggered.connect(
                 lambda: self.save_experiment_copy(experiment.results.data_filename))
             menu.addAction(action_save)
+            
+            # Delete
+            action_delete = QtGui.QAction(menu)
+            action_delete.setText("Delete Data File")
+            if self.manager.is_running():
+                if self.manager.running_experiment() == experiment:  # Experiment running
+                    action_delete.setEnabled(False)
+            action_delete.triggered.connect(lambda: self.delete_experiment_data(experiment))
+            menu.addAction(action_delete)
+            
+            menu.addSeparator()
 
             # Change Color
             action_change_color = QtGui.QAction(menu)
@@ -395,15 +467,16 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                     action_remove.setEnabled(False)
             action_remove.triggered.connect(lambda: self.remove_experiment(experiment))
             menu.addAction(action_remove)
-
-            # Delete
-            action_delete = QtGui.QAction(menu)
-            action_delete.setText("Delete Data File")
-            if self.manager.is_running():
-                if self.manager.running_experiment() == experiment:  # Experiment running
-                    action_delete.setEnabled(False)
-            action_delete.triggered.connect(lambda: self.delete_experiment_data(experiment))
-            menu.addAction(action_delete)
+            
+            menu.addSeparator()
+            
+            # Show parameters
+            action_show = QtGui.QAction(menu)
+            action_show.setText("Show Parameters")
+            action_show.triggered.connect(
+                lambda: self.show_parameters(experiment.results.data_filename, experiment.procedure))
+            menu.addAction(action_show)
+            
 
             # Use parameters
             action_use = QtGui.QAction(menu)
@@ -421,6 +494,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                                                QtWidgets.QMessageBox.StandardButton.No)
         if reply == QtWidgets.QMessageBox.StandardButton.Yes:
             self.manager.remove(experiment)
+            
+            if len(self.manager.experiments.queue) == 0:
+                self.disable_clear_buttons()
 
     def delete_experiment_data(self, experiment):
         reply = QtWidgets.QMessageBox.question(self, 'Delete Data',
@@ -431,6 +507,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if reply == QtWidgets.QMessageBox.StandardButton.Yes:
             self.manager.remove(experiment)
             os.unlink(experiment.data_filename)
+            
+            if len(self.manager.experiments.queue) == 0:
+                self.disable_clear_buttons()
 
     def show_experiments(self):
         root = self.browser.invisibleRootItem()
@@ -448,8 +527,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.manager.clear()
         
         if len(self.manager.experiments.queue) == 0:
-            self.browser_widget.clear_button.setEnabled(False)
-            self.browser_widget.clear_by_status_button.setEnabled(False)
+            self.disable_clear_buttons()
         
     def open_clear_dialog(self):
         self.clear_dialog.show()
@@ -469,9 +547,24 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         
         self.manager.clear_filtered(to_clear, delete_files)
         
+        if status[4]:
+            self.clear_selected(delete_files)
+        
         if len(self.manager.experiments.queue) == 0:
-            self.browser_widget.clear_button.setEnabled(False)
-            self.browser_widget.clear_by_status_button.setEnabled(False)
+            self.disable_clear_buttons()
+            
+    def clear_selected(self, delete_files:bool=False):
+        root = self.browser.invisibleRootItem()
+        i = 0
+        while i < root.childCount():
+            item = root.child(i)
+            if item.checkState(0) == QtCore.Qt.CheckState.Checked:
+                experiment = self.manager.experiments.with_browser_item(item)
+                self.manager.remove(experiment)
+                if delete_files:
+                    os.unlink(experiment.data_filename)
+            else:
+                i += 1
 
     def open_experiment(self):
         dialog = ResultsDialog(self.procedure_class,
@@ -500,8 +593,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                     self.browser_widget.hide_button.setEnabled(True)
         
                     if not self.manager.is_running():
-                        self.browser_widget.clear_button.setEnabled(True)
-                        self.browser_widget.clear_by_status_button.setEnabled(True)
+                        self.enable_clear_buttons()
 
     def save_experiment_copy(self, source_filename):
         """Save a copy of the datafile to a selected folder and file.
@@ -585,6 +677,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         browser_item = BrowserItem(results, curve_color)
         return Experiment(results, curve_list, browser_item)
+    
+    def show_parameters(self, filename, procedure):
+        self.parameters_widget.filename = os.path.basename(filename)
+        self.parameters_widget.procedure = procedure
+        self.parameters_widget.show()
 
     def set_parameters(self, parameters):
         """ This method should be overwritten by the child class. The
@@ -595,8 +692,15 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if not isinstance(self.inputs, InputsWidget):
             raise Exception("ManagedWindow can not set parameters"
                             " without a InputsWidget")
+        
         self.change_layout_type(parameters["layout_type"].value)
         self.inputs.set_parameters(parameters)
+        
+    def set_parameter_from_widget(self, parameter_tuple):
+        if parameter_tuple is None:
+            return
+        key, parameter = parameter_tuple
+        getattr(self.inputs, key).set_parameter(parameter)
 
     def refresh(self):
         raise NotImplementedError("Refresh method must be overwritten by the child class.")
@@ -699,6 +803,14 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.manager.resume()
         else:
             self.abort_button.setEnabled(False)
+            
+    def enable_clear_buttons(self):
+        self.browser_widget.clear_button.setEnabled(True)
+        self.browser_widget.clear_by_status_button.setEnabled(True)
+        
+    def disable_clear_buttons(self):
+        self.browser_widget.clear_button.setEnabled(False)
+        self.browser_widget.clear_by_status_button.setEnabled(False)
 
     def queued(self, experiment):
         self.abort_button.setEnabled(True)
@@ -706,12 +818,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.browser_widget.hide_button.setEnabled(True)
         
         if not self.manager.is_running():
-            self.browser_widget.clear_button.setEnabled(True)
-            self.browser_widget.clear_by_status_button.setEnabled(True)
+            self.enable_clear_buttons()
 
     def running(self, experiment):
-        self.browser_widget.clear_button.setEnabled(False)
-        self.browser_widget.clear_by_status_button.setEnabled(False)
+        self.disable_clear_buttons()
 
     def abort_returned(self, experiment):
         self.current_point.reset()
@@ -721,8 +831,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.abort_button.setEnabled(True)
         
         if len(self.manager.experiments.queue) > 0:
-            self.browser_widget.clear_button.setEnabled(True)
-            self.browser_widget.clear_by_status_button.setEnabled(True)
+            self.enable_clear_buttons()
 
     def finished(self, experiment):
         self.current_point.reset()
@@ -731,8 +840,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.abort_button.setEnabled(False)
             
         if len(self.manager.experiments.queue) > 0:
-            self.browser_widget.clear_button.setEnabled(True)
-            self.browser_widget.clear_by_status_button.setEnabled(True)
+            self.enable_clear_buttons()
             
     def curve_clicked(self, curve):
         for experiment in self.manager.experiments.queue:

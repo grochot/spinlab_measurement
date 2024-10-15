@@ -46,6 +46,7 @@ class ResultsCurve(pg.PlotDataItem):
         self.x, self.y = x, y
         self.force_reload = force_reload
         self.color = self.opts['pen'].color()
+        self.prevZValue = self.zValue()
 
     def update_data(self):
         """Updates the data by polling the results"""
@@ -77,6 +78,12 @@ class ResultsCurve(pg.PlotDataItem):
         self.opts['pen'].setWidth(pen_size)
         self.opts['symbolSize'] = symbol_size
         self.updateItems(styleUpdate=True)
+        
+    def get_last_x(self):
+        xdata, _ = self.getData()
+        if xdata is None or len(xdata) == 0 or np.isnan(xdata[-1]):
+            return None
+        return xdata[-1]
 
 # TODO: Add method for changing x and y
 

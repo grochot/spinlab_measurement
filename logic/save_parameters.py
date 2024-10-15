@@ -1,44 +1,41 @@
-
-import json 
+import json
 import os
 import sys
-class SaveParameters(): 
 
-    def __init__(self): 
+
+class SaveParameters:
+
+    def __init__(self):
         pass
 
-
     def get_executable_path(self):
-        if getattr(sys, 'frozen', False):
+        if getattr(sys, "frozen", False):
             # Jeśli jest to wersja skompilowana przez PyInstaller
-            return os.path.dirname(sys.executable)+"/logic"
+            return os.path.dirname(sys.executable) + "/logic"
         else:
             # Jeśli jest to wersja uruchamiana z kodu źródłowego
             return os.path.dirname(os.path.abspath(__file__))
 
-   
-
-
-
-    def WriteFile(self, data): 
+    def WriteFile(self, data, file_path, filename):
         # Znajdź lokalizację pliku exe
         executable_path = self.get_executable_path()
 
-         # Stwórz nazwę pliku logów
-        parameters_file_path = os.path.join(executable_path, 'parameters.json')
-        data["path"]="C://"
+        # Stwórz nazwę pliku logów
+        parameters_file_path = os.path.join(executable_path, "parameters.json")
+        data["path"] = file_path
+        data["filename"] = filename
         json_object = json.dumps(data, indent=4)
         with open(parameters_file_path, "w") as outfile:
-            outfile.write(json_object)     
+            outfile.write(json_object)
 
     def ReadFile(self):
-         # Znajdź lokalizację pliku exe
+        # Znajdź lokalizację pliku exe
         executable_path = self.get_executable_path()
 
-         # Stwórz nazwę pliku logów
-        parameters_file_path = os.path.join(executable_path, 'parameters.json')
+        # Stwórz nazwę pliku logów
+        parameters_file_path = os.path.join(executable_path, "parameters.json")
         try:
-            with open(parameters_file_path, 'r') as openfile:
+            with open(parameters_file_path, "r") as openfile:
                 json_object = json.load(openfile)
             return json_object
         except:
@@ -133,13 +130,14 @@ class SaveParameters():
     "set_azimuthal_angle": 90.0,
     "remanency_correction_time": 5.0,
     "layout_type": true,
-    "path": "C://"
+    "path": "C://",
+    "filename": "DATA"
 }"""
         with open(parameters_file_path, "w") as outfile:
-            outfile.write(json_object)  
+            outfile.write(json_object)
             outfile.close()
-        
-        with open(parameters_file_path, 'r') as openfile:
+
+        with open(parameters_file_path, "r") as openfile:
             json_object = json.load(openfile)
             openfile.close()
         return json_object
