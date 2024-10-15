@@ -83,14 +83,11 @@ class DAQ:
                 if sign(self.prev_voltage) * sign(voltage) == -1:
                     log.info("Field Controller: Sweeping field to 0 for polarity switch...")
                     sweep_field_to_zero(self.prev_voltage / self.field_constant, self.field_constant, self.field_step, self)
-                    time.sleep(3)
 
                 # Update polarity if necessary
                 new_polarity = voltage < 0
                 if new_polarity != self.polarity:
                     self._switch_polarity(new_polarity)
-                    log.info("Field Controller: Switching polarity.")
-                    time.sleep(5)
 
                 self.prev_voltage = voltage
                 voltage = abs(voltage)  # Use positive voltage after polarity adjustment
@@ -104,10 +101,12 @@ class DAQ:
 
     def _switch_polarity(self, new_polarity: bool):
         """Helper function to switch polarity on the control channel."""
+        log.info(f"Field Controller: Switching polarity to {'negative' if new_polarity else 'positive'}...")
         with nidaqmx.Task() as task:
             task.do_channels.add_do_chan(self.address_polarity_control)
             task.write(new_polarity)
         self.polarity = new_polarity
+        time.sleep(5)
 
     def shutdown(self):
         """Disable output, call parent function"""
