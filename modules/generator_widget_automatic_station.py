@@ -140,6 +140,9 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.go_to_initialize_posotion_button=QtWidgets.QPushButton("Go to initialize position")
         self.go_to_initialize_posotion_button.clicked.connect(self.go_to_initialize_posotion)
 
+        self.warning_using_dummy_textbox=QtWidgets.QLabel("")
+        self.element_not_finded_textbox=QtWidgets.QLabel("")
+
         #self.sample_in_plane_checkbox.stateChanged()
 
     
@@ -309,7 +312,10 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
                 pass
         
         if is_finded==False:
-            print("Element not finded")
+            self.element_not_finded_textbox.setText("Element not finded")
+        else:
+            self.element_not_finded_textbox.setText("")
+
         return 0
 
 
@@ -329,8 +335,10 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
     def make_connection_with_devices(self):
         if self.drive_motion_adresses_combo.currentText()!="None":
             self.MotionDriver=Esp300(self.drive_motion_adresses_combo.currentText())
+            self.warning_using_dummy_textbox.setText("")
         else:
             self.MotionDriver=DummyMotionDriver(self.drive_motion_adresses_combo.currentText())
+            self.warning_using_dummy_textbox.setText("Warning using dummy - device not connected")
             log.warning('Used dummy MotionDriver.')
 
         self.read_for_go_button()
@@ -379,18 +387,6 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
             
         if self.sequencer is not None:
             self.sequencer.load_sequence(filename='./example_sequence')
-
-        '''#data migration
-        with open('./logic/parameters.json', 'r+') as file:
-            data = json.load(file)
-            data['disconnect_length']=float(self.make_connection_textbox.text())
-            data['sample_in_plane']=float(self.sample_in_plane_checkbox.isChecked())
-            file.seek(0)
-            json.dump(data,file,indent=4)
-            file.truncate()'''
-
-            
-
 
     def read_coordinates(self,write_axes1,write_axes2):
         #z=pos1
@@ -452,6 +448,8 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         grid_layout.addWidget(self.make_connection_with_devices_label, 0, 1)
         grid_layout.addWidget(self.make_connection_with_devices_button, 1, 1)
+        grid_layout.addWidget(self.warning_using_dummy_textbox, 2, 1)
+
 
         grid_layout.addWidget(self.make_connection_textbox, 0, 2)
         grid_layout.addWidget(self.make_connection_label, 1, 2)
@@ -480,6 +478,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         grid_layout.addWidget(self.go_to_element_textbox, 0, 9)
         grid_layout.addWidget(self.go_to_element_button,1,9)
+        grid_layout.addWidget(self.element_not_finded_textbox,2,9)
 
         layout.addLayout(grid_layout)
 
