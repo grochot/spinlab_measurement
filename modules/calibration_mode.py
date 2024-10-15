@@ -20,40 +20,9 @@ log.addHandler(logging.NullHandler())
 
 
 class FieldCalibrationMode(MeasurementMode):
-    def __init__(
-        self,
-        procedure: SpinLabMeasurement,
-        # set_field,
-        # set_gaussmeter,
-        # address_daq,
-        # address_gaussmeter,
-        # vector,
-        # delay
-    ) -> None:
-
+    def __init__(self, procedure: SpinLabMeasurement) -> None:
         self.p = procedure
         self.field_vector = []
-        # self.set_field = set_field
-        # self.set_gaussmeter = set_gaussmeter
-        # self.address_gaussmeter = address_gaussmeter
-        # self.address_daq = address_daq
-        # self.vector = vector
-        # self.delay = delay
-
-        ## parameter initialization
-
-    # def generate_points(self):
-    #     vector = self.p.vector.split(",")
-    #     self.start = float(vector[0])
-    #     self.stop = float(vector[2])
-    #     self.points = int(vector[1])
-
-    #     vector = list(np.linspace(self.start, self.stop, self.points))
-
-    #     if len(vector) < 2:
-    #         raise ValueError("The number of points must be greater than 1")
-
-    #     return vector
 
     def initializing(self):
         if self.p.set_field == "none":
@@ -72,15 +41,12 @@ class FieldCalibrationMode(MeasurementMode):
             raise ValueError("Gaussmeter not supported")
 
     def operating(self, point):
-        # self.calibration_constant = calibration(self, self.start, self.stop, self.points, self.daq, self.gaussmeter, self.p.delay_field)
-
         self.daq.set_field(point)
         sleep(self.p.delay_field)
         result = self.gaussmeter.measure()
         if type(result) != int and type(result) != float:
             result = 0
         self.field_vector.append(result)
-        # log.info("Voltage: {}, Field: {}".format(point, result))
 
         data = {
             "Voltage (V)": point,
@@ -103,7 +69,6 @@ class FieldCalibrationMode(MeasurementMode):
         log.info("Field constant: {} [V/Oe]".format(1 / slope))
 
         FieldCalibrationMode.idle(self)
-        # return 1/slope
 
     def idle(self):
         sweep_field_to_zero(
