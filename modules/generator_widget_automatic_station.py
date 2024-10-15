@@ -22,7 +22,6 @@ log.addHandler(logging.NullHandler())
 class AutomaticStationGenerator(QtWidgets.QWidget):
     object_name = "automatic_station_generator"
 
-
     def __init__(self):
         super(AutomaticStationGenerator, self).__init__()
         self.state = False
@@ -33,27 +32,19 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.address = "None"
         self.sequencer = None
         self.get_available_addresses()
-        #self.make_connection_with_devices()
-
-        #self.loadState()
         self._setup_ui()
         self._layout()
 
-
     def open_widget(self):
         self.get_available_addresses()
-        #self.updateGUI()
         self.show()
-
 
     def get_available_addresses(self):
         find_instruments=FindInstrument()
         self.address_list=find_instruments.show_instrument()
         print(self.address_list)
 
-
     def go(self):
-
         if self.sample_in_plane_checkbox.isChecked():
             self.MotionDriver.goTo_2(self.go_x_textbox.text())
             self.MotionDriver.goTo_1(self.go_y_textbox.text())
@@ -70,7 +61,6 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
 
     def read_for_go_button(self):
-
         if self.sample_in_plane_checkbox.isChecked():
             self.go_x_textbox.setText(format(self.MotionDriver.pos_2(),'f'))
             self.go_y_textbox.setText(format(self.MotionDriver.pos_1(),'f'))
@@ -84,20 +74,18 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
 
     def _setup_ui(self):
-        settings_file = 'automatic_station_generator_settings.ini'  # Możesz tutaj podać pełną ścieżkę np. '/path/to/my_custom_settings.ini'
+        settings_file = 'automatic_station_generator_settings.ini'  # You can type full path there
         self.settings = QSettings(settings_file, QSettings.IniFormat)
         
-
         self.MotionDriver=DummyMotionDriver("")
         self.z_pos=self.MotionDriver.pos_1()
         
-
         self.setWindowTitle("Automatic station generator")
         self.setWindowIcon(QtGui.QIcon(self.icon_path))
 
         #first part of widget
         self.drive_motion_adresses_combo=QtWidgets.QComboBox()
-        self.drive_motion_adresses_combo.addItems(self.address_list) #dodaj prawdziwe
+        self.drive_motion_adresses_combo.addItems(self.address_list)
         self.drive_motion_adresses_label=QtWidgets.QLabel('Driver motion address')
 
         self.make_connection_with_devices_label=QtWidgets.QLabel('Make connection with devices')
@@ -143,9 +131,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.warning_using_dummy_textbox=QtWidgets.QLabel("")
         self.element_not_finded_textbox=QtWidgets.QLabel("")
 
-        #self.sample_in_plane_checkbox.stateChanged()
 
-    
         #main part of widget
         self.number_of_element_in_the_x_axis_name=QtWidgets.QLabel('number of elements on the x axis [int]')
         self.number_of_element_in_the_x_axis_textbox=QtWidgets.QLineEdit(self)
@@ -218,10 +204,11 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.load_settings()
         
     def save_settings(self):
-        # Zapisanie wartości do QSettings
+        #saving parameters
         self.settings.setValue('drive_motion_adresses_combo', self.drive_motion_adresses_combo.currentIndex())
         self.settings.setValue('make_connection_textbox', self.make_connection_textbox.text())
         self.settings.setValue('sample_in_plane_checkbox', self.sample_in_plane_checkbox.isChecked())
+        self.settings.setValue('go_to_element_textbox', self.go_to_element_textbox.text())
        
 
         self.settings.setValue('first_element_x_textbox', self.first_element_x_textbox.text())
@@ -243,6 +230,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.drive_motion_adresses_combo.setCurrentIndex(int(self.settings.value('drive_motion_adresses_combo', 0)))
         self.make_connection_textbox.setText(self.settings.value('make_connection_textbox', ''))
         self.sample_in_plane_checkbox.setChecked(self.settings.value('sample_in_plane_checkbox', '').lower()=="true")
+        self.go_to_element_textbox.setText(self.settings.value('go_to_element_textbox', ''))
 
         self.first_element_x_textbox.setText(self.settings.value('first_element_x_textbox', ''))
         self.first_element_y_textbox.setText(self.settings.value('first_element_y_textbox', ''))
@@ -262,7 +250,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
 
     def closeEvent(self, event):
-        self.save_settings()  # Zapisanie ustawień
+        self.save_settings()
         event.accept() 
     
 
@@ -275,10 +263,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         else:
             print("Sequence doesn't exist - please generate it")
             return -2
-
-        #print(f.read())
         
-        print("seq",sequence)
         is_finded=False
         for sublist in sequence:
             if sublist[2]==self.go_to_element_textbox.text():
@@ -288,23 +273,23 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
                 if self.sample_in_plane_checkbox.isChecked():
                     self.z_pos=self.MotionDriver.pos_3()
 
-                    self.MotionDriver.goTo_3(self.z_pos-float(self.make_connection_textbox.text())) #Disconnecting
+                    self.MotionDriver.goTo_3(self.z_pos-float(self.make_connection_textbox.text())) #Take off
                     
                     self.MotionDriver.goTo_2(float(finded[0]))
                     self.MotionDriver.goTo_1(float(finded[1]))
 
-                    self.MotionDriver.goTo_3(self.z_pos) #Connecting
+                    self.MotionDriver.goTo_3(self.z_pos) #Approach
 
                     self.MotionDriver.pos_1() #Non sense reading position to stop program
                 else:
                     self.z_pos=self.MotionDriver.pos_1()
 
-                    self.MotionDriver.goTo_1(self.z_pos-float(self.make_connection_textbox.text())) #Disconnecting
+                    self.MotionDriver.goTo_1(self.z_pos-float(self.make_connection_textbox.text())) #Take off
                     
                     self.MotionDriver.goTo_2(float(finded[0]))
                     self.MotionDriver.goTo_3(float(finded[1]))
 
-                    self.MotionDriver.goTo_1(self.z_pos) #Connecting
+                    self.MotionDriver.goTo_1(self.z_pos) #Approach
 
                     self.MotionDriver.pos_1() #Non sense reading position to stop program
                 break
@@ -404,7 +389,6 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
     
     
     def connect_with_sample(self, checked):
-
         if checked and self.get_motor_status():
             if self.sample_in_plane_checkbox.isChecked():
                 self.MotionDriver.goTo_3(self.z_pos-float(self.make_connection_textbox.text()))
@@ -420,8 +404,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
             self.led_indicator_label.setStyleSheet("background-color: red; border-radius: 10px;")
             self.connect_checkable_button.setText("Take off")
     
-    def enable_motors_function(self, checked):
-        
+    def enable_motors_function(self):
         motor_status=self.get_motor_status()
 
         if motor_status:
@@ -446,10 +429,9 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout.addWidget(self.drive_motion_adresses_combo, 0, 0)
         grid_layout.addWidget(self.drive_motion_adresses_label, 1, 0)
 
-        grid_layout.addWidget(self.make_connection_with_devices_label, 0, 1)
-        grid_layout.addWidget(self.make_connection_with_devices_button, 1, 1)
+        grid_layout.addWidget(self.make_connection_with_devices_button, 0, 1)
+        grid_layout.addWidget(self.make_connection_with_devices_label, 1, 1)
         grid_layout.addWidget(self.warning_using_dummy_textbox, 2, 1)
-
 
         grid_layout.addWidget(self.make_connection_textbox, 0, 2)
         grid_layout.addWidget(self.make_connection_label, 1, 2)
@@ -467,8 +449,6 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout.addWidget(self.go_x_textbox, 0, 6)
         grid_layout.addWidget(self.go_y_textbox, 1, 6)
         grid_layout.addWidget(self.go_z_textbox, 2, 6)
-
-
 
         grid_layout.addWidget(self.read_for_go_button_button,1,7)
         grid_layout.addWidget(self.go_button, 2, 7)
@@ -539,8 +519,6 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
         layout.addLayout(grid_layout2)
 
-
-        # Ustawienie głównego layoutu dla widgetu
         self.setLayout(layout)
         self.setWindowTitle('automatic station generator')
 
