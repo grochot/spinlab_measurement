@@ -16,6 +16,7 @@ class Esp300():
         self.timeout = 2
         rm = visa.ResourceManager()
         self.my_instrument = rm.open_resource(address)
+        print(self.ask("*IDN"))
         
         
 

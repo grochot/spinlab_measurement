@@ -227,6 +227,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.settings.setValue('initial_column_textbox', self.initial_column_textbox.text())
         self.settings.setValue('column_name_pattern_iterator_textbox', self.column_name_pattern_iterator_textbox.text())
         self.settings.setValue('row_name_pattern_iterator_textbox', self.row_name_pattern_iterator_textbox.text())
+
       
 
     def load_settings(self):
@@ -281,8 +282,8 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
     def go_to_element(self):
 
-        if  path.isfile("./example_sequence"):
-             with open("./example_sequence", "r") as f:
+        if  path.isfile("./sequence"):
+             with open("./sequence", "r") as f:
                 sequence=ast.literal_eval(f.read().split('"')[5])
         else:
             print("Sequence doesn't exist - please generate it")
@@ -343,6 +344,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
     def make_connection_with_devices(self):
         if self.drive_motion_adresses_combo.currentText()!="None":
             self.MotionDriver=Esp300(self.drive_motion_adresses_combo.currentText())
+            
             self.warning_using_dummy_textbox.setText("")
         else:
             self.MotionDriver=DummyMotionDriver(self.drive_motion_adresses_combo.currentText())
@@ -365,8 +367,11 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
     def element_selection(self):
         out=self.generate_sequence()
+        out.append(self.settings)
+        out.append(self.save_settings)
         self.element_selection_widget=ElementSelection(*out)
         self.element_selection_widget.show()
+
 
     def generate_sequence(self):
         number_of_element_in_the_x_axis=int(self.number_of_element_in_the_x_axis_textbox.text())
@@ -553,13 +558,18 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
 
 class ElementSelection(QtWidgets.QWidget):
-    def __init__(self,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,moves_vectors_prim,sequencer):
+    def __init__(self,number_of_element_in_the_x_axis,number_of_element_in_the_y_axis,moves_vectors_prim,sequencer,settings,save_settings):
         super().__init__()
         self.number_of_element_in_the_x_axis=number_of_element_in_the_x_axis
         self.number_of_element_in_the_y_axis=number_of_element_in_the_y_axis
         self.moves_vectors_prim=moves_vectors_prim
         self.sequencer=sequencer
+        self.settings=settings
+        self.save_settings=save_settings
+        #settings_file = 'automatic_station_generator_settings.ini'  # You can type full path there
+        #self.settings = QSettings(settings_file, QSettings.IniFormat)
         self.initUI()
+        self.load_previous_state()
 
 
 
@@ -578,6 +588,10 @@ class ElementSelection(QtWidgets.QWidget):
         if self.sequencer is not None:
             self.sequencer.load_sequence(filename='./sequence')
 
+    def closeEvent(self, event):
+        for i in range(0,len(self.checkboxes),1):
+            self.settings.setValue('element_checked_{0}'.format(i), self.checkboxes[i].isChecked())
+        event.accept() 
 
     def mark_unmark_all(self,checked):
         for i in range(len(self.checkboxes)):
@@ -585,19 +599,29 @@ class ElementSelection(QtWidgets.QWidget):
 
 
 
+    def load_previous_state(self):
+        for i in range(0,len(self.checkboxes),1):
+            self.checkboxes[i].setChecked(str(self.settings.value('element_checked_{0}'.format(i), '')).lower()=="true")
+
+    def clean(self):
+        for i in range(0,len(self.checkboxes),1):
+            self.checkboxes[i].setChecked(0)
+
     def initUI(self):
-        main_layout = QtWidgets.QVBoxLayout()
-        grid = QtWidgets.QGridLayout()
+        self.main_layout = QtWidgets.QVBoxLayout()
+        self.grid = QtWidgets.QGridLayout()
         self.checkboxes=[]
 
 
-        new_sequence_button = QtWidgets.QPushButton('Generate new sequence')
-        mark_unmark_all_checkable_button = QtWidgets.QPushButton('Mark/unmark all')
-        mark_unmark_all_checkable_button.setCheckable(True)
+        self.clean_button=QtWidgets.QPushButton('Clean')
+        self.clean_button.clicked.connect(self.clean)
+        self.new_sequence_button = QtWidgets.QPushButton('Generate new sequence')
+        self.mark_unmark_all_checkable_button = QtWidgets.QPushButton('Mark/unmark all')
+        self.mark_unmark_all_checkable_button.setCheckable(True)
         self.mark_unmark_all(False)
         
-        mark_unmark_all_checkable_button.toggled.connect(self.mark_unmark_all)
-        new_sequence_button.clicked.connect(self.extract_checked)
+        self.mark_unmark_all_checkable_button.toggled.connect(self.mark_unmark_all)
+        self.new_sequence_button.clicked.connect(self.extract_checked)
 
         for row in range(self.number_of_element_in_the_y_axis):
             for col in range(self.number_of_element_in_the_x_axis):
@@ -612,15 +636,15 @@ class ElementSelection(QtWidgets.QWidget):
                 hbox.addWidget(checkbox)
                 hbox.addWidget(label)
 
-                grid.addLayout(hbox, self.number_of_element_in_the_x_axis-row, col)
+                self.grid.addLayout(hbox, self.number_of_element_in_the_x_axis-row, col)
 
-        
-        main_layout.addWidget(mark_unmark_all_checkable_button)
-        main_layout.addLayout(grid)
-        main_layout.addWidget(new_sequence_button)
+        self.main_layout.addWidget(self.clean_button)
+        self.main_layout.addWidget(self.mark_unmark_all_checkable_button)
+        self.main_layout.addLayout(self.grid)
+        self.main_layout.addWidget(self.new_sequence_button)
         
 
-        self.setLayout(main_layout)
+        self.setLayout(self.main_layout)
 
         self.setWindowTitle('Element selection')
         self.setGeometry(300, 300, 400, 300)

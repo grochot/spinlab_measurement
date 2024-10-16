@@ -1,4 +1,5 @@
 -pomysly:
 -Zrob zeby wywalal blad gdy esp300 sie nie polaczy
+-dorob modul do stafcji automatycznej z funkcjami
 -zabebzpieczenie tak aby sprawdził czy naprawde odjechal sondami od probki (na jakis epsilon jednym if to zalatwisz)
 
