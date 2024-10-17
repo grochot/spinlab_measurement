@@ -26,7 +26,7 @@ from hardware.rotation_stage_dummy import RotationStageDummy
 from logic.vector import Vector
 from logic.sweep_field_to_zero import sweep_field_to_zero 
 from logic.sweep_field_to_value import sweep_field_to_value
-from hardware.esp300_simple import Esp300
+from hardware.esp300 import Esp300
 from hardware.dummy_motion_driver import DummyMotionDriver
 log = logging.getLogger(__name__) 
 log.addHandler(logging.NullHandler()) 

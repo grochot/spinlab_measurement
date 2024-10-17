@@ -38,5 +38,5 @@ class DummyMotionDriver:
         return 1
     
 
-    def high_level_motion_driver(self,global_xyname,sample_in_plane,disconnect_length)
+    def high_level_motion_driver(self,global_xyname,sample_in_plane,disconnect_length):
         pass

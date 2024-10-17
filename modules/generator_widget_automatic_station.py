@@ -6,7 +6,7 @@ import sys
 sys.path.append("C:\\Users\\IE\\git\\spinlab_measurement")
 from logic.find_instrument import FindInstrument
 from hardware.dummy_motion_driver import DummyMotionDriver
-from hardware.esp300_simple import Esp300
+from hardware.esp300 import Esp300
 from hardware.keithley2400 import Keithley2400
 from functools import partial
 from PyQt5.QtCore import Qt, QSettings
@@ -295,28 +295,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
             if sublist[2]==self.go_to_element_textbox.text():
                 finded=sublist
                 is_finded=True
-                if self.sample_in_plane_checkbox.isChecked():
-                    self.z_pos=self.MotionDriver.pos_3()
-
-                    self.MotionDriver.goTo_3(self.z_pos-float(self.make_connection_textbox.text())) #Take off
-                    
-                    self.MotionDriver.goTo_2(float(finded[0]))
-                    self.MotionDriver.goTo_1(float(finded[1]))
-
-                    self.MotionDriver.goTo_3(self.z_pos) #Approach
-
-                    self.MotionDriver.pos_1() #Non sense reading position to stop program
-                else:
-                    self.z_pos=self.MotionDriver.pos_1()
-
-                    self.MotionDriver.goTo_1(self.z_pos-float(self.make_connection_textbox.text())) #Take off
-                    
-                    self.MotionDriver.goTo_2(float(finded[0]))
-                    self.MotionDriver.goTo_3(float(finded[1]))
-
-                    self.MotionDriver.goTo_1(self.z_pos) #Approach
-
-                    self.MotionDriver.pos_1() #Non sense reading position to stop program
+                self.MotionDriver.high_level_motion_driver(finded,self.sample_in_plane_checkbox,float(self.make_connection_textbox.text()))
                 break
             else:
                 pass
@@ -327,10 +306,6 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
             self.element_not_finded_textbox.setText("")
 
         return 0
-
-
-
-       
 
 
     def go_to_initialize_posotion(self):
@@ -346,10 +321,18 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         if self.drive_motion_adresses_combo.currentText()!="None":
             
             try:
-                self.MotionDriver=Esp300(self.drive_motion_adresses_combo.currentText())
-                self.warning_using_dummy_textbox.setText("")
+                rm=visa.ResourceManager()
+                instrument = rm.open_resource(self.drive_motion_adresses_combo.currentText())
+                response = instrument.query('*IDN?')
+                print(response)
+
+                if response=="ESP300 Version 3.08 09/09/02\r\n":
+                    self.MotionDriver=Esp300(self.drive_motion_adresses_combo.currentText())
+                    self.warning_using_dummy_textbox.setText("Connected")
+                else:
+                    self.warning_using_dummy_textbox.setText("Wrong address")
             except visa.errors.VisaIOError:
-                self.warning_using_dummy_textbox.setText("Not connected - check address")
+                self.warning_using_dummy_textbox.setText("Time out error - check device power on")
         else:
             self.MotionDriver=DummyMotionDriver(self.drive_motion_adresses_combo.currentText())
             self.warning_using_dummy_textbox.setText("Warning using dummy - device not connected")

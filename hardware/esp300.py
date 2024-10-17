@@ -1,22 +1,18 @@
 import pyvisa as visa
 from pymeasure.instruments import Instrument
 import time
+import logging
+log = logging.getLogger(__name__) 
+log.addHandler(logging.NullHandler()) 
 
 
 class Esp300():
-    # Enable Visa port
-    
-    #address='GPIB0::20::INSTR'
-    #my_instrument = rm.open_resource(address)
-
-
-    # init
+    TAKE_OFF_PROTECTION=0.05
     def __init__(self,address,**kwargs):
         #super().__init__(**kwargs)
         self.timeout = 2
         rm = visa.ResourceManager()
         self.my_instrument = rm.open_resource(address)
-        print(self.ask("*IDN"))
         
         
 
@@ -122,6 +118,12 @@ class Esp300():
             z_pos=self.pos_3()
 
             self.goTo_3(z_pos-disconnect_length) #Disconnecting
+
+            if abs((z_pos-disconnect_length)-self.pos_3())>self.TAKE_OFF_PROTECTION:
+                self.disable()
+                print("Take off Failure")
+                log.error("Automati station - Take off Failure")
+
             
             self.goTo_2(float(global_xyname[0]))
             self.goTo_1(float(global_xyname[1]))
@@ -132,6 +134,10 @@ class Esp300():
             z_pos=self.pos_1()
 
             self.goTo_1(z_pos-disconnect_length) #Disconnecting
+            if abs((z_pos-disconnect_length)-self.pos_1())>self.TAKE_OFF_PROTECTION:
+                self.disable()
+                print("Take off Failure")
+                log.error("Automati station - Take off Failure")
             
             self.goTo_2(float(global_xyname[0]))
             self.goTo_3(float(global_xyname[1]))
