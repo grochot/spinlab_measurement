@@ -50,7 +50,7 @@ class ExpandDialog(QtWidgets.QDialog):
         if not self.combo.currentText() in self.params:
             msg = QtWidgets.QMessageBox()
             msg.setIcon(QtWidgets.QMessageBox.Critical)
-            msg.setText("Invalid parameter")
+            msg.setText("Invalid parameter!")
             msg.setWindowTitle("Error")
             msg.exec_()
             return False
