@@ -40,3 +40,10 @@ class DummyMotionDriver:
 
     def high_level_motion_driver(self,global_xyname,sample_in_plane,disconnect_length):
         pass
+
+
+    def disconnect(self,sample_in_plane,disconnect_length):
+        pass
+
+    def idle(self,z_pos,sample_in_plane,disconnect_length):
+        pass

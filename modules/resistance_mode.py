@@ -200,31 +200,7 @@ class ResistanceMode():
                 self.MotionDriver=DummyMotionDriver("sth")
             else:
                 self.MotionDriver=Esp300(self.address_automaticstation)
-            self.MotionDriver.high_level_motion_driver(self.global_xyname,self.sample_in_plane,self.disconnect_length)
-
-
-        '''    if self.sample_in_plane:
-                self.z_pos=self.MotionDriver.pos_3()
-
-                self.MotionDriver.goTo_3(self.z_pos-self.disconnect_length) #Disconnecting
-                
-                self.MotionDriver.goTo_2(float(self.global_xyname[0]))
-                self.MotionDriver.goTo_1(float(self.global_xyname[1]))
-
-                self.MotionDriver.goTo_3(self.z_pos) #Connecting
-
-            else:
-                self.z_pos=self.MotionDriver.pos_1()
-
-                self.MotionDriver.goTo_1(self.z_pos-self.disconnect_length) #Disconnecting
-                
-                self.MotionDriver.goTo_2(float(self.global_xyname[0]))
-                self.MotionDriver.goTo_3(float(self.global_xyname[1]))
-
-                self.MotionDriver.goTo_1(self.z_pos) #Connecting
-
-
-            self.MotionDriver.pos_1() #Non sense reading position to stop program'''
+            self.z_pos=self.MotionDriver.high_level_motion_driver(self.global_xyname,self.sample_in_plane,self.disconnect_length)
 
 
 
@@ -309,6 +285,7 @@ class ResistanceMode():
         ResistanceMode.idle(self)
 
     def idle(self):
+        self.MotionDriver.idle(self.z_pos,self.sample_in_plane,self.disconnect_length)
         self.sourcemeter_obj.shutdown()
         sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
         if (self.rotationstation or self.rotation_axis=="None") and self.return_the_rotationstation: 

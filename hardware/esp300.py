@@ -113,7 +113,28 @@ class Esp300():
         print("work mo",self.ask("2MO?"))
 
 #HighLevel part
-    def high_level_motion_driver(self,global_xyname,sample_in_plane,disconnect_length):
+
+    def idle(self,z_pos,sample_in_plane,disconnect_length):
+        if sample_in_plane:
+            #z_pos=self.pos_3()
+
+            self.goTo_3(z_pos-disconnect_length) #Disconnecting
+
+            if abs((z_pos-disconnect_length)-self.pos_3())>self.TAKE_OFF_PROTECTION:
+                self.disable()
+                print("Take off Failure")
+                log.error("Automati station - Take off Failure")
+
+        else:
+            #z_pos=self.pos_1()
+
+            self.goTo_1(z_pos-disconnect_length) #Disconnecting
+            if abs((z_pos-disconnect_length)-self.pos_1())>self.TAKE_OFF_PROTECTION:
+                self.disable()
+                print("Take off Failure")
+                log.error("Automati station - Take off Failure")
+
+    def disconnect(self,sample_in_plane,disconnect_length):
         if sample_in_plane:
             z_pos=self.pos_3()
 
@@ -124,12 +145,6 @@ class Esp300():
                 print("Take off Failure")
                 log.error("Automati station - Take off Failure")
 
-            
-            self.goTo_2(float(global_xyname[0]))
-            self.goTo_1(float(global_xyname[1]))
-
-            self.goTo_3(z_pos) #Connecting
-
         else:
             z_pos=self.pos_1()
 
@@ -138,6 +153,23 @@ class Esp300():
                 self.disable()
                 print("Take off Failure")
                 log.error("Automati station - Take off Failure")
+
+        self.pos_1() #Non sense reading position to stop program
+        return z_pos
+
+
+
+    def high_level_motion_driver(self,global_xyname,sample_in_plane,disconnect_length):
+        if sample_in_plane:
+            z_pos=self.disconnect(sample_in_plane,disconnect_length)
+
+            self.goTo_2(float(global_xyname[0]))
+            self.goTo_1(float(global_xyname[1]))
+
+            self.goTo_3(z_pos) #Connecting
+
+        else:
+            z_pos=self.disconnect(sample_in_plane,disconnect_length)
             
             self.goTo_2(float(global_xyname[0]))
             self.goTo_3(float(global_xyname[1]))
@@ -146,9 +178,7 @@ class Esp300():
 
 
         self.pos_1() #Non sense reading position to stop program
-
-
-
+        return z_pos
 
 if __name__ == "__main__":
     dev=Esp300("GPIB0::20::INSTR")
