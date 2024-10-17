@@ -209,10 +209,11 @@ class HarmonicMode():
                 self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
       
 #Field initialization 
+        self.field_obj.field_constant = self.field_constant
         if self.rotationstation:
-            sweep_field_to_value(0.0, float(self.constant_field_value), self.field_constant, self.field_step, self.field_obj)
+            sweep_field_to_value(0.0, float(self.constant_field_value), self.field_step, self.field_obj)
         else:
-            sweep_field_to_value(0.0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
+            sweep_field_to_value(0.0, self.point_list[0], self.field_step, self.field_obj)
 
     
     def operating(self, point):
@@ -233,14 +234,14 @@ class HarmonicMode():
                     while self.rotationstation_obj.checkBusyAzimuth() == 'BUSY;':
                         sleep(0.01)
                 case "None":
-                    self.field_obj.set_field(point*self.field_constant)
+                    self.field_obj.set_field(point)
                     self.polar_angle = self.set_polar_angle
                     self.azimuthal_angle = self.set_azimuthal_angle
                     sleep(self.delay_field)
 
         else:                
             #set_field
-            self.field_obj.set_field(point*self.field_constant)
+            self.field_obj.set_field(point)
             sleep(self.delay_field)
             
 

@@ -184,8 +184,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.settings_button.clicked.connect(lambda: self.change_layout_type(False))
         self.parameters_button.clicked.connect(lambda: self.change_layout_type(True))
 
-        self.refresh_button = QtWidgets.QPushButton('Refresh', self)
-        self.refresh_button.clicked.connect(self.refresh)
+        self.refresh_addr_button = QtWidgets.QPushButton('Refresh Addr', self)
+        self.refresh_addr_button.clicked.connect(self.refresh_addresses)
 
         self.browser_widget = BrowserWidget(
             self.procedure_class,
@@ -288,8 +288,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         queue_abort_hbox.setContentsMargins(-1, 6, -1, 6)
         queue_abort_hbox.addWidget(self.queue_button)
         queue_abort_hbox.addWidget(self.abort_button)
-        queue_abort_hbox.addWidget(self.refresh_button)
-        queue_abort_hbox.addStretch()
+        queue_abort_hbox.addWidget(self.refresh_addr_button)
+        # queue_abort_hbox.addStretch()
         parameters_buttons_layout.addWidget(self.settings_button)
         parameters_buttons_layout.addWidget(self.parameters_button)
         inputs_vbox.addLayout(parameters_buttons_layout)
@@ -702,7 +702,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         key, parameter = parameter_tuple
         getattr(self.inputs, key).set_parameter(parameter)
 
-    def refresh(self):
+    def refresh_addresses(self):
         raise NotImplementedError("Refresh method must be overwritten by the child class.")
 
     def _queue(self, checked):
