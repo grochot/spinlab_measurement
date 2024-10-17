@@ -1,5 +1,4 @@
 -pomysly:
--Zrob zeby wywalal blad gdy esp300 sie nie polaczy (załatw to try expect dla pyvisa.errors.VisaIOError - gdy nic nie podlaczone, przez idn (visa raw a nie w sterowniku) i porownanie - gdy cos jest podloczone do danego adresu)
--dorob modul do stafcji automatycznej z funkcjami
+-przez idn (visa raw a nie w sterowniku) i porownanie - gdy cos jest podloczone do danego adresu)
 -zabebzpieczenie tak aby sprawdził czy naprawde odjechal sondami od probki (na jakis epsilon jednym if to zalatwisz)
 

@@ -116,6 +116,34 @@ class Esp300():
     def test(self):
         print("work mo",self.ask("2MO?"))
 
+#HighLevel part
+    def high_level_motion_driver(self,global_xyname,sample_in_plane,disconnect_length):
+        if sample_in_plane:
+            z_pos=self.pos_3()
+
+            self.goTo_3(z_pos-disconnect_length) #Disconnecting
+            
+            self.goTo_2(float(global_xyname[0]))
+            self.goTo_1(float(global_xyname[1]))
+
+            self.goTo_3(z_pos) #Connecting
+
+        else:
+            z_pos=self.pos_1()
+
+            self.goTo_1(z_pos-disconnect_length) #Disconnecting
+            
+            self.goTo_2(float(global_xyname[0]))
+            self.goTo_3(float(global_xyname[1]))
+
+            self.goTo_1(z_pos) #Connecting
+
+
+        self.pos_1() #Non sense reading position to stop program
+
+
+
+
 if __name__ == "__main__":
     dev=Esp300("GPIB0::20::INSTR")
     dev.test()

@@ -1,4 +1,5 @@
 import pyvisa as visa
+from pyvisa.errors import VisaIOError
 from pymeasure.display.Qt import QtCore, QtWidgets, QtGui
 import sys
 #sys.path.append("/home/mariusz/moje_pliki/programowanie/python/spinlab_measurement/")
@@ -343,9 +344,12 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
     def make_connection_with_devices(self):
         if self.drive_motion_adresses_combo.currentText()!="None":
-            self.MotionDriver=Esp300(self.drive_motion_adresses_combo.currentText())
             
-            self.warning_using_dummy_textbox.setText("")
+            try:
+                self.MotionDriver=Esp300(self.drive_motion_adresses_combo.currentText())
+                self.warning_using_dummy_textbox.setText("")
+            except visa.errors.VisaIOError:
+                self.warning_using_dummy_textbox.setText("Not connected - check address")
         else:
             self.MotionDriver=DummyMotionDriver(self.drive_motion_adresses_combo.currentText())
             self.warning_using_dummy_textbox.setText("Warning using dummy - device not connected")
@@ -600,8 +604,12 @@ class ElementSelection(QtWidgets.QWidget):
 
 
     def load_previous_state(self):
-        for i in range(0,len(self.checkboxes),1):
-            self.checkboxes[i].setChecked(str(self.settings.value('element_checked_{0}'.format(i), '')).lower()=="true")
+        #Chceck that is posible
+        number_of_element_in_the_x_axis_load=self.settings.value('number_of_element_in_the_x_axis_textbox', '')
+        number_of_element_in_the_y_axis_load=self.settings.value('number_of_element_in_the_y_axis_textbox', '')
+        if int(number_of_element_in_the_x_axis_load)==self.number_of_element_in_the_x_axis and int(number_of_element_in_the_y_axis_load)==self.number_of_element_in_the_y_axis:
+            for i in range(0,len(self.checkboxes),1):
+                self.checkboxes[i].setChecked(str(self.settings.value('element_checked_{0}'.format(i), '')).lower()=="true")
 
     def clean(self):
         for i in range(0,len(self.checkboxes),1):
