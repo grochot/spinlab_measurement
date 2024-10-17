@@ -46,8 +46,8 @@ from ..widgets import (
     EstimatorWidget,
     CurrentPointWidget,
     ClearDialog,
-    ParametersWidget,
     ExpandDialog,
+    ParametersWidget
 )
 from ...experiment import Results, Procedure, unique_filename
 from packages.point_del_widget import PointDelWidget
@@ -567,7 +567,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 if delete_files:
                     os.unlink(experiment.data_filename)
             else:
-                i += 1  
+                i += 1
             
     def expand(self):
         if self.is_expanded:
