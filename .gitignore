@@ -162,6 +162,7 @@ cython_debug/
 #.idea/
 
 # parameters
-parameters.json 
 
-*.txt
+
+*.csv
+CameraControl_ipCameras.json

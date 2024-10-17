@@ -54,3 +54,12 @@ def _lockin_timeconstant(choice:str):
        "30 ks": 30e3
     }
     return TIME_CONSTANTS[choice]
+
+def _lockin_filter_slope(choice:str):
+    FILTER_SLOPES = {
+        "6 dB/Oct": 6,
+        "12 dB/Oct": 12,
+        "18 dB/Oct": 18,
+        "24 dB/Oct": 24
+    }
+    return FILTER_SLOPES[choice]

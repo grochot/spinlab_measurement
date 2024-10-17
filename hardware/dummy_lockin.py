@@ -1,11 +1,10 @@
 import re
 import time
 import numpy as np
+from random import randint
 from enum import IntFlag
-from pymeasure.instruments import Instrument, discreteTruncate
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_discrete_set, truncated_range
-
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set, truncated_range, discreteTruncate
 
 class LIAStatus(IntFlag):
     """ IntFlag type that is returned by the lia_status property.
@@ -209,7 +208,9 @@ class DummyLockin():
         pass
 
     def snap(self, val1="X", val2="Y", *vals):
-        return [0,0]
+        num1 = randint(0, 100)
+        num2 = randint(0,100)
+        return [num1,num2]
     
 
 # loc = SR830('GPIB0::8::INSTR')

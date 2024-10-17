@@ -30,3 +30,6 @@ class RotationStageDummy:
 
     def checkBusyAzimuth(self):
         pass
+
+    def goToZero(self):
+        pass

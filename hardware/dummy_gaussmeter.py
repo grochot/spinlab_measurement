@@ -1,4 +1,5 @@
 import numpy as np
+from random import random
 class DummyGaussmeter:
     def __init__(self, resource_name):
         pass
@@ -7,4 +8,4 @@ class DummyGaussmeter:
     def resolution(self, resolution):
         pass
     def measure(self):
-        return np.nan
+        return random() * 1000

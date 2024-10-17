@@ -32,7 +32,12 @@ class DummySourcemeter:
     current = 1
    
     voltage = 1
+
+    def high_z_source(self):
+        pass
        
+    def disable_source(self):
+        pass
    
 
 

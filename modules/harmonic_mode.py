@@ -5,7 +5,7 @@ import logging
 from hardware.daq import DAQ
 
 from hardware.lakeshore import Lakeshore
-
+from hardware.GM_700 import GM700
 from hardware.sr830 import SR830
 from hardware.dummy_lockin import DummyLockin
 from hardware.dummy_gaussmeter import DummyGaussmeter
@@ -13,7 +13,7 @@ from hardware.dummy_field import DummyField
 from hardware.rotation_stage import RotationStage
 from hardware.rotation_stage_dummy import RotationStageDummy
 from logic.vector import Vector
-from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity 
+from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity, _lockin_filter_slope
 from logic.sweep_field_to_zero import sweep_field_to_zero 
 from logic.sweep_field_to_value import sweep_field_to_value
 log = logging.getLogger(__name__) 
@@ -44,7 +44,6 @@ class HarmonicMode():
         lockin_sine_amplitude, 
         lockin_channel1, 
         lockin_channel2,
-        set_field_value ,
         field_constant,
         gaussmeter_range, 
         gaussmeter_resolution, 
@@ -55,11 +54,16 @@ class HarmonicMode():
         constant_field_value:float, 
         rotation_axis:str, 
         rotation_polar_constant:float, 
-        rotation_azimuth_constant:float ) -> None: 
+        rotation_azimuth_constant:float, 
+        set_polar_angle:float, 
+        set_azimuthal_angle:float,
+        hold_the_field_after_measurement:bool,
+        return_the_rotationstation:bool,
+        lockin_slope:str
+         ) -> None: 
         self.set_automaticstation = set_automaticstation
         self.set_lockin = set_lockin
         self.set_field = set_field
-        self.set_field_value = set_field_value
         self.set_gaussmeter = set_gaussmeter
         self.set_roationstation = set_roationstation
         self.address_lockin = address_lockin
@@ -93,7 +97,15 @@ class HarmonicMode():
         self.rotation_polar_constant = rotation_polar_constant
         self.rotation_azimuth_constant = rotation_azimuth_constant
         self.rotationstation = rotationstation
-        ## parameter initialization 
+        self.set_polar_angle = set_polar_angle
+        self.set_azimuthal_angle = set_azimuthal_angle
+        self.hold_the_field_after_measurement=hold_the_field_after_measurement
+        self.return_the_rotationstation = return_the_rotationstation
+        
+        self.lockin_slope = lockin_slope
+
+
+## INITIALIZATION:
         
         
         
@@ -102,6 +114,7 @@ class HarmonicMode():
         if self.vector != "":
             self.vector_obj = Vector()
             self.point_list = self.vector_obj.generate_vector(self.vector)
+            print(self.point_list)
         else:
             log.error("Vector is not defined")
             self.point_list = [1]
@@ -109,10 +122,16 @@ class HarmonicMode():
 
 
     def initializing(self):
-        # Hardware objects initialization
+
+# Hardware objects initialization
         match self.set_lockin:
             case "SR830":
-                self.lockin_obj = SR830(self.address_lockin)
+                try:
+                    self.lockin_obj = SR830(self.address_lockin)
+                except:
+                    self.lockin_obj = DummyLockin()
+                    log.warning('Used dummy Lockin.')
+
             case "Zurich":
                 pass
             case _: 
@@ -122,6 +141,8 @@ class HarmonicMode():
         match self.set_gaussmeter: 
             case "Lakeshore": 
                 self.gaussmeter_obj = Lakeshore(self.address_gaussmeter)
+            case "GM700":
+                self.gaussmeter_obj = GM700(self.address_gaussmeter)
             case _:
                 self.gaussmeter_obj = DummyGaussmeter(self.address_gaussmeter)
                 log.warning('Used dummy Gaussmeter.')
@@ -139,13 +160,14 @@ class HarmonicMode():
             case _: 
                 pass
        
-        #Lockin initialization
+#Lockin initialization
         self.lockin_obj.frequency = self.lockin_frequency
         if self.lockin_sensitivity == "Auto Gain":
             self.lockin_obj.auto_gain()
         else:
             self.lockin_obj.sensitivity = _lockin_sensitivity(self.lockin_sensitivity)
         self.lockin_obj.time_constant = _lockin_timeconstant(self.lockin_timeconstant)
+        self.lockin_obj.filter_slope = _lockin_filter_slope(self.lockin_slope)
         self.lockin_obj.harmonic = self.lockin_harmonic
         self.lockin_obj.sine_voltage = self.lockin_sine_amplitude
         self.lockin_obj.channel1 = self.lockin_channel1
@@ -155,28 +177,42 @@ class HarmonicMode():
         self.lockin_obj.reference_source = self.lockin_reference_source
    
 
-        #Lakeshore initalization 
+#Lakeshore initalization 
         self.gaussmeter_obj.range(self.gaussmeter_range)
         self.gaussmeter_obj.resolution(self.gaussmeter_resolution)
 
 
+
+### Set rotation station to constant angle
         if self.rotationstation: 
             try:
                 self.rotationstation_obj = RotationStage(self.rotationstation_port)
                 match self.rotation_axis:
                     case "Polar": 
                         self.rotationstation_obj.goToAzimuth(self.rotation_azimuth_constant)
+                        while self.rotationstation_obj.checkBusyAzimuth() == 'BUSY;':
+                            sleep(0.01)
                     case "Azimuthal": 
                         self.rotationstation_obj.goToPolar(self.rotation_polar_constant)
+                        while self.rotationstation_obj.checkBusyPolar() == 'BUSY;':
+                            sleep(0.01)
+                    case "None":
+                        self.rotationstation_obj.goToAzimuth(self.set_azimuthal_angle)
+                        while self.rotationstation_obj.checkBusyAzimuth() == 'BUSY;':
+                            sleep(0.01)
+                        self.rotationstation_obj.goToPolar(self.set_polar_angle)
+                        while self.rotationstation_obj.checkBusyPolar() == 'BUSY;':
+                            sleep(0.01)
+
             except:
-                log.error("Rotation station is not initialized")
+                log.warning("Rotation station is not initialized")
                 self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
       
-        #Field initialization 
+#Field initialization 
         if self.rotationstation:
-            sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
+            sweep_field_to_value(0.0, float(self.constant_field_value), self.field_constant, self.field_step, self.field_obj)
         else:
-            sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
+            sweep_field_to_value(0.0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
 
     
     def operating(self, point):
@@ -187,15 +223,21 @@ class HarmonicMode():
                 case "Polar":
                     self.rotationstation_obj.goToPolar(point)
                     self.polar_angle = point
-                    self.azimuthal_angle = np.nan
+                    self.azimuthal_angle = self.rotation_azimuth_constant
                     while self.rotationstation_obj.checkBusyPolar() == 'BUSY;':
                         sleep(0.01)
                 case "Azimuthal":
                     self.rotationstation_obj.goToAzimuth(point)
-                    self.polar_angle = np.nan
+                    self.polar_angle = self.rotation_polar_constant
                     self.azimuthal_angle = point
                     while self.rotationstation_obj.checkBusyAzimuth() == 'BUSY;':
                         sleep(0.01)
+                case "None":
+                    self.field_obj.set_field(point*self.field_constant)
+                    self.polar_angle = self.set_polar_angle
+                    self.azimuthal_angle = self.set_azimuthal_angle
+                    sleep(self.delay_field)
+
         else:                
             #set_field
             self.field_obj.set_field(point*self.field_constant)
@@ -203,12 +245,12 @@ class HarmonicMode():
             
 
 
-
-
-
         #measure_field
         if self.set_gaussmeter == "none":
-            self.tmp_field = point
+            if self.rotationstation:
+                self.tmp_field = self.constant_field_value
+            else: 
+                self.tmp_field = point
         else: 
             self.tmp_field = self.gaussmeter_obj.measure()
         sleep(self.delay_bias)
@@ -230,7 +272,7 @@ class HarmonicMode():
             'Frequency (Hz)': math.nan, 
             'X (V)':  self.result1 if self.lockin_channel1 == "X" else (self.result2 if self.lockin_channel2 == "X" else math.nan),   
             'Y (V)':  self.result1 if self.lockin_channel1 == "Y" else (self.result2 if self.lockin_channel2 == "Y" else math.nan), 
-            'Phase': self.result1 if self.lockin_channel1 == "Phase" else (self.result2 if self.lockin_channel2 == "Phase" else math.nan),
+            'Phase': self.result1 if self.lockin_channel1 == "Theta" else (self.result2 if self.lockin_channel2 == "Theta" else math.nan),
             'Polar angle (deg)': self.polar_angle if self.rotationstation == True else math.nan,
             'Azimuthal angle (deg)': self.azimuthal_angle if self.rotationstation == True else math.nan
             }
@@ -242,4 +284,11 @@ class HarmonicMode():
         HarmonicMode.idle(self)
 
     def idle(self):
-        sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
+        
+        if self.hold_the_field_after_measurement==False:
+            sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
+
+        if self.return_the_rotationstation and self.rotationstation == True: 
+            self.rotationstation_obj.goToZero() 
+
+
