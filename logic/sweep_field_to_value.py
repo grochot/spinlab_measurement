@@ -1,9 +1,8 @@
 import numpy as np
 from time import sleep
-from hardware.daq import DAQ
 
 
-def sweep_field_to_value(start_field: float, end_field: float, field_step: float, daq: DAQ, abort_callback=None) -> float:
+def sweep_field_to_value(start_field: float, end_field: float, field_step: float, daq, abort_callback=None) -> float:
     """
     Gradually sweeps the magnetic field from a starting value to a target value, adjusting the voltage in increments
     to ensure a smooth transition.
