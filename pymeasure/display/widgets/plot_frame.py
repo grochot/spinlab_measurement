@@ -121,7 +121,7 @@ class PlotFrame(QtWidgets.QFrame):
     def collapse(self):
         for item in self.plot.items:
             if isinstance(item, self.ResultsClass):
-                item.setOffset(0)
+                item.setOffset(0.0)
 
     def parse_axis(self, axis):
         """ Returns the units of an axis by searching the string
