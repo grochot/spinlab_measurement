@@ -45,10 +45,12 @@ from ..widgets import (
     FileInputWidget,
     EstimatorWidget,
     CurrentPointWidget,
-    ClearDialog
+    ClearDialog,
+    ParametersWidget
 )
 from ...experiment import Results, Procedure, unique_filename
 from packages.point_del_widget import PointDelWidget
+from logic.open_in_explorer import open_in_explorer
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -182,8 +184,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.settings_button.clicked.connect(lambda: self.change_layout_type(False))
         self.parameters_button.clicked.connect(lambda: self.change_layout_type(True))
 
-        self.refresh_button = QtWidgets.QPushButton('Refresh', self)
-        self.refresh_button.clicked.connect(self.refresh)
+        self.refresh_addr_button = QtWidgets.QPushButton('Refresh Addr', self)
+        self.refresh_addr_button.clicked.connect(self.refresh_addresses)
 
         self.browser_widget = BrowserWidget(
             self.procedure_class,
@@ -252,15 +254,30 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.pointWidget = PointDelWidget(parent=self)
             
         self.clear_dialog = ClearDialog(parent=self)
+        
+        self.parameters_widget = ParametersWidget()
+        self.parameters_widget.sigSetParameter.connect(self.set_parameter_from_widget)
+        
+        self.dockShowWidget = QtWidgets.QWidget(self)
+        dockShowLayout = QtWidgets.QHBoxLayout()
+        dockShowLayout.setContentsMargins(-1, 0, -1, 0)
+        self.dockShowWidget.setLayout(dockShowLayout)
+        self.dockShowWidget.setMaximumHeight(30)
 
     def _layout(self):
         self.main = QtWidgets.QWidget(self)
+        
+        self.show_dock = QtWidgets.QDockWidget('Show/Hide')
+        self.show_dock.setWidget(self.dockShowWidget)
+        self.show_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.show_dock)
         
         current_pt_dock = QtWidgets.QDockWidget('Current Point')
         current_pt_dock.setWidget(self.current_point)
         current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
         current_pt_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, current_pt_dock)
+        current_pt_dock.setVisible(False)
 
         inputs_dock = QtWidgets.QWidget(self)
         inputs_vbox = QtWidgets.QVBoxLayout(self.main)
@@ -271,8 +288,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         queue_abort_hbox.setContentsMargins(-1, 6, -1, 6)
         queue_abort_hbox.addWidget(self.queue_button)
         queue_abort_hbox.addWidget(self.abort_button)
-        queue_abort_hbox.addWidget(self.refresh_button)
-        queue_abort_hbox.addStretch()
+        queue_abort_hbox.addWidget(self.refresh_addr_button)
+        # queue_abort_hbox.addStretch()
         parameters_buttons_layout.addWidget(self.settings_button)
         parameters_buttons_layout.addWidget(self.parameters_button)
         inputs_vbox.addLayout(parameters_buttons_layout)
@@ -299,6 +316,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             sequencer_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
             sequencer_dock.setVisible(False)
             self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, sequencer_dock)
+            
+            showSequencerButton = QtWidgets.QPushButton('Sequencer', self.dockShowWidget)
+            self.dockShowWidget.layout().addWidget(showSequencerButton)
+            showSequencerButton.clicked.connect(lambda: sequencer_dock.setVisible(not sequencer_dock.isVisible()))
 
         if self.use_estimator:
             estimator_dock = QtWidgets.QDockWidget('Estimator')
@@ -308,6 +329,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             estimator_dock.setVisible(False)
             self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, estimator_dock)
             
+            showEstimatorButton = QtWidgets.QPushButton('Estimator', self.dockShowWidget)
+            self.dockShowWidget.layout().addWidget(showEstimatorButton)
+            showEstimatorButton.clicked.connect(lambda: estimator_dock.setVisible(not estimator_dock.isVisible()))
+            
         self.point_dock = QtWidgets.QDockWidget('Point Removal')
         self.point_dock.setWidget(self.pointWidget)
         self.point_dock.visibilityChanged.connect(self.pointWidget.setMode)
@@ -315,6 +340,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.point_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.point_dock.setVisible(False)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.point_dock)
+        
+        showPointButton = QtWidgets.QPushButton('Point Removal', self.dockShowWidget)
+        self.dockShowWidget.layout().addWidget(showPointButton)
+        showPointButton.clicked.connect(lambda: self.point_dock.setVisible(not self.point_dock.isVisible()))
 
         self.tabs = QtWidgets.QTabWidget(self.main)
         for wdg in self.widget_list:
@@ -397,6 +426,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             action_open.triggered.connect(
                 lambda: self.open_file_externally(experiment.results.data_filename))
             menu.addAction(action_open)
+            
+            # Open in Explorer
+            action_open_explorer = QtGui.QAction(menu)
+            action_open_explorer.setText("Reveal in File Explorer")
+            action_open_explorer.triggered.connect(
+                lambda: open_in_explorer(experiment.results.data_filename))
+            menu.addAction(action_open_explorer)
 
             # Save a copy of the datafile
             action_save = QtGui.QAction(menu)
@@ -404,6 +440,17 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             action_save.triggered.connect(
                 lambda: self.save_experiment_copy(experiment.results.data_filename))
             menu.addAction(action_save)
+            
+            # Delete
+            action_delete = QtGui.QAction(menu)
+            action_delete.setText("Delete Data File")
+            if self.manager.is_running():
+                if self.manager.running_experiment() == experiment:  # Experiment running
+                    action_delete.setEnabled(False)
+            action_delete.triggered.connect(lambda: self.delete_experiment_data(experiment))
+            menu.addAction(action_delete)
+            
+            menu.addSeparator()
 
             # Change Color
             action_change_color = QtGui.QAction(menu)
@@ -420,15 +467,16 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                     action_remove.setEnabled(False)
             action_remove.triggered.connect(lambda: self.remove_experiment(experiment))
             menu.addAction(action_remove)
-
-            # Delete
-            action_delete = QtGui.QAction(menu)
-            action_delete.setText("Delete Data File")
-            if self.manager.is_running():
-                if self.manager.running_experiment() == experiment:  # Experiment running
-                    action_delete.setEnabled(False)
-            action_delete.triggered.connect(lambda: self.delete_experiment_data(experiment))
-            menu.addAction(action_delete)
+            
+            menu.addSeparator()
+            
+            # Show parameters
+            action_show = QtGui.QAction(menu)
+            action_show.setText("Show Parameters")
+            action_show.triggered.connect(
+                lambda: self.show_parameters(experiment.results.data_filename, experiment.procedure))
+            menu.addAction(action_show)
+            
 
             # Use parameters
             action_use = QtGui.QAction(menu)
@@ -629,6 +677,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         browser_item = BrowserItem(results, curve_color)
         return Experiment(results, curve_list, browser_item)
+    
+    def show_parameters(self, filename, procedure):
+        self.parameters_widget.filename = os.path.basename(filename)
+        self.parameters_widget.procedure = procedure
+        self.parameters_widget.show()
 
     def set_parameters(self, parameters):
         """ This method should be overwritten by the child class. The
@@ -639,10 +692,17 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if not isinstance(self.inputs, InputsWidget):
             raise Exception("ManagedWindow can not set parameters"
                             " without a InputsWidget")
+        
         self.change_layout_type(parameters["layout_type"].value)
         self.inputs.set_parameters(parameters)
+        
+    def set_parameter_from_widget(self, parameter_tuple):
+        if parameter_tuple is None:
+            return
+        key, parameter = parameter_tuple
+        getattr(self.inputs, key).set_parameter(parameter)
 
-    def refresh(self):
+    def refresh_addresses(self):
         raise NotImplementedError("Refresh method must be overwritten by the child class.")
 
     def _queue(self, checked):

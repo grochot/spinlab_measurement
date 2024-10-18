@@ -188,11 +188,12 @@ class ResistanceMode():
         self.gaussmeter_obj.resolution(self.gaussmeter_resolution)
       
 
-        #Field initialization 
+        #Field initialization
+        self.field_obj.field_constant = self.field_constant
         if self.rotationstation:
-            sweep_field_to_value(0, self.constant_field_value, self.field_constant, self.field_step, self.field_obj)
+            sweep_field_to_value(0, self.constant_field_value, self.field_step, self.field_obj)
         else:
-            sweep_field_to_value(0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
+            sweep_field_to_value(0, self.point_list[0], self.field_step, self.field_obj)
 
         #MotionDriver
         if self.automaticstation:
@@ -220,7 +221,7 @@ class ResistanceMode():
 
         else:
             pass
-        self.actual_set_field = self.field_obj.set_field(point*self.field_constant)
+        self.field_obj.set_field(point)
         sleep(self.delay_field)
 
 

@@ -13,7 +13,7 @@ from hardware.dummy_field import DummyField
 from hardware.rotation_stage import RotationStage
 from hardware.rotation_stage_dummy import RotationStageDummy
 from logic.vector import Vector
-from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity 
+from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity, _lockin_filter_slope
 from logic.sweep_field_to_zero import sweep_field_to_zero 
 from logic.sweep_field_to_value import sweep_field_to_value
 log = logging.getLogger(__name__) 
@@ -58,8 +58,8 @@ class HarmonicMode():
         set_polar_angle:float, 
         set_azimuthal_angle:float,
         hold_the_field_after_measurement:bool,
-        return_the_rotationstation:bool
-
+        return_the_rotationstation:bool,
+        lockin_slope:str
          ) -> None: 
         self.set_automaticstation = set_automaticstation
         self.set_lockin = set_lockin
@@ -101,6 +101,8 @@ class HarmonicMode():
         self.set_azimuthal_angle = set_azimuthal_angle
         self.hold_the_field_after_measurement=hold_the_field_after_measurement
         self.return_the_rotationstation = return_the_rotationstation
+        
+        self.lockin_slope = lockin_slope
 
 
 ## INITIALIZATION:
@@ -165,6 +167,7 @@ class HarmonicMode():
         else:
             self.lockin_obj.sensitivity = _lockin_sensitivity(self.lockin_sensitivity)
         self.lockin_obj.time_constant = _lockin_timeconstant(self.lockin_timeconstant)
+        self.lockin_obj.filter_slope = _lockin_filter_slope(self.lockin_slope)
         self.lockin_obj.harmonic = self.lockin_harmonic
         self.lockin_obj.sine_voltage = self.lockin_sine_amplitude
         self.lockin_obj.channel1 = self.lockin_channel1
@@ -206,10 +209,11 @@ class HarmonicMode():
                 self.rotationstation_obj = RotationStageDummy(self.rotationstation_port)
       
 #Field initialization 
+        self.field_obj.field_constant = self.field_constant
         if self.rotationstation:
-            sweep_field_to_value(0.0, float(self.constant_field_value), self.field_constant, self.field_step, self.field_obj)
+            sweep_field_to_value(0.0, float(self.constant_field_value), self.field_step, self.field_obj)
         else:
-            sweep_field_to_value(0.0, self.point_list[0], self.field_constant, self.field_step, self.field_obj)
+            sweep_field_to_value(0.0, self.point_list[0], self.field_step, self.field_obj)
 
     
     def operating(self, point):
@@ -230,14 +234,14 @@ class HarmonicMode():
                     while self.rotationstation_obj.checkBusyAzimuth() == 'BUSY;':
                         sleep(0.01)
                 case "None":
-                    self.field_obj.set_field(point*self.field_constant)
+                    self.field_obj.set_field(point)
                     self.polar_angle = self.set_polar_angle
                     self.azimuthal_angle = self.set_azimuthal_angle
                     sleep(self.delay_field)
 
         else:                
             #set_field
-            self.field_obj.set_field(point*self.field_constant)
+            self.field_obj.set_field(point)
             sleep(self.delay_field)
             
 

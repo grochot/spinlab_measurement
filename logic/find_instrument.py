@@ -50,6 +50,8 @@ class FindInstrument():
         for device in system.devices:
             for channel in device.ao_physical_chans:
                 self.lista.append(channel.name)
+            for channel in device.do_lines:
+                self.lista.append(channel.name)
         self.lista.append("None")
         return self.lista
 
