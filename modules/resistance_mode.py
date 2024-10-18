@@ -200,7 +200,7 @@ class ResistanceMode():
                 self.MotionDriver=DummyMotionDriver("sth")
             else:
                 self.MotionDriver=Esp300(self.address_automaticstation)
-            self.z_pos=self.MotionDriver.high_level_motion_driver(self.global_xyname,self.sample_in_plane,self.disconnect_length)
+                self.MotionDriver.high_level_motion_driver(self.global_xyname,self.sample_in_plane,self.disconnect_length)
 
 
 
@@ -285,7 +285,6 @@ class ResistanceMode():
         ResistanceMode.idle(self)
 
     def idle(self):
-        self.MotionDriver.idle(self.z_pos,self.sample_in_plane,self.disconnect_length)
         self.sourcemeter_obj.shutdown()
         sweep_field_to_zero(self.tmp_field, self.field_constant, self.field_step, self.field_obj)
         if (self.rotationstation or self.rotation_axis=="None") and self.return_the_rotationstation: 

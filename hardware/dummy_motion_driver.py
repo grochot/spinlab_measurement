@@ -44,6 +44,3 @@ class DummyMotionDriver:
 
     def disconnect(self,sample_in_plane,disconnect_length):
         pass
-
-    def idle(self,z_pos,sample_in_plane,disconnect_length):
-        pass
