@@ -30,6 +30,7 @@
     "address_generator": "None",
     "address_lfgen": "None",
     "address_pulsegenerator": "None",
+    "address_automaticstation": "None",
     "sourcemter_source": "CURR",
     "sourcemeter_compliance": 0.5,
     "sourcemeter_channel": "Channel A",
