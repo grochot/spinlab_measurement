@@ -195,7 +195,7 @@ class SpinLabMeasurement(Procedure):
     kriostat_temperature = FloatParameter("Kriostat Temperature", default = parameters_from_file["kriostat_temperature"], units="K", vis_cond=(PARAMETERS, lambda set_kriostat: set_kriostat == True))
 
     #AutomaticStationParameters
-    global_xyname=Parameter("Global \"[x,y,name]\"",vis_cond=(NOT_VISIBLE))
+    global_xyname=Parameter("Global \"[x,y,name]\"",default='', vis_cond=(NOT_VISIBLE))
     disconnect_length=FloatParameter("Disconnect length", default = parameters_from_file["disconnect_length"], vis_cond=(PARAMETERS, lambda set_automaticstation: set_automaticstation == True))
     sample_in_plane=BooleanParameter("Perpendicular?", default=parameters_from_file["sample_in_plane"],  vis_cond=(PARAMETERS, lambda set_automaticstation: set_automaticstation == True))
 
