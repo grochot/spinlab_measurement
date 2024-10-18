@@ -1,5 +1,4 @@
 from time import sleep
-import math
 import numpy as np
 import logging
 
@@ -23,7 +22,6 @@ from hardware.dummy_multimeter import DummyMultimeter
 from hardware.rotation_stage import RotationStage
 from hardware.rotation_stage_dummy import RotationStageDummy
 
-from logic.vector import Vector
 from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity, _lockin_filter_slope
 from logic.sweep_field_to_zero import sweep_field_to_zero
 from logic.sweep_field_to_value import sweep_field_to_value
@@ -38,18 +36,22 @@ class FMRMode(MeasurementMode):
 
     def initializing(self):
         # Hardware objects initialization
+
+        # Measurement object device initialization
         if self.p.set_measdevice_fmr == "LockIn":
+            # Lockin object initialization
             match self.p.set_lockin:
                 case "SR830":
                     self.lockin_obj = SR830(self.p.address_lockin)
                 case "Zurich":
-                    pass
+                    raise NotImplementedError("Zurich lockin is not implemented")
                 case _:
                     self.lockin_obj = DummyLockin()
                     log.warning("Used dummy Lockin.")
-
             self.multimeter_obj = DummyMultimeter(self.p.address_multimeter)
-        else:
+
+        elif self.p.set_measdevice_fmr == "Multimeter":
+            # Multimeter object initialization
             match self.p.set_multimeter:
                 case "Agilent 34400":
                     self.multimeter_obj = Agilent34410A(self.p.address_multimeter)
@@ -59,7 +61,10 @@ class FMRMode(MeasurementMode):
 
             self.lockin_obj = DummyLockin()
             self.p.set_lfgen = "none"
+        else:
+            raise ValueError(f"Measurement device: '{self.p.set_measdevice_fmr}' not supported")
 
+        # Gaussmeter object initialization
         match self.p.set_gaussmeter:
             case "Lakeshore":
                 self.gaussmeter_obj = Lakeshore(self.p.address_gaussmeter)
@@ -69,6 +74,7 @@ class FMRMode(MeasurementMode):
                 self.gaussmeter_obj = DummyGaussmeter(self.p.address_gaussmeter)
                 log.warning("Used dummy Gaussmeter.")
 
+        # Field controller object initialization
         match self.p.set_field_cntrl:
             case "DAQ":
                 self.field_obj = DAQ(self.p.address_daq)
@@ -76,12 +82,7 @@ class FMRMode(MeasurementMode):
                 self.field_obj = DummyField(self.p.address_daq)
                 log.warning("Used dummy DAQ.")
 
-        match self.p.set_automaticstation:
-            case True:
-                pass
-            case _:
-                pass
-
+        # High Frequency Generator object initialization
         match self.p.set_generator:
             case "Agilent":
                 self.generator_obj = FGenDriver(self.p.address_generator)
@@ -92,6 +93,7 @@ class FMRMode(MeasurementMode):
                 self.generator_obj = DummyFgenDriver()
                 log.warning("Used dummy Frequency Generator.")
 
+        # Low Frequency Generator object initialization (Helmholtz coil)
         match self.p.set_lfgen:
             case "SR830":
                 if type(self.lockin_obj) is DummyLockin:
@@ -102,7 +104,9 @@ class FMRMode(MeasurementMode):
                 self.lfgen_obj = DummyLFGenDriver()
                 log.warning("Used dummy Modulation Generator.")
 
+        # High Frequency Generator initialization
         self.generator_obj.initialization()
+
         # Lockin initialization
         self.lockin_obj.frequency = self.p.lockin_frequency
         if self.p.lockin_sensitivity == "Auto Gain":
@@ -129,15 +133,15 @@ class FMRMode(MeasurementMode):
         self.multimeter_obj.trigger_count = self.p.multimeter_average
         self.multimeter_obj.nplc = self.p.multimeter_nplc
 
-        # Modulation initalization
+        # Low Frequency Generator initalization
         if self.p.set_lfgen == "SR830":
             self.lockin_obj.reference_source = "Internal"
-        else:
-            self.lfgen_obj.set_shape("SIN")
-            self.lfgen_obj.set_freq(self.p.lfgen_freq)
-            self.lfgen_obj.set_amp(self.p.lfgen_amp)
 
-        # Field initialization
+        self.lfgen_obj.set_shape("SIN")
+        self.lfgen_obj.set_freq(self.p.lfgen_freq)
+        self.lfgen_obj.set_amp(self.p.lfgen_amp)
+
+        # Field controller initialization
         self.field_obj.field_constant = self.p.field_constant
         self.field_obj.field_step = self.p.field_step
         self.field_obj.polarity_control_enabled = self.p.polarity_control_enabled
@@ -221,7 +225,6 @@ class FMRMode(MeasurementMode):
 
                 else:
                     self.field_obj.set_field(point)
-                    sleep(self.p.delay_field)
 
                 # measure field
 
@@ -245,48 +248,46 @@ class FMRMode(MeasurementMode):
                             self.azimuthal_angle = point
                             while self.rotationstation_obj.checkBusyAzimuth() == "BUSY;":
                                 sleep(0.01)
-
                 else:
                     self.generator_obj.setFreq(point)
-                    sleep(self.p.delay_field)
 
-                # measure field
-                if self.p.set_gaussmeter == "none":
-                    self.tmp_field = point
-                else:
-                    self.tmp_field = self.gaussmeter_obj.measure()
+        sleep(self.p.delay_field)
+
+        # measure field
+        if self.p.set_gaussmeter == "none":
+            self.tmp_field = point
+        else:
+            self.tmp_field = self.gaussmeter_obj.measure()
 
         sleep(self.p.delay_lockin)
 
-        self.result1 = math.nan
-        self.result2 = math.nan
+        result = np.nan
+        result1 = np.nan
+        result2 = np.nan
 
         if self.p.set_measdevice_fmr == "LockIn":
-            # measure_lockin
-            # measure_lockin
-            # measure_lockin
+            result_list = []
             for i in range(self.p.lockin_average):
                 result = self.lockin_obj.snap("{}".format(self.p.lockin_channel1), "{}".format(self.p.lockin_channel2))
-                self.result_list.append(result)
+                result_list.append(result)
 
             # calculate average:
-            self.result1 = np.average([i[0] for i in self.result_list])
-            self.result2 = np.average([i[1] for i in self.result_list])
-        else:
-            # measure_multimeter
+            result1 = np.average([i[0] for i in result_list])
+            result2 = np.average([i[1] for i in result_list])
+        elif self.p.set_measdevice_fmr == "Multimeter":
             result = np.average(self.multimeter_obj.reading)
 
         data = {
-            "Voltage (V)": result if self.p.set_measdevice_fmr == "Multimeter" else math.nan,
-            "Current (A)": math.nan,
-            "Resistance (ohm)": self.result1 if self.p.lockin_channel1 == "R" else (self.result2 if self.p.lockin_channel2 == "R" else math.nan),
+            "Voltage (V)": result if self.p.set_measdevice_fmr == "Multimeter" else np.nan,
+            "Current (A)": np.nan,
+            "Resistance (ohm)": result1 if self.p.lockin_channel1 == "R" else (result2 if self.p.lockin_channel2 == "R" else np.nan),
             "Field (Oe)": self.tmp_field,
             "Frequency (Hz)": self.p.generator_frequency if self.p.mode_fmr == "V-FMR" else point,
-            "X (V)": self.result1 if self.p.lockin_channel1 == "X" else (self.result2 if self.p.lockin_channel2 == "X" else math.nan),
-            "Y (V)": self.result1 if self.p.lockin_channel1 == "Y" else (self.result2 if self.p.lockin_channel2 == "Y" else math.nan),
-            "Phase": self.result1 if self.p.lockin_channel1 == "Theta" else (self.result2 if self.p.lockin_channel2 == "Theta" else math.nan),
-            "Polar angle (deg)": self.polar_angle if self.p.set_rotationstation == True else math.nan,
-            "Azimuthal angle (deg)": self.azimuthal_angle if self.p.set_rotationstation == True else math.nan,
+            "X (V)": result1 if self.p.lockin_channel1 == "X" else (result2 if self.p.lockin_channel2 == "X" else np.nan),
+            "Y (V)": result1 if self.p.lockin_channel1 == "Y" else (result2 if self.p.lockin_channel2 == "Y" else np.nan),
+            "Phase": result1 if self.p.lockin_channel1 == "Theta" else (result2 if self.p.lockin_channel2 == "Theta" else np.nan),
+            "Polar angle (deg)": self.polar_angle if self.p.set_rotationstation == True else np.nan,
+            "Azimuthal angle (deg)": self.azimuthal_angle if self.p.set_rotationstation == True else np.nan,
         }
 
         return data

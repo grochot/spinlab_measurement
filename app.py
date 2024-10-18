@@ -274,6 +274,10 @@ class SpinLabMeasurement(Procedure):
         self.counter = 0
         
         for point in self.points:
+            if self.should_stop():
+                log.warning("Caught the stop flag in the procedure")
+                break
+            
             start_time = time()
             
             self.result = self.selected_mode.operating(point)
@@ -284,11 +288,7 @@ class SpinLabMeasurement(Procedure):
             
             self.counter = self.counter + 1
             
-            window.inputs.point_meas_duration.setValue(time()-start_time)
-            
-            if self.should_stop():
-                log.warning("Caught the stop flag in the procedure")
-                break
+            window.inputs.point_meas_duration.setValue(time()-start_time) 
             
         self.selected_mode.end()
         if self.update_field_constant:
