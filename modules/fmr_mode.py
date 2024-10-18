@@ -172,7 +172,7 @@ class FMRMode(MeasurementMode):
                 self.generator_obj.setFreq(self.p.generator_frequency)
                 self.generator_obj.setPower(self.p.generator_power)
                 # Field initialization
-                if self.rotationstation:
+                if self.p.set_rotationstation:
                     sweep_field_to_value(0, self.p.constant_field_value, self.p.field_step, self.field_obj)
                 else:
                     sweep_field_to_value(0, self.point_list[0], self.p.field_step, self.field_obj)
@@ -181,7 +181,7 @@ class FMRMode(MeasurementMode):
                 self.generator_obj.setFreq(self.point_list[0])
                 self.generator_obj.setPower(self.p.generator_power)
                 # Field initialization
-                if self.rotationstation:
+                if self.p.set_rotationstation:
                     sweep_field_to_value(0, self.p.constant_field_value, self.p.field_step, self.field_obj)
                 else:
                     sweep_field_to_value(0, self.p.constant_field_value, self.p.field_step, self.field_obj)
