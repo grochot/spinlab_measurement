@@ -333,6 +333,7 @@ class PlotDataItem(GraphicsObject):
             'alphaHint': 1.0,
             'alphaMode': False,
             'offset': 0.0,
+            'offsetMultiplier': 1.0,
 
             'pen': (200,200,200),
             'shadowPen': None,
@@ -409,10 +410,11 @@ class PlotDataItem(GraphicsObject):
         self.setOpacity(alpha)
         #self.update()
         
-    def setOffset(self, offset):
-        if self.opts['offset'] == offset:
+    def setOffset(self, offset, multiplier):
+        if self.opts['offset'] == offset and self.opts['offsetMultiplier'] == multiplier:
             return
         self.opts['offset'] = offset
+        self.opts['offsetMultiplier'] = multiplier
         self._datasetMapped  = None
         self._datasetDisplay = None
         self.updateItems(styleUpdate=False)
@@ -975,7 +977,8 @@ class PlotDataItem(GraphicsObject):
                 x = self._dataset.y[:-1]
                 y = np.diff(self._dataset.y)/np.diff(self._dataset.x)
                
-            y = y + self.opts['offset']
+            offset = self.opts['offset'] if not self.opts['normalizeMode'] else 1.1
+            y = y + (offset * self.opts['offsetMultiplier'])
 
             dataset = PlotDataset(x,y)
             dataset.containsNonfinite = self._dataset.containsNonfinite
