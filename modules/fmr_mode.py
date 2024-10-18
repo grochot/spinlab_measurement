@@ -136,6 +136,12 @@ class FMRMode(MeasurementMode):
             self.lfgen_obj.set_shape("SIN")
             self.lfgen_obj.set_freq(self.p.lfgen_freq)
             self.lfgen_obj.set_amp(self.p.lfgen_amp)
+            
+        # Field initialization
+        self.field_obj.field_constant = self.p.field_constant
+        self.field_obj.field_step = self.p.field_step
+        self.field_obj.polarity_control_enabled = self.p.polarity_control_enabled
+        self.field_obj.address_polarity_control = self.p.address_polarity_control
 
         # Lakeshore initalization
         self.gaussmeter_obj.range(self.p.gaussmeter_range)
@@ -166,19 +172,19 @@ class FMRMode(MeasurementMode):
                 self.generator_obj.setFreq(self.p.generator_frequency)
                 self.generator_obj.setPower(self.p.generator_power)
                 # Field initialization
-                if self.p.set_rotationstation:
-                    sweep_field_to_value(0, self.p.constant_field_value, self.p.field_constant, self.p.field_step, self.field_obj)
+                if self.rotationstation:
+                    sweep_field_to_value(0, self.p.constant_field_value, self.p.field_step, self.field_obj)
                 else:
-                    sweep_field_to_value(0, self.point_list[0], self.p.field_constant, self.p.field_step, self.field_obj)
+                    sweep_field_to_value(0, self.point_list[0], self.p.field_step, self.field_obj)
             case "ST-FMR":
                 # Generator initialization
                 self.generator_obj.setFreq(self.point_list[0])
                 self.generator_obj.setPower(self.p.generator_power)
                 # Field initialization
-                if self.p.set_rotationstation:
-                    sweep_field_to_value(0, self.p.constant_field_value, self.p.field_constant, self.p.field_step, self.field_obj)
+                if self.rotationstation:
+                    sweep_field_to_value(0, self.p.constant_field_value, self.p.field_step, self.field_obj)
                 else:
-                    sweep_field_to_value(0, self.p.constant_field_value, self.p.field_constant, self.p.field_step, self.field_obj)
+                    sweep_field_to_value(0, self.p.constant_field_value, self.p.field_step, self.field_obj)
 
         self.generator_obj.set_lf_signal()
         self.generator_obj.setOutput(True, True if (self.p.set_lfgen == "none" and self.p.set_measdevice_fmr == "LockIn") else False)
@@ -214,7 +220,7 @@ class FMRMode(MeasurementMode):
                                 sleep(0.01)
 
                 else:
-                    self.actual_set_field = self.field_obj.set_field(point * self.p.field_constant)
+                    self.field_obj.set_field(point)
                     sleep(self.p.delay_field)
 
                 # measure field

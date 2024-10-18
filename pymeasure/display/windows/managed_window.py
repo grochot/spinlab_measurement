@@ -184,8 +184,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.settings_button.clicked.connect(lambda: self.change_layout_type(False))
         self.parameters_button.clicked.connect(lambda: self.change_layout_type(True))
 
-        self.refresh_button = QtWidgets.QPushButton('Refresh', self)
-        self.refresh_button.clicked.connect(self.refresh)
+        self.refresh_addr_button = QtWidgets.QPushButton('Refresh Addr', self)
+        self.refresh_addr_button.clicked.connect(self.refresh_addresses)
 
         self.browser_widget = BrowserWidget(
             self.procedure_class,
@@ -288,8 +288,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         queue_abort_hbox.setContentsMargins(-1, 6, -1, 6)
         queue_abort_hbox.addWidget(self.queue_button)
         queue_abort_hbox.addWidget(self.abort_button)
-        queue_abort_hbox.addWidget(self.refresh_button)
-        queue_abort_hbox.addStretch()
+        queue_abort_hbox.addWidget(self.refresh_addr_button)
+        # queue_abort_hbox.addStretch()
         parameters_buttons_layout.addWidget(self.settings_button)
         parameters_buttons_layout.addWidget(self.parameters_button)
         inputs_vbox.addLayout(parameters_buttons_layout)
@@ -702,7 +702,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         key, parameter = parameter_tuple
         getattr(self.inputs, key).set_parameter(parameter)
 
-    def refresh(self):
+    def refresh_addresses(self):
         raise NotImplementedError("Refresh method must be overwritten by the child class.")
 
     def _queue(self, checked):
@@ -756,13 +756,15 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         if self.store_measurement:
             try:
+                automaticstation_suffix='_{0}_{1}'.format(procedure.mode,procedure.global_xyname[2]) if procedure.set_automaticstation else '_{0}'.format(procedure.mode)
                 filename = unique_filename(
                     self.directory,
-                    prefix=self.file_input.filename_base,
+                    prefix=self.file_input.filename_base + automaticstation_suffix,
                     datetimeformat="",
                     procedure=procedure,
                     ext=self.file_input.filename_extension,
                 )
+                print("filename-queue",filename)
             except KeyError as E:
                 if not E.args[0].startswith("The following placeholder-keys are not valid:"):
                     raise E from None

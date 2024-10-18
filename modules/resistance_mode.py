@@ -26,6 +26,8 @@ from hardware.rotation_stage_dummy import RotationStageDummy
 from logic.vector import Vector
 from logic.sweep_field_to_zero import sweep_field_to_zero
 from logic.sweep_field_to_value import sweep_field_to_value
+from hardware.esp300 import Esp300
+from hardware.dummy_motion_driver import DummyMotionDriver
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -130,11 +132,22 @@ class ResistanceMode(MeasurementMode):
         self.gaussmeter_obj.range(self.p.gaussmeter_range)
         self.gaussmeter_obj.resolution(self.p.gaussmeter_resolution)
 
-        # Field initialization
+        #Field initialization
+        self.field_obj.field_constant = self.p.field_constant
         if self.p.set_rotationstation:
-            sweep_field_to_value(0, self.p.constant_field_value, self.p.field_constant, self.p.field_step, self.field_obj)
+            sweep_field_to_value(0, self.p.constant_field_value, self.p.field_step, self.field_obj)
         else:
-            sweep_field_to_value(0, self.point_list[0], self.p.field_constant, self.p.field_step, self.field_obj)
+            sweep_field_to_value(0, self.point_list[0], self.p.field_step, self.field_obj)
+
+        #MotionDriver
+        if self.p.set_automaticstation:
+            if self.p.address_automaticstation=='None':
+                self.MotionDriver=DummyMotionDriver("sth")
+            else:
+                self.MotionDriver=Esp300(self.p.address_automaticstation)
+                self.MotionDriver.high_level_motion_driver(self.p.global_xyname,self.p.sample_in_plane,self.p.disconnect_length)
+
+
 
     def operating(self, point):
         if self.p.set_rotationstation:
@@ -151,7 +164,7 @@ class ResistanceMode(MeasurementMode):
 
         else:
             pass
-        self.actual_set_field = self.field_obj.set_field(point * self.p.field_constant)
+        self.field_obj.set_field(point)
         sleep(self.p.delay_field)
 
         # measure field

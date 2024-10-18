@@ -196,10 +196,11 @@ class Procedure:
         """ Enforces that all the parameters are re-cast and updated in the meta
         dictionary
         """
-        for name, parameter in self._parameters.items():
-            value = getattr(self, name)
-            parameter.value = value
-            setattr(self, name, parameter.value)
+        raise NotImplementedError("Procedure.refresh_parameters must be implemented by a subclass")
+        # for name, parameter in self._parameters.items():
+        #     value = getattr(self, name)
+        #     parameter.value = value
+        #     setattr(self, name, parameter.value)
 
     def set_parameters(self, parameters, except_missing=False):
         """ Sets a dictionary of parameters and raises an exception if additional

@@ -30,6 +30,8 @@ from hardware.rotation_stage_dummy import RotationStageDummy
 from logic.vector import Vector
 from logic.sweep_field_to_zero import sweep_field_to_zero
 from logic.sweep_field_to_value import sweep_field_to_value
+from hardware.esp300 import Esp300
+from hardware.dummy_motion_driver import DummyMotionDriver
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -139,6 +141,8 @@ class CIMSMode(MeasurementMode):
         # Lakeshore initalization
         self.gaussmeter_obj.range(self.p.gaussmeter_range)
         self.gaussmeter_obj.resolution(self.p.gaussmeter_resolution)
+        
+        self.field_obj.field_constant = self.p.field_constant
 
         # Field remagnetization
         if self.p.remagnetization:
@@ -148,14 +152,13 @@ class CIMSMode(MeasurementMode):
 
                 self.actual_remanency = self.gaussmeter_obj.measure()
                 sweep_field_to_value(
-                    0, self.p.remagnetization_value - self.actual_remanency, self.p.field_constant, self.p.field_step, self.field_obj
+                    0, self.p.remagnetization_value - self.actual_remanency, self.p.field_step, self.field_obj
                 )
                 sleep(self.p.remagnetization_time)
                 print("to zero:")
                 sweep_field_to_value(
                     self.p.remagnetization_value - self.actual_remanency,
                     self.p.field_bias_value,
-                    self.p.field_constant,
                     self.p.field_step,
                     self.field_obj,
                 )
@@ -165,16 +168,15 @@ class CIMSMode(MeasurementMode):
                 sweep_field_to_value(
                     self.p.field_bias_value,
                     self.p.field_bias_value + (self.p.field_bias_value - self.actual_remanency),
-                    self.p.field_constant,
                     self.p.field_step,
                     self.field_obj,
                 )
             else:
                 self.actual_remanency = 0
-                sweep_field_to_value(0, self.p.remagnetization_value, self.p.field_constant, self.p.field_step, self.field_obj)
+                sweep_field_to_value(0, self.p.remagnetization_value, self.p.field_step, self.field_obj)
                 sleep(self.p.remagnetization_time)
                 print("to zero:")
-                sweep_field_to_value(self.p.remagnetization_value, self.p.field_bias_value, self.p.field_constant, self.p.field_step, self.field_obj)
+                sweep_field_to_value(self.p.remagnetization_value, self.p.field_bias_value, self.p.field_step, self.field_obj)
 
         else:
             if self.p.remanency_correction:
@@ -182,11 +184,11 @@ class CIMSMode(MeasurementMode):
 
                 self.actual_remanency = self.gaussmeter_obj.measure()
                 print("Remanency:", self.actual_remanency)
-                sweep_field_to_value(0, self.p.field_bias_value - self.actual_remanency, self.p.field_constant, self.p.field_step, self.field_obj)
+                sweep_field_to_value(0, self.p.field_bias_value - self.actual_remanency, self.p.field_step, self.field_obj)
 
             else:
                 self.actual_remanency = 0
-                sweep_field_to_value(0, self.p.field_bias_value, self.p.field_constant, self.p.field_step, self.field_obj)
+                sweep_field_to_value(0, self.p.field_bias_value, self.p.field_step, self.field_obj)
 
         # pulsegenerator initialization
         self.pulsegenerator_obj.duration = self.p.pulsegenerator_duration
@@ -196,6 +198,16 @@ class CIMSMode(MeasurementMode):
             self.pulsegenerator_obj.generator_compliance_current = self.p.pulsegenerator_compliance
         else:
             self.pulsegenerator_obj.generator_compliance_voltage = self.p.pulsegenerator_compliance
+
+
+        #MotionDriver
+        if self.p.set_automaticstation:
+            if self.p.address_automaticstation=='None':
+                self.MotionDriver=DummyMotionDriver("sth")
+            else:
+                self.MotionDriver=Esp300(self.p.address_automaticstation)
+            self.MotionDriver.high_level_motion_driver(self.p.global_xyname,self.p.sample_in_plane,self.p.disconnect_length)
+
 
     def operating(self, point):
         # measure field
