@@ -74,7 +74,7 @@ class ResistanceMode(MeasurementMode):
                 self.gaussmeter_obj = DummyGaussmeter(self.p.address_gaussmeter)
                 log.warning("Used dummy Gaussmeter.")
 
-        match self.p.set_field:
+        match self.p.set_field_cntrl:
             case "DAQ":
                 self.field_obj = DAQ(self.p.address_daq)
             case _:
@@ -132,22 +132,20 @@ class ResistanceMode(MeasurementMode):
         self.gaussmeter_obj.range(self.p.gaussmeter_range)
         self.gaussmeter_obj.resolution(self.p.gaussmeter_resolution)
 
-        #Field initialization
+        # Field initialization
         self.field_obj.field_constant = self.p.field_constant
         if self.p.set_rotationstation:
             sweep_field_to_value(0, self.p.constant_field_value, self.p.field_step, self.field_obj)
         else:
             sweep_field_to_value(0, self.point_list[0], self.p.field_step, self.field_obj)
 
-        #MotionDriver
+        # MotionDriver
         if self.p.set_automaticstation:
-            if self.p.address_automaticstation=='None':
-                self.MotionDriver=DummyMotionDriver("sth")
+            if self.p.address_automaticstation == "None":
+                self.MotionDriver = DummyMotionDriver("sth")
             else:
-                self.MotionDriver=Esp300(self.p.address_automaticstation)
-                self.MotionDriver.high_level_motion_driver(self.p.global_xyname,self.p.sample_in_plane,self.p.disconnect_length)
-
-
+                self.MotionDriver = Esp300(self.p.address_automaticstation)
+                self.MotionDriver.high_level_motion_driver(self.p.global_xyname, self.p.sample_in_plane, self.p.disconnect_length)
 
     def operating(self, point):
         if self.p.set_rotationstation:

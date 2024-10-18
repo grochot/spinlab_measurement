@@ -69,7 +69,7 @@ class FMRMode(MeasurementMode):
                 self.gaussmeter_obj = DummyGaussmeter(self.p.address_gaussmeter)
                 log.warning("Used dummy Gaussmeter.")
 
-        match self.p.set_field:
+        match self.p.set_field_cntrl:
             case "DAQ":
                 self.field_obj = DAQ(self.p.address_daq)
             case _:
@@ -136,7 +136,7 @@ class FMRMode(MeasurementMode):
             self.lfgen_obj.set_shape("SIN")
             self.lfgen_obj.set_freq(self.p.lfgen_freq)
             self.lfgen_obj.set_amp(self.p.lfgen_amp)
-            
+
         # Field initialization
         self.field_obj.field_constant = self.p.field_constant
         self.field_obj.field_step = self.p.field_step

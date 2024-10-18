@@ -11,7 +11,6 @@ from hardware.lakeshore import Lakeshore
 from hardware.GM_700 import GM700
 from hardware.dummy_gaussmeter import DummyGaussmeter
 
-# from logic.field_calibration import calibration, set_calibrated_field
 from logic.sweep_field_to_zero import sweep_field_to_zero
 from scipy.stats import linregress
 
@@ -25,11 +24,12 @@ class FieldCalibrationMode(MeasurementMode):
         self.field_vector = []
 
     def initializing(self):
-        if self.p.set_field == "none":
+        if self.p.set_field_cntrl == "none":
             self.daq = DummyField(self.p.address_daq)
             log.warning("Used dummy DAQ")
         else:
             self.daq = DAQ(self.p.address_daq)
+
         if self.p.set_gaussmeter == "none":
             self.gaussmeter = DummyGaussmeter(self.p.address_gaussmeter)
             log.warning("Used dummy Gaussmeter")
@@ -40,12 +40,17 @@ class FieldCalibrationMode(MeasurementMode):
         else:
             raise ValueError("Gaussmeter not supported")
 
+        self.daq.field_constant = self.p.field_constant
+
     def operating(self, point):
-        self.daq.set_field(point)
+
+        self.daq.set_voltage(point)
         sleep(self.p.delay_field)
         result = self.gaussmeter.measure()
+
         if type(result) != int and type(result) != float:
             result = 0
+
         self.field_vector.append(result)
 
         data = {
@@ -71,13 +76,4 @@ class FieldCalibrationMode(MeasurementMode):
         FieldCalibrationMode.idle(self)
 
     def idle(self):
-        sweep_field_to_zero(
-            self.point_list[-1] / self.p.field_constant, self.p.field_constant, self.p.field_step, self.daq
-        )  # czy tutaj nie powinno byc mnozenia?
-
-
-# test = FieldCalibrationMode("ff", "dfd", 'Dev4/ao0', 'GPIB1::12::INSTR',[0,5,1], 2)
-# test.initializing()
-# test.operating()
-# sleep(5)
-# test.end()
+        sweep_field_to_zero(self.point_list[-1] / self.p.field_constant, self.p.field_constant, self.p.field_step, self.daq)

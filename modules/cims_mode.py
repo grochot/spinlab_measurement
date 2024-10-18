@@ -100,7 +100,7 @@ class CIMSMode(MeasurementMode):
                 self.gaussmeter_obj = DummyGaussmeter(self.p.address_gaussmeter)
                 log.warning("Used dummy Gaussmeter.")
 
-        match self.p.set_field:
+        match self.p.set_field_cntrl:
             case "DAQ":
                 self.field_obj = DAQ(self.p.address_daq)
             case _:
@@ -141,7 +141,7 @@ class CIMSMode(MeasurementMode):
         # Lakeshore initalization
         self.gaussmeter_obj.range(self.p.gaussmeter_range)
         self.gaussmeter_obj.resolution(self.p.gaussmeter_resolution)
-        
+
         self.field_obj.field_constant = self.p.field_constant
 
         # Field remagnetization
@@ -151,9 +151,7 @@ class CIMSMode(MeasurementMode):
                 sleep(self.p.remanency_correction_time)
 
                 self.actual_remanency = self.gaussmeter_obj.measure()
-                sweep_field_to_value(
-                    0, self.p.remagnetization_value - self.actual_remanency, self.p.field_step, self.field_obj
-                )
+                sweep_field_to_value(0, self.p.remagnetization_value - self.actual_remanency, self.p.field_step, self.field_obj)
                 sleep(self.p.remagnetization_time)
                 print("to zero:")
                 sweep_field_to_value(
@@ -199,15 +197,13 @@ class CIMSMode(MeasurementMode):
         else:
             self.pulsegenerator_obj.generator_compliance_voltage = self.p.pulsegenerator_compliance
 
-
-        #MotionDriver
+        # MotionDriver
         if self.p.set_automaticstation:
-            if self.p.address_automaticstation=='None':
-                self.MotionDriver=DummyMotionDriver("sth")
+            if self.p.address_automaticstation == "None":
+                self.MotionDriver = DummyMotionDriver("sth")
             else:
-                self.MotionDriver=Esp300(self.p.address_automaticstation)
-            self.MotionDriver.high_level_motion_driver(self.p.global_xyname,self.p.sample_in_plane,self.p.disconnect_length)
-
+                self.MotionDriver = Esp300(self.p.address_automaticstation)
+            self.MotionDriver.high_level_motion_driver(self.p.global_xyname, self.p.sample_in_plane, self.p.disconnect_length)
 
     def operating(self, point):
         # measure field
@@ -270,8 +266,8 @@ class CIMSMode(MeasurementMode):
             "X (V)": math.nan,
             "Y (V)": math.nan,
             "Phase": math.nan,
-            "Polar angle (deg)": self.polar_angle if self.p.set_rotationstation == True else math.nan,
-            "Azimuthal angle (deg)": self.azimuthal_angle if self.p.set_rotationstation == True else math.nan,
+            "Polar angle (deg)": self.p.set_polar_angle if self.p.set_rotationstation == True else math.nan,
+            "Azimuthal angle (deg)": self.p.set_azimuthal_angle if self.p.set_rotationstation == True else math.nan,
             "Applied Voltage (V)": point,
         }
 

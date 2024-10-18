@@ -17,7 +17,7 @@ from hardware.rotation_stage import RotationStage
 from hardware.rotation_stage_dummy import RotationStageDummy
 from logic.vector import Vector
 from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity, _lockin_filter_slope
-from logic.sweep_field_to_zero import sweep_field_to_zero 
+from logic.sweep_field_to_zero import sweep_field_to_zero
 from logic.sweep_field_to_value import sweep_field_to_value
 
 log = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ class HarmonicMode(MeasurementMode):
                 self.gaussmeter_obj = DummyGaussmeter(self.p.address_gaussmeter)
                 log.warning("Used dummy Gaussmeter.")
 
-        match self.p.set_field:
+        match self.p.set_field_cntrl:
             case "DAQ":
                 self.field_obj = DAQ(self.p.address_daq)
             case _:
@@ -111,15 +111,14 @@ class HarmonicMode(MeasurementMode):
             except:
                 log.warning("Rotation station is not initialized")
                 self.rotationstation_obj = RotationStageDummy(self.p.address_rotationstation)
-      
-#Field initialization 
+
+        # Field initialization
         self.field_obj.field_constant = self.p.field_constant
         if self.p.set_rotationstation:
             sweep_field_to_value(0.0, float(self.p.constant_field_value), self.p.field_step, self.field_obj)
         else:
             sweep_field_to_value(0.0, self.point_list[0], self.p.field_step, self.field_obj)
 
-    
     def operating(self, point):
         # set temporary result list
         self.result_list = []
@@ -143,12 +142,10 @@ class HarmonicMode(MeasurementMode):
                     self.azimuthal_angle = self.p.set_azimuthal_angle
                     sleep(self.p.delay_field)
 
-        else:                
-            #set_field
+        else:
+            # set_field
             self.field_obj.set_field(point)
             sleep(self.p.delay_field)
-            
-
 
         # measure_field
         if self.p.set_gaussmeter == "none":

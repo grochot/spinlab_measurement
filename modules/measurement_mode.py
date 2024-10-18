@@ -25,7 +25,7 @@ class MeasurementMode(ABC):
         pass
 
     @abstractmethod
-    def operating(self, point):
+    def operating(self, point) -> dict:
         pass
 
     @abstractmethod
