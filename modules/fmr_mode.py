@@ -170,25 +170,27 @@ class FMRMode(MeasurementMode):
         self.begin()
 
     def begin(self):
+        # V_FMR - constant frequency, sweep field (self.point_list - field values in Oe)
+        # ST_FMR - constant field, sweep frequency (self.point_list - frequency values in Hz)
+        # set initial values
+        initial_freq = 0
+        initial_field = 0
         match self.p.mode_fmr:
             case "V-FMR":
-                # Generator initialization
-                self.generator_obj.setFreq(self.p.generator_frequency)
-                self.generator_obj.setPower(self.p.generator_power)
-                # Field initialization
-                if self.p.set_rotationstation:
-                    sweep_field_to_value(0, self.p.constant_field_value, self.p.field_step, self.field_obj)
-                else:
-                    sweep_field_to_value(0, self.point_list[0], self.p.field_step, self.field_obj)
+                initial_freq = self.p.generator_frequency
+                initial_field = self.point_list[0]
+                print("V-FMR")
             case "ST-FMR":
-                # Generator initialization
-                self.generator_obj.setFreq(self.point_list[0])
-                self.generator_obj.setPower(self.p.generator_power)
-                # Field initialization
-                if self.p.set_rotationstation:
-                    sweep_field_to_value(0, self.p.constant_field_value, self.p.field_step, self.field_obj)
-                else:
-                    sweep_field_to_value(0, self.p.constant_field_value, self.p.field_step, self.field_obj)
+                initial_freq = self.point_list[0]
+                initial_field = self.p.constant_field_value
+
+        if self.p.set_rotationstation:
+            initial_field = self.p.constant_field_value
+
+        self.generator_obj.setFreq(initial_freq)
+        self.generator_obj.setPower(self.p.generator_power)
+
+        sweep_field_to_value(0, initial_field, self.p.field_step, self.field_obj)
 
         self.generator_obj.set_lf_signal()
         self.generator_obj.setOutput(True, True if (self.p.set_lfgen == "none" and self.p.set_measdevice_fmr == "LockIn") else False)
