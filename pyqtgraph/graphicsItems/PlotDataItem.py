@@ -333,7 +333,7 @@ class PlotDataItem(GraphicsObject):
             'alphaHint': 1.0,
             'alphaMode': False,
             'offset': 0.0,
-            'offsetMultiplier': 1.0,
+            'offsetMultiplier': 0.0,
 
             'pen': (200,200,200),
             'shadowPen': None,
