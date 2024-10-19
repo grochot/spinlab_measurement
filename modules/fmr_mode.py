@@ -179,7 +179,6 @@ class FMRMode(MeasurementMode):
             case "V-FMR":
                 initial_freq = self.p.generator_frequency
                 initial_field = self.point_list[0]
-                print("V-FMR")
             case "ST-FMR":
                 initial_freq = self.point_list[0]
                 initial_field = self.p.constant_field_value
@@ -205,57 +204,30 @@ class FMRMode(MeasurementMode):
 
     def operating(self, point):
         sleep(self.p.delay_field)
-        # set temporary result list
-        self.result_list = []
+
+        if self.p.set_rotationstation:
+            match self.p.rotation_axis:
+                case "Polar":
+                    self.rotationstation_obj.goToPolar(point)
+                    self.polar_angle = point
+                    self.azimuthal_angle = np.nan
+                    while self.rotationstation_obj.checkBusyPolar() == "BUSY;":
+                        sleep(0.01)
+                case "Azimuthal":
+                    self.rotationstation_obj.goToAzimuth(point)
+                    self.polar_angle = np.nan
+                    self.azimuthal_angle = point
+                    while self.rotationstation_obj.checkBusyAzimuth() == "BUSY;":
+                        sleep(0.01)
 
         match self.p.mode_fmr:
             case "V-FMR":
-                if self.p.set_rotationstation:
-                    match self.p.rotation_axis:
-                        case "Polar":
-                            self.rotationstation_obj.goToPolar(point)
-                            self.polar_angle = point
-                            self.azimuthal_angle = np.nan
-                            while self.rotationstation_obj.checkBusyPolar() == "BUSY;":
-                                sleep(0.01)
-                        case "Azimuthal":
-                            self.rotationstation_obj.goToAzimuth(point)
-                            self.polar_angle = np.nan
-                            self.azimuthal_angle = point
-                            while self.rotationstation_obj.checkBusyAzimuth() == "BUSY;":
-                                sleep(0.01)
-
-                else:
-                    self.field_obj.set_field(point)
-
-                # measure field
-
-                if self.p.set_gaussmeter == "none":
-                    self.tmp_field = point
-                else:
-                    self.tmp_field = self.gaussmeter_obj.measure()
-
+                self.field_obj.set_field(point)
             case "ST-FMR":
-                if self.p.set_rotationstation:
-                    match self.p.rotation_axis:
-                        case "Polar":
-                            self.rotationstation_obj.goToPolar(point)
-                            self.polar_angle = point
-                            self.azimuthal_angle = np.nan
-                            while self.rotationstation_obj.checkBusyPolar() == "BUSY;":
-                                sleep(0.01)
-                        case "Azimuthal":
-                            self.rotationstation_obj.goToAzimuth(point)
-                            self.polar_angle = np.nan
-                            self.azimuthal_angle = point
-                            while self.rotationstation_obj.checkBusyAzimuth() == "BUSY;":
-                                sleep(0.01)
-                else:
-                    self.generator_obj.setFreq(point)
+                self.generator_obj.setFreq(point)
 
         sleep(self.p.delay_field)
 
-        # measure field
         if self.p.set_gaussmeter == "none":
             self.tmp_field = point
         else:
@@ -273,7 +245,6 @@ class FMRMode(MeasurementMode):
                 result = self.lockin_obj.snap("{}".format(self.p.lockin_channel1), "{}".format(self.p.lockin_channel2))
                 result_list.append(result)
 
-            # calculate average:
             result1 = np.average([i[0] for i in result_list])
             result2 = np.average([i[1] for i in result_list])
         elif self.p.set_measdevice_fmr == "Multimeter":
