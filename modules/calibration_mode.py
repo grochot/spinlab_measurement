@@ -70,8 +70,11 @@ class FieldCalibrationMode(MeasurementMode):
     def end(self):
         slope, intercept, r, p, std_err = linregress(self.point_list, self.field_vector)
         log.info("Previous field constant: {} [V/Oe]".format(self.p.field_constant))
-        self.p.field_constant = 1 / slope
-        log.info("Field constant: {} [V/Oe]".format(1 / slope))
+        try:
+            self.p.field_constant = 1 / slope # type: ignore
+        except ZeroDivisionError:
+            log.error("Voltage to field conversion factor is zero.")
+        log.info(f"Field constant: {self.p.field_constant} [V/Oe]")
 
         FieldCalibrationMode.idle(self)
 
