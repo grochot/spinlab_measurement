@@ -1,5 +1,5 @@
 {
-    "mode": "FMRMode",
+    "mode": "HarmonicMode",
     "sample_name": "dfsdf",
     "vector": "-200,3,0,3,200",
     "mode_resistance": false,
@@ -10,7 +10,7 @@
     "set_multimeter": "none",
     "set_pulsegenerator": "Agilent 2912",
     "set_gaussmeter": "none",
-    "set_field": "DAQ",
+    "set_field_cntrl": "DAQ",
     "set_lockin": "none",
     "set_automaticstation": false,
     "set_rotationstation": false,
@@ -30,7 +30,8 @@
     "address_generator": "None",
     "address_lfgen": "None",
     "address_pulsegenerator": "None",
-    "sourcemter_source": "CURR",
+    "address_automaticstation": "None",
+    "sourcemeter_source": "CURR",
     "sourcemeter_compliance": 0.5,
     "sourcemeter_channel": "Channel A",
     "sourcemeter_limit": 0.0001,
@@ -99,6 +100,8 @@
     "layout_type": false,
     "layout_type": false,
     "kriostat_temperature": 306.0,
-    "path": "C:/SPINLAB/pomiary/2024_MTJ_NI/2024_10  MTJ 191 Nowy falow\u00f3d",
-    "filename": "{date}_19196_MTJ_{RF Generator Frequency:.2E}"
+    "disconnect_length": 0.5,
+    "sample_in_plane": true,
+    "path": "C:/SPINLAB/pomiary/CoPt",
+    "filename": "31-Co-Pt_{RF Generator Power}_{RF Generator Frequency:.2E}"
 }

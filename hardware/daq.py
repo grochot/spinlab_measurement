@@ -76,6 +76,7 @@ class DAQ:
             # If voltage is 0, ensure polarity is set to False (positive)
             if voltage == 0:
                 if self.polarity:
+                    time.sleep(3)
                     self._switch_polarity(False)  # Switch to positive polarity if it's currently negative
                 self.prev_voltage = 0  # Set previous voltage to 0
             else:
