@@ -55,15 +55,7 @@ class FieldCalibrationMode(MeasurementMode):
 
         data = {
             "Voltage (V)": point,
-            "Current (A)": nan,
-            "Resistance (ohm)": nan,
             "Field (Oe)": result,
-            "Frequency (Hz)": nan,
-            "X (V)": nan,
-            "Y (V)": nan,
-            "Phase": nan,
-            "Polar angle (deg)": nan,
-            "Azimuthal angle (deg)": nan,
         }
         return data
 
@@ -71,7 +63,7 @@ class FieldCalibrationMode(MeasurementMode):
         slope, intercept, r, p, std_err = linregress(self.point_list, self.field_vector)
         log.info("Previous field constant: {} [V/Oe]".format(self.p.field_constant))
         try:
-            self.p.field_constant = 1 / slope # type: ignore
+            self.p.field_constant = 1 / slope
         except ZeroDivisionError:
             log.error("Voltage to field conversion factor is zero.")
         log.info(f"Field constant: {self.p.field_constant} [V/Oe]")
