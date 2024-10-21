@@ -89,6 +89,9 @@ class BrowserItem(QtWidgets.QTreeWidgetItem, BaseBrowserItem):
 
     def setProgress(self, progress):
         self.progressbar.setValue(int(progress))
+        
+    def setInfo(self, info):
+        self.setText(4, info)
 
 
 class Browser(QtWidgets.QTreeWidget):
@@ -108,7 +111,7 @@ class Browser(QtWidgets.QTreeWidget):
         self.procedure_class = procedure_class
         self.measured_quantities = set(measured_quantities)
 
-        header_labels = ["Graph", "Filename", "Progress", "Status"]
+        header_labels = ["Graph", "Filename", "Progress", "Status", "Info"]
         for parameter in self.display_parameters:
             header_labels.append(getattr(self.procedure_class, parameter).name)
 
