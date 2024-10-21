@@ -233,6 +233,7 @@ class SpinLabMeasurement(Procedure):
 
         self.time_of_measurement = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.has_next_callback=window.manager.experiments.has_next
+        self.last_set_field = 0
 
         for param_name in self.used_parameters_list:
             param = getattr(self, param_name)

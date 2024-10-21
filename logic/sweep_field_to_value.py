@@ -21,6 +21,7 @@ def sweep_field_to_value(start_field: float, end_field: float, field_step: float
     last_set_field = start_field
     step_direction = field_step if end_field > start_field else -field_step
     field_values = np.arange(start_field, end_field, step_direction)
+    wasAborted = False
 
     if len(field_values) == 0 or field_values[-1] != end_field:
         field_values = np.append(field_values, end_field)
@@ -37,6 +38,7 @@ def sweep_field_to_value(start_field: float, end_field: float, field_step: float
     for field in field_values:
         
         if abort_callback and abort_callback():
+            wasAborted = True
             print("Aborting sweep")
             break
         
@@ -47,4 +49,4 @@ def sweep_field_to_value(start_field: float, end_field: float, field_step: float
     if emit_info_callback:
         emit_info_callback("info", "")
 
-    return last_set_field
+    return last_set_field, wasAborted
