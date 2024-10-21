@@ -307,6 +307,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
 
     def go_to_initialize_posotion(self):
+        self.MotionDriver.disconnect(self.sample_in_plane_checkbox.isChecked(),float(self.make_connection_textbox.text()))
         self.MotionDriver.init_position(self.sample_in_plane_checkbox.isChecked())
 
 
