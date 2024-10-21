@@ -185,6 +185,10 @@ class BaseManager(QtCore.QObject):
             self._running_experiment.procedure.status = status
             self._running_experiment.browser_item.setStatus(status)
             
+    def _update_info(self, info):
+        if self.is_running():
+            self._running_experiment.browser_item.setInfo(info)
+            
     def _update_current_point(self, point):
         self.update_point.emit(point)
 
@@ -249,6 +253,7 @@ class BaseManager(QtCore.QObject):
                 self._monitor.progress.connect(self._update_progress)
                 self._monitor.status.connect(self._update_status)
                 self._monitor.current_point.connect(self._update_current_point)
+                self._monitor.info.connect(self._update_info)
                 self._monitor.log.connect(self._update_log)
 
                 self._monitor.start()

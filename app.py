@@ -301,6 +301,8 @@ class SpinLabMeasurement(Procedure):
         if self.update_field_constant:
             window.set_calibration_constant(self.field_constant)
             self.update_field_constant = False
+            
+        self.emit("info", "")
 
     def shutdown(self):
         pass

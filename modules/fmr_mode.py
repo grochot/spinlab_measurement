@@ -189,7 +189,7 @@ class FMRMode(MeasurementMode):
         self.generator_obj.setFreq(initial_freq)
         self.generator_obj.setPower(self.p.generator_power)
 
-        sweep_field_to_value(0, initial_field, self.p.field_step, self.field_obj)
+        sweep_field_to_value(0, initial_field, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit)
 
         self.generator_obj.set_lf_signal()
         self.generator_obj.setOutput(True, True if (self.p.set_lfgen == "none" and self.p.set_measdevice_fmr == "LockIn") else False)
@@ -270,7 +270,7 @@ class FMRMode(MeasurementMode):
 
     def idle(self):
         if self.p.hold_the_field_after_measurement == False:
-            sweep_field_to_zero(self.tmp_field, self.p.field_constant, self.p.field_step, self.field_obj)
+            sweep_field_to_zero(self.tmp_field, self.p.field_constant, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit)
         self.generator_obj.setOutput(False)
         if self.p.return_the_rotationstation and self.p.set_rotationstation == True:
             self.rotationstation_obj.goToZero()
