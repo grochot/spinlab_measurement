@@ -108,6 +108,15 @@ class Esp300():
     
     def is_motor_3_active(self):
         return self.ask("3MO?")
+    
+    def define_home_1(self):
+        self.write("1DH")
+
+    def define_home_2(self):
+        self.write("2DH")
+
+    def define_home_3(self):
+        self.write("3DH")
 
     def test(self):
         print("work mo",self.ask("2MO?"))
@@ -167,6 +176,12 @@ class Esp300():
             self.goTo_2(0)
             self.goTo_3(0)
             self.goTo_1(0)
+
+
+    def define_home_all_axes(self):
+        self.define_home_1()
+        self.define_home_2()
+        self.define_home_3()
 
             
     
