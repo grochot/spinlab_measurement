@@ -183,13 +183,11 @@ class FMRMode(MeasurementMode):
                 initial_freq = self.point_list[0]
                 initial_field = self.p.constant_field_value
 
-        if self.p.set_rotationstation:
-            initial_field = self.p.constant_field_value
-
         self.generator_obj.setFreq(initial_freq)
         self.generator_obj.setPower(self.p.generator_power)
 
         sweep_field_to_value(0, initial_field, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit)
+        self.tmp_field = initial_field
 
         self.generator_obj.set_lf_signal()
         self.generator_obj.setOutput(True, True if (self.p.set_lfgen == "none" and self.p.set_measdevice_fmr == "LockIn") else False)
