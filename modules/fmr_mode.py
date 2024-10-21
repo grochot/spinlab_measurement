@@ -205,21 +205,6 @@ class FMRMode(MeasurementMode):
     def operating(self, point):
         sleep(self.p.delay_field)
 
-        if self.p.set_rotationstation:
-            match self.p.rotation_axis:
-                case "Polar":
-                    self.rotationstation_obj.goToPolar(point)
-                    self.polar_angle = point
-                    self.azimuthal_angle = np.nan
-                    while self.rotationstation_obj.checkBusyPolar() == "BUSY;":
-                        sleep(0.01)
-                case "Azimuthal":
-                    self.rotationstation_obj.goToAzimuth(point)
-                    self.polar_angle = np.nan
-                    self.azimuthal_angle = point
-                    while self.rotationstation_obj.checkBusyAzimuth() == "BUSY;":
-                        sleep(0.01)
-
         match self.p.mode_fmr:
             case "V-FMR":
                 self.field_obj.set_field(point)
@@ -259,8 +244,8 @@ class FMRMode(MeasurementMode):
             "X (V)": result1 if self.p.lockin_channel1 == "X" else (result2 if self.p.lockin_channel2 == "X" else np.nan),
             "Y (V)": result1 if self.p.lockin_channel1 == "Y" else (result2 if self.p.lockin_channel2 == "Y" else np.nan),
             "Phase": result1 if self.p.lockin_channel1 == "Theta" else (result2 if self.p.lockin_channel2 == "Theta" else np.nan),
-            "Polar angle (deg)": self.polar_angle if self.p.set_rotationstation == True else np.nan,
-            "Azimuthal angle (deg)": self.azimuthal_angle if self.p.set_rotationstation == True else np.nan,
+            "Polar angle (deg)": self.p.rotation_polar_constant if self.p.set_rotationstation == True else np.nan,
+            "Azimuthal angle (deg)": self.p.rotation_azimuth_constant if self.p.set_rotationstation == True else np.nan,
         }
 
         return data
