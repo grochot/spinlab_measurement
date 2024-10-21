@@ -227,3 +227,7 @@ class ResistanceMode(MeasurementMode):
         sweep_field_to_zero(self.tmp_field, self.p.field_constant, self.p.field_step, self.field_obj)
         if (self.p.set_rotationstation or self.p.rotation_axis == "None") and self.p.return_the_rotationstation:
             self.rotationstation_obj.goToZero()
+
+        if not self.p.has_next_callback() and self.p.set_automaticstation and self.p.go_init_position:
+            self.MotionDriver.disconnect(self.p.sample_in_plane,self.p.disconnect_length)
+            self.MotionDriver.init_position(self.p.sample_in_plane)

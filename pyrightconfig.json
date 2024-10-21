@@ -2,4 +2,5 @@
 	// Install LSP-json to get validation and autocompletion in this file.
 	"venvPath": ".",
 	"venv": ".env",
+	"typeCheckingMode": "off"
 }

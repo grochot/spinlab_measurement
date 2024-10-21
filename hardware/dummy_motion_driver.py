@@ -44,3 +44,6 @@ class DummyMotionDriver:
 
     def disconnect(self,sample_in_plane,disconnect_length):
         pass
+
+    def init_position(self,sample_in_plane):
+        pass

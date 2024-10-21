@@ -307,9 +307,8 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
 
     def go_to_initialize_posotion(self):
-        self.MotionDriver.goTo_1(0)
-        self.MotionDriver.goTo_2(0)
-        self.MotionDriver.goTo_3(0)
+        self.MotionDriver.init_position(self.sample_in_plane_checkbox.isChecked())
+
 
 
     def get_motor_status(self):

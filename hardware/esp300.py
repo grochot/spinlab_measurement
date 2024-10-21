@@ -157,6 +157,20 @@ class Esp300():
 
         self.pos_1() #Non sense reading position to stop program
 
+
+    def init_position(self,sample_in_plane):
+        if sample_in_plane:
+            self.goTo_2(0)
+            self.goTo_1(0)
+            self.goTo_3(0)
+        else:
+            self.goTo_2(0)
+            self.goTo_3(0)
+            self.goTo_1(0)
+
+            
+    
+
 if __name__ == "__main__":
     dev=Esp300("GPIB0::20::INSTR")
     dev.test()
