@@ -136,10 +136,10 @@ class FMRMode(MeasurementMode):
         # Low Frequency Generator initalization
         if self.p.set_lfgen == "SR830":
             self.lockin_obj.reference_source = "Internal"
-
-        self.lfgen_obj.set_shape("SIN")
-        self.lfgen_obj.set_freq(self.p.lfgen_freq)
-        self.lfgen_obj.set_amp(self.p.lfgen_amp)
+        else:
+            self.lfgen_obj.set_shape("SIN")
+            self.lfgen_obj.set_freq(self.p.lfgen_freq)
+            self.lfgen_obj.set_amp(self.p.lfgen_amp)
 
         # Field controller initialization
         self.field_obj.field_constant = self.p.field_constant
