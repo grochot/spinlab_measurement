@@ -13,8 +13,8 @@ log.addHandler(logging.NullHandler())
 class FieldCalibrationMode(MeasurementMode):
 
     def initializing(self):    
-        self.daq = self.hardware_creator.create_field_cntrl()
-        self.gaussmeter = self.hardware_creator.create_gaussmeter()
+        self.daq = self.hardware_manager.create_field_cntrl()
+        self.gaussmeter = self.hardware_manager.create_gaussmeter()
         self.daq.field_constant = self.p.field_constant
         self.field_vector = []
 

@@ -4,7 +4,7 @@ import logging
 
 from modules.measurement_mode import MeasurementMode
 
-from logic.hardware_creator import DummyMultimeter, DummyLockin, DummyLFGenDriver
+from logic.hardware_manager import DummyMultimeter, DummyLockin, DummyLFGenDriver
 from hardware.rotation_stage import RotationStage
 from hardware.rotation_stage_dummy import RotationStageDummy
 
@@ -19,16 +19,16 @@ log.addHandler(logging.NullHandler())
 class FMRMode(MeasurementMode):
     def create_measurement_device(self):
         if self.p.set_measdevice_fmr == "LockIn":
-            self.lockin_obj = self.hardware_creator.create_lockin()
+            self.lockin_obj = self.hardware_manager.create_lockin()
             self.multimeter_obj = DummyMultimeter(self.p.address_multimeter)
         elif self.p.set_measdevice_fmr == "Multimeter":
-            self.multimeter_obj = self.hardware_creator.create_multimeter()
+            self.multimeter_obj = self.hardware_manager.create_multimeter()
             self.lockin_obj = DummyLockin()
         else:
             raise ValueError(f"Measurement device: '{self.p.set_measdevice_fmr}' not supported")
 
     def create_lfgen(self):
-        self.lfgen_obj = self.hardware_creator.create_lf_generator()
+        self.lfgen_obj = self.hardware_manager.create_lf_generator()
         if self.p.set_lfgen == "SR830" and isinstance(self.lockin_obj, DummyLockin):
             self.lockin_obj = self.lfgen_obj
             self.lfgen_obj = DummyLFGenDriver()
@@ -36,39 +36,19 @@ class FMRMode(MeasurementMode):
     def initializing(self):
         # Hardware objects initialization
         self.create_measurement_device()
-        self.gaussmeter_obj = self.hardware_creator.create_gaussmeter()
-        self.field_obj = self.hardware_creator.create_field_cntrl()
-        self.generator_obj = self.hardware_creator.create_hf_generator()
+        self.gaussmeter_obj = self.hardware_manager.create_gaussmeter()
+        self.field_obj = self.hardware_manager.create_field_cntrl()
+        self.generator_obj = self.hardware_manager.create_hf_generator()
         self.create_lfgen()
 
         # High Frequency Generator initialization
         self.generator_obj.initialization()
 
         # Lockin initialization
-        self.lockin_obj.frequency = self.p.lockin_frequency
-        if self.p.lockin_sensitivity == "Auto Gain":
-            self.lockin_obj.auto_gain()
-        else:
-            self.lockin_obj.sensitivity = _lockin_sensitivity(self.p.lockin_sensitivity)
-        self.lockin_obj.time_constant = _lockin_timeconstant(self.p.lockin_timeconstant)
-        self.lockin_obj.filter_slope = _lockin_filter_slope(self.p.lockin_slope)
-        self.lockin_obj.harmonic = self.p.lockin_harmonic
-        self.lockin_obj.sine_voltage = self.p.lockin_sine_amplitude
-        self.lockin_obj.channel1 = self.p.lockin_channel1
-        self.lockin_obj.channel2 = self.p.lockin_channel2
-        self.lockin_obj.input_config = self.p.lockin_input_connection
-        self.lockin_obj.input_coupling = self.p.lockin_input_coupling
-        self.lockin_obj.reference_source = self.p.lockin_reference_source
+        self.hardware_manager.initialize_lockin(self.lockin_obj)
 
         # Multimeter initialization
-        if not self.p.multimeter_autorange:
-            self.multimeter_obj.resolution = self.p.multimeter_resolution
-        self.multimeter_obj.range_ = self.p.multimeter_range
-        self.multimeter_obj.autorange = self.p.multimeter_autorange
-        self.multimeter_obj.function_ = self.p.multimeter_function
-        self.multimeter_obj.trigger_delay = "MIN"
-        self.multimeter_obj.trigger_count = self.p.multimeter_average
-        self.multimeter_obj.nplc = self.p.multimeter_nplc
+        self.hardware_manager.initialize_multimeter(self.multimeter_obj)
 
         # Low Frequency Generator initalization
         if self.p.set_lfgen == "SR830":

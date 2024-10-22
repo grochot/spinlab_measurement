@@ -19,10 +19,10 @@ class ResistanceMode(MeasurementMode):
 
     def initializing(self):
         # Hardware objects initialization
-        self.sourcemeter_obj = self.hardware_creator.create_sourcemeter()
-        self.multimeter_obj = self.hardware_creator.create_multimeter()
-        self.gaussmeter_obj = self.hardware_creator.create_gaussmeter()
-        self.field_obj = self.hardware_creator.create_field_cntrl()
+        self.sourcemeter_obj = self.hardware_manager.create_sourcemeter()
+        self.multimeter_obj = self.hardware_manager.create_multimeter()
+        self.gaussmeter_obj = self.hardware_manager.create_gaussmeter()
+        self.field_obj = self.hardware_manager.create_field_cntrl()
 
         # Rotation_station object initialization
         if self.p.set_rotationstation:
@@ -62,13 +62,7 @@ class ResistanceMode(MeasurementMode):
             self.sourcemeter_obj.measure_voltage(self.p.sourcemeter_nplc, self.p.sourcemeter_limit)
 
         # Multimeter initialization
-        self.multimeter_obj.resolution = self.p.multimeter_resolution
-        self.multimeter_obj.range_ = self.p.multimeter_range
-        self.multimeter_obj.autorange = self.p.multimeter_autorange
-        self.multimeter_obj.function_ = self.p.multimeter_function
-        self.multimeter_obj.trigger_delay = "MIN"
-        self.multimeter_obj.trigger_count = self.p.multimeter_average
-        self.multimeter_obj.nplc = self.p.multimeter_nplc
+        self.hardware_manager.initialize_multimeter(self.multimeter_obj)
 
         # Lakeshore initalization
         self.gaussmeter_obj.range(self.p.gaussmeter_range)

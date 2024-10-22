@@ -19,25 +19,12 @@ class HarmonicMode(MeasurementMode):
     def initializing(self):
 
         # Hardware objects initialization
-        self.lockin_obj = self.hardware_creator.create_lockin()
-        self.gaussmeter_obj = self.hardware_creator.create_gaussmeter()
-        self.field_obj = self.hardware_creator.create_field_cntrl()
+        self.lockin_obj = self.hardware_manager.create_lockin()
+        self.gaussmeter_obj = self.hardware_manager.create_gaussmeter()
+        self.field_obj = self.hardware_manager.create_field_cntrl()
 
         # Lockin initialization
-        self.lockin_obj.frequency = self.p.lockin_frequency
-        if self.p.lockin_sensitivity == "Auto Gain":
-            self.lockin_obj.auto_gain()
-        else:
-            self.lockin_obj.sensitivity = _lockin_sensitivity(self.p.lockin_sensitivity)
-        self.lockin_obj.time_constant = _lockin_timeconstant(self.p.lockin_timeconstant)
-        self.lockin_obj.filter_slope = _lockin_filter_slope(self.p.lockin_slope)
-        self.lockin_obj.harmonic = self.p.lockin_harmonic
-        self.lockin_obj.sine_voltage = self.p.lockin_sine_amplitude
-        self.lockin_obj.channel1 = self.p.lockin_channel1
-        self.lockin_obj.channel2 = self.p.lockin_channel2
-        self.lockin_obj.input_config = self.p.lockin_input_connection
-        self.lockin_obj.input_coupling = self.p.lockin_input_coupling
-        self.lockin_obj.reference_source = self.p.lockin_reference_source
+        self.hardware_manager.initialize_lockin(self.lockin_obj)
 
         # Lakeshore initalization
         self.gaussmeter_obj.range(self.p.gaussmeter_range)

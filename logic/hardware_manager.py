@@ -5,6 +5,7 @@ from app import SpinLabMeasurement
 # lockin
 from hardware.sr830 import SR830
 from hardware.dummy_lockin import DummyLockin
+from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity, _lockin_filter_slope
 
 # multimeter
 from hardware.agilent_34410a import Agilent34410A
@@ -38,7 +39,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class HardwareCreator:
+class HardwareManager:
     def __init__(self, procedure: SpinLabMeasurement) -> None:
         self.p: SpinLabMeasurement = procedure
 
@@ -54,6 +55,22 @@ class HardwareCreator:
 
         return lockin_obj
 
+    def initialize_lockin(self, lockin_obj: Union[SR830, DummyLockin]) -> None:
+        lockin_obj.frequency = self.p.lockin_frequency
+        if self.p.lockin_sensitivity == "Auto Gain":
+            lockin_obj.auto_gain()
+        else:
+            lockin_obj.sensitivity = _lockin_sensitivity(self.p.lockin_sensitivity)
+        lockin_obj.time_constant = _lockin_timeconstant(self.p.lockin_timeconstant)
+        lockin_obj.filter_slope = _lockin_filter_slope(self.p.lockin_slope)
+        lockin_obj.harmonic = self.p.lockin_harmonic
+        lockin_obj.sine_voltage = self.p.lockin_sine_amplitude
+        lockin_obj.channel1 = self.p.lockin_channel1
+        lockin_obj.channel2 = self.p.lockin_channel2
+        lockin_obj.input_config = self.p.lockin_input_connection
+        lockin_obj.input_coupling = self.p.lockin_input_coupling
+        lockin_obj.reference_source = self.p.lockin_reference_source
+
     def create_multimeter(self) -> Union[Agilent34410A, DummyMultimeter]:
         match self.p.set_multimeter:
             case "Agilent 34400":
@@ -63,6 +80,16 @@ class HardwareCreator:
                 log.warning("Used dummy Multimeter.")
 
         return multimeter_obj
+    
+    def initialize_multimeter(self, multimeter_obj: Union[Agilent34410A, DummyMultimeter]) -> None:
+        if not self.p.multimeter_autorange:
+            multimeter_obj.resolution = self.p.multimeter_resolution
+        multimeter_obj.range_ = self.p.multimeter_range
+        multimeter_obj.autorange = self.p.multimeter_autorange
+        multimeter_obj.function_ = self.p.multimeter_function
+        multimeter_obj.trigger_delay = "MIN"
+        multimeter_obj.trigger_count = self.p.multimeter_average
+        multimeter_obj.nplc = self.p.multimeter_nplc
 
     def create_gaussmeter(self) -> Union[Lakeshore, GM700, DummyGaussmeter]:
         match self.p.set_gaussmeter:
@@ -130,5 +157,5 @@ class HardwareCreator:
             case _:
                 sourcemeter_obj = DummySourcemeter(self.p.address_sourcemeter)
                 log.warning("Used dummy Sourcemeter.")
-                
+
         return sourcemeter_obj

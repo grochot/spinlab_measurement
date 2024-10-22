@@ -74,8 +74,8 @@ class CIMSMode(MeasurementMode):
                 self.pulsegenerator_obj = DummyPulsegenerator(self.p.address_pulsegenerator)
                 log.warning("Used dummy Pulsegemerator.")
 
-        self.gaussmeter_obj = self.hardware_creator.create_gaussmeter()
-        self.field_obj = self.hardware_creator.create_field_cntrl()
+        self.gaussmeter_obj = self.hardware_manager.create_gaussmeter()
+        self.field_obj = self.hardware_manager.create_field_cntrl()
 
         # Sourcemeter initialization
         self.sourcemeter_obj.source_mode = self.p.sourcemeter_source  # Set source type
