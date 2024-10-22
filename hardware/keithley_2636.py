@@ -494,22 +494,32 @@ class Channel:
     def disable_source(self):
         self.source_output="HIGH_Z"
 
+
+    def test(self):
+        self.write('rbi = smua.makebuffer(10)')
+        self.write('rbi.clear()')
+        self.write('rbi.appendmode = 1')
+        self.write('ConfigPulseIMeasureVSweepLin(smua, 0, 0.01, 0.05, 1, 1e-3, 0.1, 9,rbi, 1)')
+        self.write('InitiatePulseTest(1)')
+        print('Bufor:',self.ask('printbuffer(1, 8, rbi)'))
+
     
 
 if __name__ == "__main__":
 #from time import sleep
     k = Keithley2636('GPIB0::26::INSTR', timeout=50000)
     ch=k.ChA
-    ch.amplitude=("VOLT",2)
-    ch.single_pulse_prepare()
+    ch.test()
+    #ch.amplitude=("VOLT",2)
+    #ch.single_pulse_prepare()
     
     
-    ch.duration=1e-3
-    ch.source_range=("VOLT",5)
+    #ch.duration=1e-3
+    #ch.source_range=("VOLT",5)
     
-    while True:
-        ch.trigger()
-        time.sleep(1)
+    #while True:
+    #    ch.trigger()
+    #    time.sleep(1)
     #time.sleep(1)
     #ch.disable_source()
     #ch.trigger()
