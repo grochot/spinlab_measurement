@@ -19,6 +19,11 @@ def sweep_field_to_value(start_field: float, end_field: float, field_step: float
         float: The final magnetic field value that was set.
     """
     last_set_field = start_field
+    
+    if abs(end_field - start_field) <= field_step:
+        daq.set_field(end_field)
+        return end_field
+    
     step_direction = field_step if end_field > start_field else -field_step
     field_values = np.arange(start_field, end_field, step_direction)
 
