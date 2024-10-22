@@ -34,7 +34,7 @@ class FMRMode(MeasurementMode):
             self.lfgen_obj = DummyLFGenDriver()
 
     def initializing(self):
-        ### Hardware objects initialization
+        # Hardware objects initialization
         self.create_measurement_device()
         self.gaussmeter_obj = self.hardware_creator.create_gaussmeter()
         self.field_obj = self.hardware_creator.create_field_cntrl()

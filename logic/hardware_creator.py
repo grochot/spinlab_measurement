@@ -28,13 +28,19 @@ from hardware.dummy_fgen import DummyFgenDriver
 from hardware.hp_33120a import LFGenDriver
 from hardware.dummy_lfgen import DummyLFGenDriver
 
+# sourcemeter
+from hardware.keithley2400 import Keithley2400
+from hardware.keithley_2636 import Keithley2636
+from hardware.agilent_2912 import Agilent2912
+from hardware.dummy_sourcemeter import DummySourcemeter
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
 class HardwareCreator:
     def __init__(self, procedure: SpinLabMeasurement) -> None:
-        self.p = procedure
+        self.p: SpinLabMeasurement = procedure
 
     def create_lockin(self) -> Union[SR830, DummyLockin]:
         match self.p.set_lockin:
@@ -104,3 +110,25 @@ class HardwareCreator:
                 log.warning("Used dummy Modulation Generator.")
 
         return lfgen_obj
+
+    def create_sourcemeter(self) -> Union[Keithley2400, Keithley2636, Agilent2912, DummySourcemeter]:
+        match self.p.set_sourcemeter:
+            case "Keithley 2400":
+                sourcemeter_obj = Keithley2400(self.p.address_sourcemeter)
+                sourcemeter_obj.config_average(self.p.sourcemeter_average)
+            case "Keithley 2636":
+                if self.p.sourcemeter_channel == "Channel A":
+                    sourcemeter_obj = Keithley2636(self.p.address_sourcemeter).ChA
+                else:
+                    sourcemeter_obj = Keithley2636(self.p.address_sourcemeter).ChB
+
+            case "Agilent 2912":
+                if self.p.sourcemeter_channel == "Channel A":
+                    sourcemeter_obj = Agilent2912(self.p.address_sourcemeter).ChA
+                else:
+                    sourcemeter_obj = Agilent2912(self.p.address_sourcemeter).ChB
+            case _:
+                sourcemeter_obj = DummySourcemeter(self.p.address_sourcemeter)
+                log.warning("Used dummy Sourcemeter.")
+                
+        return sourcemeter_obj
