@@ -288,12 +288,11 @@ class SpinLabMeasurement(Procedure):
             start_time = time()
 
             self.result = self.selected_mode.operating(point)
+            self.counter = self.counter + 1
 
             self.emit("results", self.result)
             self.emit("progress", 100 * self.counter / len(self.points))
             self.emit("current_point", point)
-
-            self.counter = self.counter + 1
 
             window.inputs.point_meas_duration.setValue(time() - start_time)
 

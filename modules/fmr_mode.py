@@ -197,6 +197,8 @@ class FMRMode(MeasurementMode):
             self.lockin_obj.phase = 0
         else:
             self.lockin_obj.phase = 180
+            
+        self.prev_point = initial_field
 
         sleep(1)
 
@@ -205,9 +207,11 @@ class FMRMode(MeasurementMode):
 
         match self.p.mode_fmr:
             case "V-FMR":
-                self.field_obj.set_field(point)
+                sweep_field_to_value(self.prev_point, point, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit)
             case "ST-FMR":
                 self.generator_obj.setFreq(point)
+                
+        self.prev_point = point
 
         sleep(self.p.delay_field)
 
