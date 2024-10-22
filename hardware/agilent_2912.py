@@ -268,6 +268,30 @@ class Channel:
     def disable_source(self):
         self.write(":OUTP{ch} OFF")
 
+    def test(self,STR=None):
+        self.write(":sour2:func:mode volt") # source mode volt
+        self.write(":sour2:volt:mode swe") # source mode sweep
+        self.write(":sour2:PULS:WIDT 10e-3")
+        self.write(":sour2:volt:star %g"%0)
+        self.write(":sour2:volt:stop %g"%1)
+        self.write(":sour2:volt:poin %g"%5)
+
+
+        self.write(":SENS2:CURR:PROT 0.001")
+
+        # setup measure mode to resistance
+        self.write(":SENS2:FUNC ""RES""")
+
+        # internal triggers
+        self.write(":TRIG2:SOUR AINT")
+        self.write(":TRIG2:COUN %g"%5)
+
+        # turn on output switch
+        self.write(":OUTP2 ON")
+
+        # initiate transition and acquire
+        self.write(":INIT (@2)")
+
     
  #examples
 def give_one_pulse():
@@ -302,8 +326,12 @@ def give_one_pulse():
 
 if __name__ == "__main__":
     dev=Agilent2912("GPIB0::23::INSTR")
-    #ch=dev.ChB
+    ch=dev.ChB
+    
+    ch.test()
     #dev.reset()
     #print(ch.source_mode)
     #dev.ChA.source_mode="CURR"
-    give_one_pulse()
+    #give_one_pulse()
+
+    #Hard test
