@@ -135,12 +135,13 @@ class ResistanceMode(MeasurementMode):
         # Field initialization
         self.field_obj.field_constant = self.p.field_constant
         if self.p.set_rotationstation:
-            sweep_field_to_value(0, self.p.constant_field_value, self.p.field_step, self.field_obj)
             self.tmp_field = self.p.constant_field_value
         else:
-            sweep_field_to_value(0, self.point_list[0], self.p.field_step, self.field_obj)
             self.tmp_field = self.point_list[0]
-
+            
+        sweep_field_to_value(0, self.tmp_field, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit)
+        self.prev_point = self.tmp_field
+        
         # MotionDriver
         if self.p.set_automaticstation:
             if self.p.address_automaticstation == "None":
@@ -164,7 +165,8 @@ class ResistanceMode(MeasurementMode):
 
         else:
             pass
-        self.field_obj.set_field(point)
+        sweep_field_to_value(self.prev_point, point, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit)
+        self.prev_point = point
         sleep(self.p.delay_field)
 
         # measure field
@@ -226,7 +228,7 @@ class ResistanceMode(MeasurementMode):
 
     def idle(self):
         self.sourcemeter_obj.shutdown()
-        sweep_field_to_zero(self.tmp_field, self.p.field_constant, self.p.field_step, self.field_obj)
+        sweep_field_to_zero(self.tmp_field, self.p.field_constant, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit)
         if (self.p.set_rotationstation or self.p.rotation_axis == "None") and self.p.return_the_rotationstation:
             self.rotationstation_obj.goToZero()
 
