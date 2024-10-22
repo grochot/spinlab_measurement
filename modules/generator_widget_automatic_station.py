@@ -404,13 +404,15 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         #z=pos1
         #x=pos2
         #y=pos3
+
+        #moton om
         if self.sample_in_plane_checkbox.isChecked():
             write_axes1.setText(str(self.MotionDriver.pos_2()))
             write_axes2.setText(str(self.MotionDriver.pos_1()))
         else:
             write_axes1.setText(str(self.MotionDriver.pos_2()))
             write_axes2.setText(str(self.MotionDriver.pos_3())) 
-
+        
 
 
     
