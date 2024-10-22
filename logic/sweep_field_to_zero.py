@@ -19,6 +19,11 @@ def sweep_field_to_zero(start_field: float, field_constant: float, field_step: f
         float: The final magnetic field value that was set.
     """
     last_set_field = start_field
+    
+    if abs(start_field) <= field_step:
+        daq.set_field(0)
+        return 0.0
+    
     if field_constant > 2:  # tego if'a bym wywalil przy mergowaniu
         daq.set_field(0)
         return 0.0
