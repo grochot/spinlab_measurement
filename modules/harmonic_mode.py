@@ -1,21 +1,11 @@
 from time import sleep
-import math
 import numpy as np
 import logging
-from hardware.daq import DAQ
 
-from app import SpinLabMeasurement
 from modules.measurement_mode import MeasurementMode
 
-from hardware.lakeshore import Lakeshore
-from hardware.GM_700 import GM700
-from hardware.sr830 import SR830
-from hardware.dummy_lockin import DummyLockin
-from hardware.dummy_gaussmeter import DummyGaussmeter
-from hardware.dummy_field import DummyField
 from hardware.rotation_stage import RotationStage
 from hardware.rotation_stage_dummy import RotationStageDummy
-from logic.vector import Vector
 from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity, _lockin_filter_slope
 from logic.sweep_field_to_zero import sweep_field_to_zero
 from logic.sweep_field_to_value import sweep_field_to_value
@@ -25,47 +15,13 @@ log.addHandler(logging.NullHandler())
 
 
 class HarmonicMode(MeasurementMode):
-    def __init__(self, procedure: SpinLabMeasurement) -> None:
-        self.p = procedure
 
     def initializing(self):
 
         # Hardware objects initialization
-        match self.p.set_lockin:
-            case "SR830":
-                try:
-                    self.lockin_obj = SR830(self.p.address_lockin)
-                except:
-                    self.lockin_obj = DummyLockin()
-                    log.warning("Used dummy Lockin.")
-
-            case "Zurich":
-                pass
-            case _:
-                self.lockin_obj = DummyLockin()
-                log.warning("Used dummy Lockin.")
-
-        match self.p.set_gaussmeter:
-            case "Lakeshore":
-                self.gaussmeter_obj = Lakeshore(self.p.address_gaussmeter)
-            case "GM700":
-                self.gaussmeter_obj = GM700(self.p.address_gaussmeter)
-            case _:
-                self.gaussmeter_obj = DummyGaussmeter(self.p.address_gaussmeter)
-                log.warning("Used dummy Gaussmeter.")
-
-        match self.p.set_field_cntrl:
-            case "DAQ":
-                self.field_obj = DAQ(self.p.address_daq)
-            case _:
-                self.field_obj = DummyField(self.p.address_daq)
-                log.warning("Used dummy DAQ.")
-
-        match self.p.set_automaticstation:
-            case True:
-                pass
-            case _:
-                pass
+        self.lockin_obj = self.hardware_creator.create_lockin()
+        self.gaussmeter_obj = self.hardware_creator.create_gaussmeter()
+        self.field_obj = self.hardware_creator.create_field_cntrl()
 
         # Lockin initialization
         self.lockin_obj.frequency = self.p.lockin_frequency
@@ -169,16 +125,13 @@ class HarmonicMode(MeasurementMode):
         self.result2 = np.average([i[1] for i in self.result_list])
 
         data = {
-            "Voltage (V)": math.nan,
-            "Current (A)": math.nan,
-            "Resistance (ohm)": self.result1 if self.p.lockin_channel1 == "R" else (self.result2 if self.p.lockin_channel2 == "R" else math.nan),
+            "Resistance (ohm)": self.result1 if self.p.lockin_channel1 == "R" else (self.result2 if self.p.lockin_channel2 == "R" else np.nan),
             "Field (Oe)": self.tmp_field,
-            "Frequency (Hz)": math.nan,
-            "X (V)": self.result1 if self.p.lockin_channel1 == "X" else (self.result2 if self.p.lockin_channel2 == "X" else math.nan),
-            "Y (V)": self.result1 if self.p.lockin_channel1 == "Y" else (self.result2 if self.p.lockin_channel2 == "Y" else math.nan),
-            "Phase": self.result1 if self.p.lockin_channel1 == "Theta" else (self.result2 if self.p.lockin_channel2 == "Theta" else math.nan),
-            "Polar angle (deg)": self.polar_angle if self.p.set_rotationstation == True else math.nan,
-            "Azimuthal angle (deg)": self.azimuthal_angle if self.p.set_rotationstation == True else math.nan,
+            "X (V)": self.result1 if self.p.lockin_channel1 == "X" else (self.result2 if self.p.lockin_channel2 == "X" else np.nan),
+            "Y (V)": self.result1 if self.p.lockin_channel1 == "Y" else (self.result2 if self.p.lockin_channel2 == "Y" else np.nan),
+            "Phase": self.result1 if self.p.lockin_channel1 == "Theta" else (self.result2 if self.p.lockin_channel2 == "Theta" else np.nan),
+            "Polar angle (deg)": self.polar_angle if self.p.set_rotationstation == True else np.nan,
+            "Azimuthal angle (deg)": self.azimuthal_angle if self.p.set_rotationstation == True else np.nan,
         }
 
         return data

@@ -1,15 +1,7 @@
 from time import sleep
-from numpy import nan
 import logging
 
-from app import SpinLabMeasurement
 from modules.measurement_mode import MeasurementMode
-
-from hardware.daq import DAQ
-from hardware.dummy_field import DummyField
-from hardware.lakeshore import Lakeshore
-from hardware.GM_700 import GM700
-from hardware.dummy_gaussmeter import DummyGaussmeter
 
 from logic.sweep_field_to_zero import sweep_field_to_zero
 from scipy.stats import linregress
@@ -19,28 +11,12 @@ log.addHandler(logging.NullHandler())
 
 
 class FieldCalibrationMode(MeasurementMode):
-    def __init__(self, procedure: SpinLabMeasurement) -> None:
-        self.p = procedure
-        self.field_vector = []
 
-    def initializing(self):
-        if self.p.set_field_cntrl == "none":
-            self.daq = DummyField(self.p.address_daq)
-            log.warning("Used dummy DAQ")
-        else:
-            self.daq = DAQ(self.p.address_daq)
-
-        if self.p.set_gaussmeter == "none":
-            self.gaussmeter = DummyGaussmeter(self.p.address_gaussmeter)
-            log.warning("Used dummy Gaussmeter")
-        elif self.p.set_gaussmeter == "GM700":
-            self.gaussmeter = GM700(self.p.address_gaussmeter)
-        elif self.p.set_gaussmeter == "Lakeshore":
-            self.gaussmeter = Lakeshore(self.p.address_gaussmeter)
-        else:
-            raise ValueError("Gaussmeter not supported")
-
+    def initializing(self):    
+        self.daq = self.hardware_creator.create_field_cntrl()
+        self.gaussmeter = self.hardware_creator.create_gaussmeter()
         self.daq.field_constant = self.p.field_constant
+        self.field_vector = []
 
     def operating(self, point):
 
