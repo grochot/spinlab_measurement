@@ -58,7 +58,8 @@ class DummyMotionDriver:
         pass
 
 
-
+    def get_motor_status(self):
+        return int(self.is_motor_1_active())*int(self.is_motor_2_active())*int(self.is_motor_3_active())
     
     def define_home_all_axes(self):
         self.define_home_1()

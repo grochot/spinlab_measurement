@@ -278,7 +278,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
 
     def force_approach(self):
-        if self.get_motor_status():
+        if self.MotionDriver.get_motor_status():
             if self.sample_in_plane_checkbox.isChecked():
                 self.MotionDriver.goTo_3(self.z_pos-float(self.make_connection_textbox.text()))
             else:
@@ -322,10 +322,6 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.MotionDriver.init_position(self.sample_in_plane_checkbox.isChecked())
 
 
-
-    def get_motor_status(self):
-        return int(self.MotionDriver.is_motor_1_active())*int(self.MotionDriver.is_motor_2_active())*int(self.MotionDriver.is_motor_3_active())
-
     def make_connection_with_devices(self):
         if self.drive_motion_adresses_combo.currentText()!="None":
             
@@ -354,7 +350,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         else:
             self.z_pos=self.MotionDriver.pos_1()
 
-        motor_status=self.get_motor_status()
+        motor_status=self.MotionDriver.get_motor_status()
         if motor_status:
             self.enable_motors_checkable_button.setText("Disable")
         else:
@@ -405,20 +401,26 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         #x=pos2
         #y=pos3
 
-        #moton om
+
+        disable_after=False
+        if self.MotionDriver.get_motor_status()==0:
+            self.MotionDriver.enable()
+            disable_after=True
+            
         if self.sample_in_plane_checkbox.isChecked():
             write_axes1.setText(str(self.MotionDriver.pos_2()))
             write_axes2.setText(str(self.MotionDriver.pos_1()))
         else:
             write_axes1.setText(str(self.MotionDriver.pos_2()))
-            write_axes2.setText(str(self.MotionDriver.pos_3())) 
+            write_axes2.setText(str(self.MotionDriver.pos_3()))
         
-
+        if disable_after:
+            self.MotionDriver.disable()
 
     
     
     def connect_with_sample(self, checked):
-        if checked and self.get_motor_status():
+        if checked and self.MotionDriver.get_motor_status():
             if self.sample_in_plane_checkbox.isChecked():
                 self.MotionDriver.goTo_3(self.z_pos-float(self.make_connection_textbox.text()))
             else:
@@ -434,7 +436,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
             self.connect_checkable_button.setText("Take off")
     
     def enable_motors_function(self):
-        motor_status=self.get_motor_status()
+        motor_status=self.MotionDriver.get_motor_status()
 
         if motor_status:
             self.MotionDriver.disable()
@@ -442,7 +444,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         else:
             self.MotionDriver.enable() #to ma byc negacja tekstu wysietlanego na ekranie, wtedy jest dobrze.
 
-        motor_status=self.get_motor_status()
+        motor_status=self.MotionDriver.get_motor_status()
 
         if motor_status:
             self.enable_motors_checkable_button.setText("Disable")
