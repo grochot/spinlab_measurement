@@ -102,8 +102,18 @@ class FMRMode(MeasurementMode):
         self.generator_obj.setFreq(initial_freq)
         self.generator_obj.setPower(self.p.generator_power)
 
-        sweep_field_to_value(0, initial_field, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit)
-        self.tmp_field = initial_field
+        # sweep field to initial value
+        self.p.last_set_field, wasSweepAborted = sweep_field_to_value(
+            0,
+            initial_field,
+            self.p.field_step,
+            self.field_obj,
+            emit_info_callback=self.p.emit,
+            abort_callback=self.p.should_stop,
+        )
+        if wasSweepAborted:
+            return
+        self.prev_point = initial_field
 
         self.generator_obj.set_lf_signal()
         self.generator_obj.setOutput(True, True if (self.p.set_lfgen == "none" and self.p.set_measdevice_fmr == "LockIn") else False)
@@ -113,7 +123,6 @@ class FMRMode(MeasurementMode):
             self.lockin_obj.phase = 0
         else:
             self.lockin_obj.phase = 180
-
         sleep(1)
 
     def operating(self, point):
@@ -121,16 +130,27 @@ class FMRMode(MeasurementMode):
 
         match self.p.mode_fmr:
             case "V-FMR":
-                self.field_obj.set_field(point)
+                self.p.last_set_field, wasSweepAborted = sweep_field_to_value(
+                    self.prev_point,
+                    point,
+                    self.p.field_step,
+                    self.field_obj,
+                    emit_info_callback=self.p.emit,
+                    abort_callback=self.p.should_stop,
+                )
+                if wasSweepAborted:
+                    return {}
             case "ST-FMR":
                 self.generator_obj.setFreq(point)
+
+        self.prev_point = point
 
         sleep(self.p.delay_field)
 
         if self.p.set_gaussmeter == "none":
-            self.tmp_field = point
+            tmp_field = point
         else:
-            self.tmp_field = self.gaussmeter_obj.measure()
+            tmp_field = self.gaussmeter_obj.measure()
 
         sleep(self.p.delay_lockin)
 
@@ -152,12 +172,12 @@ class FMRMode(MeasurementMode):
         data = {
             "Voltage (V)": result if self.p.set_measdevice_fmr == "Multimeter" else np.nan,
             "Current (A)": np.nan,
-            "Resistance (ohm)": result1 if self.p.lockin_channel1 == "R" else (result2 if self.p.lockin_channel2 == "R" else np.nan),
-            "Field (Oe)": self.tmp_field,
+            "Resistance (ohm)": (result1 if self.p.lockin_channel1 == "R" else (result2 if self.p.lockin_channel2 == "R" else np.nan)),
+            "Field (Oe)": tmp_field,
             "Frequency (Hz)": self.p.generator_frequency if self.p.mode_fmr == "V-FMR" else point,
-            "X (V)": result1 if self.p.lockin_channel1 == "X" else (result2 if self.p.lockin_channel2 == "X" else np.nan),
-            "Y (V)": result1 if self.p.lockin_channel1 == "Y" else (result2 if self.p.lockin_channel2 == "Y" else np.nan),
-            "Phase": result1 if self.p.lockin_channel1 == "Theta" else (result2 if self.p.lockin_channel2 == "Theta" else np.nan),
+            "X (V)": (result1 if self.p.lockin_channel1 == "X" else (result2 if self.p.lockin_channel2 == "X" else np.nan)),
+            "Y (V)": (result1 if self.p.lockin_channel1 == "Y" else (result2 if self.p.lockin_channel2 == "Y" else np.nan)),
+            "Phase": (result1 if self.p.lockin_channel1 == "Theta" else (result2 if self.p.lockin_channel2 == "Theta" else np.nan)),
             "Polar angle (deg)": self.p.rotation_polar_constant if self.p.set_rotationstation == True else np.nan,
             "Azimuthal angle (deg)": self.p.rotation_azimuth_constant if self.p.set_rotationstation == True else np.nan,
         }
@@ -169,7 +189,13 @@ class FMRMode(MeasurementMode):
 
     def idle(self):
         if self.p.hold_the_field_after_measurement == False:
-            sweep_field_to_zero(self.tmp_field, self.p.field_constant, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit)
+            sweep_field_to_zero(
+                self.p.last_set_field,
+                self.p.field_constant,
+                self.p.field_step,
+                self.field_obj,
+                emit_info_callback=self.p.emit,
+            )
         self.generator_obj.setOutput(False)
         if self.p.return_the_rotationstation and self.p.set_rotationstation == True:
             self.rotationstation_obj.goToZero()

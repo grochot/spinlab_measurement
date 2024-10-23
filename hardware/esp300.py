@@ -36,7 +36,7 @@ class Esp300():
 
     def disable(self):
         self.write("1MF; 2MF; 3MF")
-        print("Disabled Enabled")
+        print("Motion Disabled")
 
     "There is Z axis"
     def goTo_1(self, position, wait=False):
@@ -182,6 +182,10 @@ class Esp300():
         self.define_home_1()
         self.define_home_2()
         self.define_home_3()
+
+
+    def get_motor_status(self):
+        return int(self.is_motor_1_active())*int(self.is_motor_2_active())*int(self.is_motor_3_active())
 
             
     
