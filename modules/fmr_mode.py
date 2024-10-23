@@ -197,20 +197,16 @@ class FMRMode(MeasurementMode):
         )
         if wasSweepAborted:
             return
+        self.prev_point = initial_field
 
         self.generator_obj.set_lf_signal()
-        self.generator_obj.setOutput(
-            True, True if (self.p.set_lfgen == "none" and self.p.set_measdevice_fmr == "LockIn") else False
-        )
+        self.generator_obj.setOutput(True, True if (self.p.set_lfgen == "none" and self.p.set_measdevice_fmr == "LockIn") else False)
 
         # set lockin phase:
         if self.p.set_lfgen == "SR830":
             self.lockin_obj.phase = 0
         else:
             self.lockin_obj.phase = 180
-
-        self.prev_point = initial_field
-
         sleep(1)
 
     def operating(self, point):
@@ -227,7 +223,7 @@ class FMRMode(MeasurementMode):
                     abort_callback=self.p.should_stop,
                 )
                 if wasSweepAborted:
-                    return
+                    return {}
             case "ST-FMR":
                 self.generator_obj.setFreq(point)
 

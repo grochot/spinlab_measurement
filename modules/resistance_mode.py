@@ -134,23 +134,20 @@ class ResistanceMode(MeasurementMode):
 
         # Field initialization
         self.field_obj.field_constant = self.p.field_constant
-        
+
         if self.p.set_rotationstation:
             initial_field = self.p.constant_field_value
         else:
             initial_field = self.point_list[0]
-            
+
         # Sweep field to initial value
         self.p.last_set_field, wasSweepAborted = sweep_field_to_value(
-            0,
-            initial_field,
-            self.p.field_step,
-            self.field_obj,
-            emit_info_callback=self.p.emit,
-            abort_callback=self.p.should_stop)
+            0, initial_field, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit, abort_callback=self.p.should_stop
+        )
         if wasSweepAborted:
             return
-        
+        self.prev_point = initial_field
+
         # MotionDriver
         if self.p.set_automaticstation:
             if self.p.address_automaticstation == "None":
@@ -174,16 +171,12 @@ class ResistanceMode(MeasurementMode):
 
         else:
             self.p.last_set_field, wasSweepAborted = sweep_field_to_value(
-                self.prev_point,
-                point,
-                self.p.field_step,
-                self.field_obj,
-                emit_info_callback=self.p.emit,
-                abort_callback=self.p.should_stop)
+                self.prev_point, point, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit, abort_callback=self.p.should_stop
+            )
             if wasSweepAborted:
-                return
+                return {}
             self.prev_point = point
-        
+
         sleep(self.p.delay_field)
 
         # measure field
@@ -250,5 +243,5 @@ class ResistanceMode(MeasurementMode):
             self.rotationstation_obj.goToZero()
 
         if not self.p.has_next_callback() and self.p.set_automaticstation and self.p.go_init_position:
-            self.MotionDriver.disconnect(self.p.sample_in_plane,self.p.disconnect_length)
+            self.MotionDriver.disconnect(self.p.sample_in_plane, self.p.disconnect_length)
             self.MotionDriver.init_position(self.p.sample_in_plane)
