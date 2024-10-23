@@ -3,7 +3,7 @@ import math
 import numpy as np
 import logging
 
-from modules.measurement_mode import MeasurementMode
+from modules.measurement_mode import MeasurementMode, Vector
 from app import SpinLabMeasurement
 
 from hardware.keithley2400 import Keithley2400
@@ -37,22 +37,32 @@ class CIMSOneDeviceMode(MeasurementMode):
     def __init__(self, procedure: SpinLabMeasurement) -> None:
         self.p = procedure
 
+    def generate_points(self):
+        vector_string = self.p.vector
+        v = Vector()
+        ranges = v.generate_ranges(vector_string)
+        return ranges
+
     def initializing(self):
         # Hardware objects initialization
         match self.p.set_sourcemeter:
-            # case "Keithley 2400":
-            #     self.sourcemeter_obj = Keithley2400(self.p.address_sourcemeter)
-            #     self.sourcemeter_obj.config_average(self.p.sourcemeter_average)
-            # case "Keithley 2636":
-            #     if self.p.sourcemeter_channel == "Channel A":
-            #         self.sourcemeter_obj = Keithley2636(self.p.address_sourcemeter).ChA
-            #     else:
-            #         self.sourcemeter_obj = Keithley2636(self.p.address_sourcemeter).ChB
+            case "Keithley 2400":
+                self.sourcemeter_obj = Keithley2400(self.p.address_sourcemeter)
+                # self.sourcemeter_obj.reset()
+                self.sourcemeter_obj.config_average(self.p.sourcemeter_average)
+            case "Keithley 2636":
+                if self.p.sourcemeter_channel == "Channel A":
+                    self.sourcemeter_obj = Keithley2636(self.p.address_sourcemeter).ChA
+                else:
+                    self.sourcemeter_obj = Keithley2636(self.p.address_sourcemeter).ChB
+                # self.sourcemeter_obj.reset()
             case "Agilent 2912":
                 if self.p.sourcemeter_channel == "Channel A":
                     self.sourcemeter_obj = Agilent2912(self.p.address_sourcemeter).ChA
                 else:
                     self.sourcemeter_obj = Agilent2912(self.p.address_sourcemeter).ChB
+                # self.sourcemeter_obj.reset()
+                self.sourcemeter_obj.func_shape = "DC"
             case _:
                 self.sourcemeter_obj = DummySourcemeter(self.p.address_sourcemeter)
                 log.warning("Used dummy Sourcemeter.")
@@ -111,15 +121,6 @@ class CIMSOneDeviceMode(MeasurementMode):
             self.sourcemeter_obj.enable_source()
             self.sourcemeter_obj.measure_voltage(self.p.sourcemeter_nplc, self.p.sourcemeter_limit)
 
-        # Multimeter initialization
-        self.multimeter_obj.resolution = self.p.multimeter_resolution
-        self.multimeter_obj.range_ = self.p.multimeter_range
-        self.multimeter_obj.autorange = self.p.multimeter_autorange
-        self.multimeter_obj.function_ = self.p.multimeter_function
-        self.multimeter_obj.trigger_delay = "MIN"
-        self.multimeter_obj.trigger_count = self.p.multimeter_average
-        self.multimeter_obj.nplc = self.p.multimeter_nplc
-
         # Lakeshore initalization
         self.gaussmeter_obj.range(self.p.gaussmeter_range)
         self.gaussmeter_obj.resolution(self.p.gaussmeter_resolution)
@@ -141,23 +142,9 @@ class CIMSOneDeviceMode(MeasurementMode):
                 self.MotionDriver = Esp300(self.p.address_automaticstation)
                 self.MotionDriver.high_level_motion_driver(self.p.global_xyname, self.p.sample_in_plane, self.p.disconnect_length)
 
-    def operating(self, point):
-        if self.p.set_rotationstation:
-            match self.p.rotation_axis:
-                case "Polar":
-                    self.rotationstation_obj.goToPolar(point)
-                    self.polar_angle = point
-                    self.azimuthal_angle = self.p.rotation_azimuth_constant
 
-                case "Azimuthal":
-                    self.rotationstation_obj.goToAzimuth(point)
-                    self.polar_angle = self.p.rotation_polar_constant
-                    self.azimuthal_angle = point
+        #Script initialization and measurement
 
-        else:
-            pass
-        self.field_obj.set_field(point)
-        sleep(self.p.delay_field)
 
         # measure field
         if self.p.set_gaussmeter == "none":
@@ -166,37 +153,12 @@ class CIMSOneDeviceMode(MeasurementMode):
             self.tmp_field = self.gaussmeter_obj.measure()
         sleep(self.p.delay_bias)
 
-        # Measure voltage/current/resistance
-        if self.p.mode_resistance:
-            if self.p.sourcemeter_source == "VOLT":
-                self.tmp_voltage = self.p.sourcemeter_bias
-                self.tmp_current = np.average(self.multimeter_obj.reading)
-                self.tmp_resistance = self.tmp_voltage / self.tmp_current
-            else:
-                self.tmp_voltage = np.average(self.multimeter_obj.reading)
-                self.tmp_current = self.p.sourcemeter_bias
-                self.tmp_resistance = self.tmp_voltage / self.tmp_current
-        else:
-            if self.p.sourcemeter_source == "VOLT":
-                if self.p.sourcemeter_bias != 0:
-                    self.tmp_voltage = self.p.sourcemeter_bias
-                else:
-                    self.tmp_voltage = 1e-9
-                self.tmp_current = self.sourcemeter_obj.current
-                if type(self.tmp_current) == list:
-                    self.tmp_current = np.average(self.tmp_current)
-                print(self.tmp_current)
-                self.tmp_resistance = self.tmp_voltage / self.tmp_current
-            else:
-                self.tmp_voltage = self.sourcemeter_obj.voltage
-                if type(self.tmp_voltage) == list:
-                    self.tmp_voltage = np.average(self.tmp_voltage)
-                print(self.tmp_voltage)
-                if self.p.sourcemeter_bias != 0:
-                    self.tmp_current = self.p.sourcemeter_bias
-                else:
-                    self.tmp_current = 1e-9
-                self.tmp_resistance = self.tmp_voltage / self.tmp_current
+
+    def operating(self, point):
+        #self.field_obj.set_field(point)
+        #sleep(self.p.delay_field)
+
+
 
         data = {
             "Voltage (V)": self.tmp_voltage,

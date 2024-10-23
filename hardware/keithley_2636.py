@@ -491,17 +491,58 @@ class Channel:
     def enable_source(self):
         self.source_output="ON"
 
-    def disable_source(self):
-        self.source_output="HIGH_Z"
+    def disable_source(self,HIGH_Z=True):
+        if HIGH_Z:
+            self.source_output="HIGH_Z"
+        else:
+            self.source_output="OFF"
+
+    def InitiatePulseTest(self,tag):
+        self.write('InitiatePulseTest(%d)'%tag)
+
+    def prepare_ConfigPulseVMeasureISweepLin(self,bias,start,stop,limit,ton,toff,points,tag):
+        self.write('smu{ch}.measure.autozero = smu{ch}.AUTOZERO_ONCE')
+        self.write('rbi = smu{ch}.makebuffer(%d)'%points)
+        self.write('rbv = smu{ch}.makebuffer(%d)'%points)
+        self.write('rbi.appendmode = 1')
+        self.write('rbv.appendmode = 1')
+        self.write('rbs = { i = rbi, v = rbv }')
+        self.write('ConfigPulseVMeasureISweepLin(smu{ch},%f,%f,%f,%f,%f,%f,%d,rbs,%d)'%(bias,start,stop,limit,ton,toff,points,tag))
+
+    
+    def fast_configuration(self):
+        self.write('smu{ch}.reset()')
+        self.write('smua.source.rangev = 5')
+        self.write('smua.source.rangei = 1')
+        self.write('smua.source.levelv = 0 ')
+        self.write('smua.measure.rangev = 5 ')
+        self.write('smua.measure.rangei = 1')
+        self.write('smua.measure.nplc = 0.01')
 
 
     def test(self):
+        self.write('smua.reset()')
+ 
+        self.write('smua.measure.autozero = smua.AUTOZERO_ONCE')
+        
+        #self.write('smua.nvbuffer1.clear()')
+        #self.write('smua.nvbuffer1.appendmode = 1 ')
         self.write('rbi = smua.makebuffer(10)')
-        self.write('rbi.clear()')
+        self.write('rbv = smua.makebuffer(10)')
         self.write('rbi.appendmode = 1')
-        self.write('ConfigPulseIMeasureVSweepLin(smua, 0, 0.01, 0.05, 1, 1e-3, 0.1, 8,rbi, 1)')
-        self.write('InitiatePulseTest(1)')
-        print('Bufor:',self.ask('printbuffer(1, 12, rbi)'))
+        self.write('rbv.appendmode = 1')
+        self.write('rbs = { i = rbi, v = rbv }')
+        
+        
+        #self.write('smua.source.output = smua.OUTPUT_ON')
+
+        self.write('ConfigPulseVMeasureISweepLin(smua, 0.01, 0.01, 2, 0.6, 10e-3, 10e-3, 10,rbs, 3)')
+        self.enable_source()
+        self.write('InitiatePulseTest(3)')
+        print('Bufor:',self.ask('printbuffer(1, 10, rbs.i)'))
+        #print('Bufor:',self.ask('printbuffer(1, smua.nibuffer1.n, smua.nibuffer1)'))
+
+
 
     
 
@@ -509,7 +550,16 @@ if __name__ == "__main__":
 #from time import sleep
     k = Keithley2636('GPIB0::26::INSTR', timeout=50000)
     ch=k.ChA
-    ch.test()
+
+    ch.fast_configuration()
+    ch.prepare_ConfigPulseVMeasureISweepLin( 0.01, 0.01, 2, 0.6, 10e-3, 10e-3, 10, 3)
+    ch.enable_source()
+    ch.InitiatePulseTest(3)
+    ch.disable_source(HIGH_Z=False)
+    
+
+
+    #ch.test()
     #ch.amplitude=("VOLT",2)
     #ch.single_pulse_prepare()
     
