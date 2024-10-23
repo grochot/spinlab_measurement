@@ -134,14 +134,20 @@ class ResistanceMode(MeasurementMode):
 
         # Field initialization
         self.field_obj.field_constant = self.p.field_constant
+
         if self.p.set_rotationstation:
-            self.tmp_field = self.p.constant_field_value
+            initial_field = self.p.constant_field_value
         else:
-            self.tmp_field = self.point_list[0]
-            
-        sweep_field_to_value(0, self.tmp_field, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit)
-        self.prev_point = self.tmp_field
-        
+            initial_field = self.point_list[0]
+
+        # Sweep field to initial value
+        self.p.last_set_field, wasSweepAborted = sweep_field_to_value(
+            0, initial_field, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit, abort_callback=self.p.should_stop
+        )
+        if wasSweepAborted:
+            return
+        self.prev_point = initial_field
+
         # MotionDriver
         if self.p.set_automaticstation:
             if self.p.address_automaticstation == "None":
@@ -164,16 +170,20 @@ class ResistanceMode(MeasurementMode):
                     self.azimuthal_angle = point
 
         else:
-            pass
-        sweep_field_to_value(self.prev_point, point, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit)
-        self.prev_point = point
+            self.p.last_set_field, wasSweepAborted = sweep_field_to_value(
+                self.prev_point, point, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit, abort_callback=self.p.should_stop
+            )
+            if wasSweepAborted:
+                return {}
+            self.prev_point = point
+
         sleep(self.p.delay_field)
 
         # measure field
         if self.p.set_gaussmeter == "none":
-            self.tmp_field = point
+            tmp_field = point
         else:
-            self.tmp_field = self.gaussmeter_obj.measure()
+            tmp_field = self.gaussmeter_obj.measure()
         sleep(self.p.delay_bias)
 
         # Measure voltage/current/resistance
@@ -212,7 +222,7 @@ class ResistanceMode(MeasurementMode):
             "Voltage (V)": self.tmp_voltage,
             "Current (A)": self.tmp_current,
             "Resistance (ohm)": self.tmp_resistance,
-            "Field (Oe)": self.tmp_field,
+            "Field (Oe)": tmp_field,
             "Frequency (Hz)": math.nan,
             "X (V)": math.nan,
             "Y (V)": math.nan,
@@ -228,10 +238,10 @@ class ResistanceMode(MeasurementMode):
 
     def idle(self):
         self.sourcemeter_obj.shutdown()
-        sweep_field_to_zero(self.tmp_field, self.p.field_constant, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit)
+        sweep_field_to_zero(self.p.last_set_field, self.p.field_constant, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit)
         if (self.p.set_rotationstation or self.p.rotation_axis == "None") and self.p.return_the_rotationstation:
             self.rotationstation_obj.goToZero()
 
         if not self.p.has_next_callback() and self.p.set_automaticstation and self.p.go_init_position:
-            self.MotionDriver.disconnect(self.p.sample_in_plane,self.p.disconnect_length)
+            self.MotionDriver.disconnect(self.p.sample_in_plane, self.p.disconnect_length)
             self.MotionDriver.init_position(self.p.sample_in_plane)
