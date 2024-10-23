@@ -19,14 +19,15 @@ def sweep_field_to_zero(start_field: float, field_constant: float, field_step: f
         float: The final magnetic field value that was set.
     """
     last_set_field = start_field
+    wasAborted = False
     
     if abs(start_field) <= field_step:
         daq.set_field(0)
-        return 0.0
+        return 0.0, wasAborted
     
     if field_constant > 2:  # tego if'a bym wywalil przy mergowaniu
         daq.set_field(0)
-        return 0.0
+        return 0.0, wasAborted
 
     step_direction = field_step if start_field < 0 else -field_step
     field_values = np.arange(start_field, 0, step_direction)
@@ -45,6 +46,7 @@ def sweep_field_to_zero(start_field: float, field_constant: float, field_step: f
 
         if abort_callback and abort_callback():
             print("Aborting sweep")
+            wasAborted = True
             break
 
         daq.set_field(field)
@@ -54,4 +56,4 @@ def sweep_field_to_zero(start_field: float, field_constant: float, field_step: f
     if emit_info_callback:
         emit_info_callback("info", "")
 
-    return last_set_field
+    return last_set_field, wasAborted

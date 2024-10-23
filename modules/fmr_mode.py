@@ -186,10 +186,11 @@ class FMRMode(MeasurementMode):
         self.generator_obj.setFreq(initial_freq)
         self.generator_obj.setPower(self.p.generator_power)
 
-        self.p.last_set_field, wasSweepAborted = sweep_field_to_value(0, initial_field, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit, abort_callback=self.p.should_stop)
+        self.p.last_set_field, wasSweepAborted = sweep_field_to_value(
+            0, initial_field, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit, abort_callback=self.p.should_stop
+        )
         if wasSweepAborted:
             return
-        self.tmp_field = initial_field
 
         self.generator_obj.set_lf_signal()
         self.generator_obj.setOutput(True, True if (self.p.set_lfgen == "none" and self.p.set_measdevice_fmr == "LockIn") else False)
@@ -199,7 +200,7 @@ class FMRMode(MeasurementMode):
             self.lockin_obj.phase = 0
         else:
             self.lockin_obj.phase = 180
-            
+
         self.prev_point = initial_field
 
         sleep(1)
@@ -209,10 +210,14 @@ class FMRMode(MeasurementMode):
 
         match self.p.mode_fmr:
             case "V-FMR":
-                sweep_field_to_value(self.prev_point, point, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit)
+                self.p.last_set_field, wasSweepAborted = sweep_field_to_value(
+                    self.prev_point, point, self.p.field_step, self.field_obj, emit_info_callback=self.p.emit, abort_callback=self.p.should_stop
+                )
+                if wasSweepAborted:
+                    return
             case "ST-FMR":
                 self.generator_obj.setFreq(point)
-                
+
         self.prev_point = point
 
         sleep(self.p.delay_field)
@@ -221,8 +226,6 @@ class FMRMode(MeasurementMode):
             tmp_field = point
         else:
             tmp_field = self.gaussmeter_obj.measure()
-            
-        self.last_set_field = tmp_field
 
         sleep(self.p.delay_lockin)
 
