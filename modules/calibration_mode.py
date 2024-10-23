@@ -64,6 +64,7 @@ class FieldCalibrationMode(MeasurementMode):
         log.info("Previous field constant: {} [V/Oe]".format(self.p.field_constant))
         try:
             self.p.field_constant = 1 / slope
+            self.daq.field_constant = self.p.field_constant
         except ZeroDivisionError:
             log.error("Voltage to field conversion factor is zero.")
         log.info(f"Field constant: {self.p.field_constant} [V/Oe]")

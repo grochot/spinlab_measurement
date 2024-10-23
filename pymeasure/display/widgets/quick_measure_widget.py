@@ -186,7 +186,7 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
                     log.error("Device not implemented!")
                     return
 
-            sourcemeter_source = self.get("sourcemter_source")
+            sourcemeter_source = self.get("sourcemeter_source")
             self.device.source_mode = sourcemeter_source
             if sourcemeter_source == "VOLT":
                 self.device.current_range = self.get("sourcemeter_limit")
@@ -248,7 +248,7 @@ class QuickMeasureWidget(TabWidget, QtWidgets.QWidget):
             return
 
         if self.meas_device == "Sourcemeter":
-            sourcemeter_source = self.get("sourcemter_source")
+            sourcemeter_source = self.get("sourcemeter_source")
 
             if sourcemeter_source == "VOLT":
                 if self.get("sourcemeter_bias") != 0:

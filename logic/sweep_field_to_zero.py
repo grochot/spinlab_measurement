@@ -19,6 +19,11 @@ def sweep_field_to_zero(start_field: float, field_constant: float, field_step: f
         float: The final magnetic field value that was set.
     """
     last_set_field = start_field
+    
+    if abs(start_field) <= field_step:
+        daq.set_field(0)
+        return 0.0
+    
     if field_constant > 2:  # tego if'a bym wywalil przy mergowaniu
         daq.set_field(0)
         return 0.0
@@ -29,12 +34,12 @@ def sweep_field_to_zero(start_field: float, field_constant: float, field_step: f
 
     # set print options to avoid printing large arrays to console
     np.set_printoptions(threshold=10)
-    print(f"Sweeping field from: {start_field} to: 0 with {len(field_values)} steps: {field_values}")
+    print(f"Sweeping field from: {start_field:.2f} to: 0 with {len(field_values)} steps: {field_values}")
     # reset print options to default
     np.set_printoptions(threshold=1000)
 
     if emit_info_callback:
-        emit_info_callback("info", f"Sweeping field from: {start_field} to: 0 [Oe]")
+        emit_info_callback("info", f"Sweeping field from: {start_field:.2f} to: 0 [Oe]")
 
     for field in field_values:
 

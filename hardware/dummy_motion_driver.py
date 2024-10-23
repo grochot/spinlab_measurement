@@ -38,6 +38,15 @@ class DummyMotionDriver:
         return 1
     
 
+    def define_home_1(self):
+        pass
+
+    def define_home_2(self):
+        pass
+
+    def define_home_3(self):
+        pass
+
     def high_level_motion_driver(self,global_xyname,sample_in_plane,disconnect_length):
         pass
 
@@ -47,3 +56,12 @@ class DummyMotionDriver:
 
     def init_position(self,sample_in_plane):
         pass
+
+
+    def get_motor_status(self):
+        return int(self.is_motor_1_active())*int(self.is_motor_2_active())*int(self.is_motor_3_active())
+    
+    def define_home_all_axes(self):
+        self.define_home_1()
+        self.define_home_2()
+        self.define_home_3()

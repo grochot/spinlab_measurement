@@ -87,8 +87,8 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.drive_motion_adresses_combo.addItems(self.address_list)
         self.drive_motion_adresses_label=QtWidgets.QLabel('Driver motion address')
 
-        self.make_connection_with_devices_label=QtWidgets.QLabel('Make connection with devices')
-        self.make_connection_with_devices_button=QtWidgets.QPushButton("connect")
+        #self.make_connection_with_devices_label=QtWidgets.QLabel('Make connection with devices')
+        self.make_connection_with_devices_button=QtWidgets.QPushButton("Connect with device")
 
         self.make_connection_label=QtWidgets.QLabel('Take off distance [mm]')
         self.make_connection_textbox=QtWidgets.QLineEdit(self)
@@ -127,8 +127,11 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.sample_in_plane_checkbox=QtWidgets.QCheckBox("Perpendicular?",self)
         self.connect_with_sample(False)
 
-        self.go_to_initialize_posotion_button=QtWidgets.QPushButton("Go to initialize position")
-        self.go_to_initialize_posotion_button.clicked.connect(self.go_to_initialize_posotion)
+        self.go_to_initialize_position_button=QtWidgets.QPushButton("Go to initialize position")
+        self.go_to_initialize_position_button.clicked.connect(self.go_to_initialize_posotion)
+
+        self.define_initialize_position_button=QtWidgets.QPushButton("Define initialize position")
+        self.define_initialize_position_button.clicked.connect(self.define_initialize_position)
 
         self.warning_using_dummy_textbox=QtWidgets.QLabel("")
         self.element_not_finded_textbox=QtWidgets.QLabel("")
@@ -257,6 +260,14 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         event.accept() 
     
 
+    def define_initialize_position(self):
+        reply = QtWidgets.QMessageBox.question(self, 'Confirmation', 
+                                     "Do to want set current position as home? - Make sure that probes are outside the sample", 
+                                     QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+
+        if reply == QtWidgets.QMessageBox.Yes:
+            self.MotionDriver.define_home_all_axes()
+
     def force_approach_button_dialog(self):
         reply = QtWidgets.QMessageBox.question(self, 'Confirmation', 
                                      "Do to really want to force approach? - It can damage sample or connectors", 
@@ -267,7 +278,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
 
 
     def force_approach(self):
-        if self.get_motor_status():
+        if self.MotionDriver.get_motor_status():
             if self.sample_in_plane_checkbox.isChecked():
                 self.MotionDriver.goTo_3(self.z_pos-float(self.make_connection_textbox.text()))
             else:
@@ -311,10 +322,6 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         self.MotionDriver.init_position(self.sample_in_plane_checkbox.isChecked())
 
 
-
-    def get_motor_status(self):
-        return int(self.MotionDriver.is_motor_1_active())*int(self.MotionDriver.is_motor_2_active())*int(self.MotionDriver.is_motor_3_active())
-
     def make_connection_with_devices(self):
         if self.drive_motion_adresses_combo.currentText()!="None":
             
@@ -343,7 +350,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         else:
             self.z_pos=self.MotionDriver.pos_1()
 
-        motor_status=self.get_motor_status()
+        motor_status=self.MotionDriver.get_motor_status()
         if motor_status:
             self.enable_motors_checkable_button.setText("Disable")
         else:
@@ -393,19 +400,27 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         #z=pos1
         #x=pos2
         #y=pos3
+
+
+        disable_after=False
+        if self.MotionDriver.get_motor_status()==0:
+            self.MotionDriver.enable()
+            disable_after=True
+            
         if self.sample_in_plane_checkbox.isChecked():
             write_axes1.setText(str(self.MotionDriver.pos_2()))
             write_axes2.setText(str(self.MotionDriver.pos_1()))
         else:
             write_axes1.setText(str(self.MotionDriver.pos_2()))
-            write_axes2.setText(str(self.MotionDriver.pos_3())) 
-
-
+            write_axes2.setText(str(self.MotionDriver.pos_3()))
+        
+        if disable_after:
+            self.MotionDriver.disable()
 
     
     
     def connect_with_sample(self, checked):
-        if checked and self.get_motor_status():
+        if checked and self.MotionDriver.get_motor_status():
             if self.sample_in_plane_checkbox.isChecked():
                 self.MotionDriver.goTo_3(self.z_pos-float(self.make_connection_textbox.text()))
             else:
@@ -421,7 +436,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
             self.connect_checkable_button.setText("Take off")
     
     def enable_motors_function(self):
-        motor_status=self.get_motor_status()
+        motor_status=self.MotionDriver.get_motor_status()
 
         if motor_status:
             self.MotionDriver.disable()
@@ -429,7 +444,7 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         else:
             self.MotionDriver.enable() #to ma byc negacja tekstu wysietlanego na ekranie, wtedy jest dobrze.
 
-        motor_status=self.get_motor_status()
+        motor_status=self.MotionDriver.get_motor_status()
 
         if motor_status:
             self.enable_motors_checkable_button.setText("Disable")
@@ -446,7 +461,8 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout.addWidget(self.drive_motion_adresses_label, 1, 0)
 
         grid_layout.addWidget(self.make_connection_with_devices_button, 0, 1)
-        grid_layout.addWidget(self.make_connection_with_devices_label, 1, 1)
+        grid_layout.addWidget(self.define_initialize_position_button, 1, 1)
+        #grid_layout.addWidget(self.make_connection_with_devices_label, 1, 1)
         grid_layout.addWidget(self.warning_using_dummy_textbox, 2, 1)
 
         grid_layout.addWidget(self.make_connection_textbox, 0, 2)
@@ -471,8 +487,9 @@ class AutomaticStationGenerator(QtWidgets.QWidget):
         grid_layout.addWidget(self.read_for_go_button_button,1,7)
         grid_layout.addWidget(self.go_button, 2, 7)
 
-        grid_layout.addWidget(self.go_to_initialize_posotion_button, 0, 8)
-        grid_layout.addWidget(self.sample_in_plane_checkbox,1,8)
+        grid_layout.addWidget(self.go_to_initialize_position_button, 0, 8)
+        #grid_layout.addWidget(self.define_initialize_position_button, 1, 8)
+        grid_layout.addWidget(self.sample_in_plane_checkbox,2,8)
 
         grid_layout.addWidget(self.go_to_element_textbox, 0, 9)
         grid_layout.addWidget(self.go_to_element_button,1,9)

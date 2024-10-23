@@ -116,8 +116,10 @@ class HarmonicMode(MeasurementMode):
         self.field_obj.field_constant = self.p.field_constant
         if self.p.set_rotationstation:
             sweep_field_to_value(0.0, float(self.p.constant_field_value), self.p.field_step, self.field_obj)
+            self.tmp_field = self.p.constant_field_value
         else:
             sweep_field_to_value(0.0, self.point_list[0], self.p.field_step, self.field_obj)
+            self.tmp_field = self.point_list[0]
 
     def operating(self, point):
         # set temporary result list

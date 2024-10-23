@@ -19,6 +19,11 @@ def sweep_field_to_value(start_field: float, end_field: float, field_step: float
         float: The final magnetic field value that was set.
     """
     last_set_field = start_field
+    
+    if abs(end_field - start_field) <= field_step:
+        daq.set_field(end_field)
+        return end_field
+    
     step_direction = field_step if end_field > start_field else -field_step
     field_values = np.arange(start_field, end_field, step_direction)
     wasAborted = False
@@ -28,12 +33,12 @@ def sweep_field_to_value(start_field: float, end_field: float, field_step: float
 
     # set print options to avoid printing large arrays to console
     np.set_printoptions(threshold=10)
-    print(f"Sweeping field from: {start_field} to: {end_field} with {len(field_values)} steps: {field_values}")
+    print(f"Sweeping field from: {start_field:.2f} to: {end_field:.2f} with {len(field_values)} steps: {field_values}")
     # reset print options to default
     np.set_printoptions(threshold=1000)
 
     if emit_info_callback:
-        emit_info_callback("info", f"Sweeping field from: {start_field} to: {end_field} [Oe]")
+        emit_info_callback("info", f"Sweeping field from: {start_field:.2f} to: {end_field:.2f} [Oe]")
 
     for field in field_values:
         
