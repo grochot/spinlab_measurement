@@ -2,14 +2,16 @@ from logic.vector import Vector
 from app import SpinLabMeasurement
 import logging
 from abc import ABC, abstractmethod
+from logic.hardware_manager import HardwareManager
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
 class MeasurementMode(ABC):
-    def __init__(self, procedure):
+    def __init__(self, procedure: SpinLabMeasurement):
         self.p: SpinLabMeasurement = procedure
+        self.hardware_manager = HardwareManager(procedure)
 
     def generate_points(self) -> list:
         if self.p.vector:

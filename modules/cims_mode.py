@@ -1,33 +1,18 @@
 # biblioteki
 from time import sleep
-import math
 import numpy as np
 import logging
 
-from app import SpinLabMeasurement
 from modules.measurement_mode import MeasurementMode
 
 from hardware.keithley2400 import Keithley2400
-from hardware.agilent_34410a import Agilent34410A
-from hardware.daq import DAQ
-from hardware.keisight_e3600a import E3600a
 from hardware.keithley_2636 import Keithley2636
-from hardware.lakeshore import Lakeshore
-from hardware.GM_700 import GM700
-from hardware.autostation import AutoStation
-from hardware.kriostat import Kriostat
-from hardware.switch import Switch
 from hardware.agilent_2912 import Agilent2912
 from hardware.tektronix_10070a import Tektronix10070a
 from hardware.dummy_sourcemeter import DummySourcemeter
-from hardware.dummy_multimeter import DummyMultimeter
-from hardware.dummy_gaussmeter import DummyGaussmeter
 from hardware.dummy_pulsegenerator import DummyPulsegenerator
-from hardware.dummy_field import DummyField
-from hardware.dummy_relay import DummyRelay
 from hardware.rotation_stage import RotationStage
 from hardware.rotation_stage_dummy import RotationStageDummy
-from logic.vector import Vector
 from logic.sweep_field_to_zero import sweep_field_to_zero
 from logic.sweep_field_to_value import sweep_field_to_value
 from hardware.esp300 import Esp300
@@ -38,8 +23,6 @@ log.addHandler(logging.NullHandler())
 
 
 class CIMSMode(MeasurementMode):
-    def __init__(self, procedure: SpinLabMeasurement) -> None:
-        self.p = procedure
 
     def initializing(self):
         # Hardware objects initialization
@@ -91,21 +74,8 @@ class CIMSMode(MeasurementMode):
                 self.pulsegenerator_obj = DummyPulsegenerator(self.p.address_pulsegenerator)
                 log.warning("Used dummy Pulsegemerator.")
 
-        match self.p.set_gaussmeter:
-            case "Lakeshore":
-                self.gaussmeter_obj = Lakeshore(self.p.address_gaussmeter)
-            case "GM700":
-                self.gaussmeter_obj = GM700(self.p.address_gaussmeter)
-            case _:
-                self.gaussmeter_obj = DummyGaussmeter(self.p.address_gaussmeter)
-                log.warning("Used dummy Gaussmeter.")
-
-        match self.p.set_field_cntrl:
-            case "DAQ":
-                self.field_obj = DAQ(self.p.address_daq)
-            case _:
-                self.field_obj = DummyField(self.p.address_daq)
-                log.warning("Used dummy DAQ.")
+        self.gaussmeter_obj = self.hardware_manager.create_gaussmeter()
+        self.field_obj = self.hardware_manager.create_field_cntrl()
 
         # Sourcemeter initialization
         self.sourcemeter_obj.source_mode = self.p.sourcemeter_source  # Set source type
@@ -262,12 +232,8 @@ class CIMSMode(MeasurementMode):
             "Current (A)": self.tmp_current,
             "Resistance (ohm)": self.tmp_resistance,
             "Field (Oe)": self.tmp_field,
-            "Frequency (Hz)": math.nan,
-            "X (V)": math.nan,
-            "Y (V)": math.nan,
-            "Phase": math.nan,
-            "Polar angle (deg)": self.p.set_polar_angle if self.p.set_rotationstation == True else math.nan,
-            "Azimuthal angle (deg)": self.p.set_azimuthal_angle if self.p.set_rotationstation == True else math.nan,
+            "Polar angle (deg)": self.p.set_polar_angle if self.p.set_rotationstation == True else np.nan,
+            "Azimuthal angle (deg)": self.p.set_azimuthal_angle if self.p.set_rotationstation == True else np.nan,
             "Applied Voltage (V)": point,
         }
 

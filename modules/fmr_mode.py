@@ -2,27 +2,12 @@ from time import sleep
 import numpy as np
 import logging
 
-from app import SpinLabMeasurement
 from modules.measurement_mode import MeasurementMode
 
-from hardware.daq import DAQ
-from hardware.lakeshore import Lakeshore
-from hardware.GM_700 import GM700
-from hardware.windfreak import Windfreak
-from hardware.sr830 import SR830
-from hardware.generator_agilent import FGenDriver
-from hardware.hp_33120a import LFGenDriver
-from hardware.dummy_fgen import DummyFgenDriver
-from hardware.dummy_lfgen import DummyLFGenDriver
-from hardware.dummy_lockin import DummyLockin
-from hardware.dummy_gaussmeter import DummyGaussmeter
-from hardware.dummy_field import DummyField
-from hardware.agilent_34410a import Agilent34410A
-from hardware.dummy_multimeter import DummyMultimeter
+from logic.hardware_manager import DummyMultimeter, DummyLockin, DummyLFGenDriver
 from hardware.rotation_stage import RotationStage
 from hardware.rotation_stage_dummy import RotationStageDummy
 
-from logic.lockin_parameters import _lockin_timeconstant, _lockin_sensitivity, _lockin_filter_slope
 from logic.sweep_field_to_zero import sweep_field_to_zero
 from logic.sweep_field_to_value import sweep_field_to_value
 
@@ -31,108 +16,38 @@ log.addHandler(logging.NullHandler())
 
 
 class FMRMode(MeasurementMode):
-    def __init__(self, procedure: SpinLabMeasurement) -> None:
-        self.p = procedure
-
-    def initializing(self):
-        # Hardware objects initialization
-
-        # Measurement object device initialization
+    def create_measurement_device(self):
         if self.p.set_measdevice_fmr == "LockIn":
-            # Lockin object initialization
-            match self.p.set_lockin:
-                case "SR830":
-                    self.lockin_obj = SR830(self.p.address_lockin)
-                case "Zurich":
-                    raise NotImplementedError("Zurich lockin is not implemented")
-                case _:
-                    self.lockin_obj = DummyLockin()
-                    log.warning("Used dummy Lockin.")
+            self.lockin_obj = self.hardware_manager.create_lockin()
             self.multimeter_obj = DummyMultimeter(self.p.address_multimeter)
-
         elif self.p.set_measdevice_fmr == "Multimeter":
-            # Multimeter object initialization
-            match self.p.set_multimeter:
-                case "Agilent 34400":
-                    self.multimeter_obj = Agilent34410A(self.p.address_multimeter)
-                case _:
-                    self.multimeter_obj = DummyMultimeter(self.p.address_multimeter)
-                    log.warning("Used dummy Multimeter.")
-
+            self.multimeter_obj = self.hardware_manager.create_multimeter()
             self.lockin_obj = DummyLockin()
-            self.p.set_lfgen = "none"
         else:
             raise ValueError(f"Measurement device: '{self.p.set_measdevice_fmr}' not supported")
 
-        # Gaussmeter object initialization
-        match self.p.set_gaussmeter:
-            case "Lakeshore":
-                self.gaussmeter_obj = Lakeshore(self.p.address_gaussmeter)
-            case "GM700":
-                self.gaussmeter_obj = GM700(self.p.address_gaussmeter)
-            case _:
-                self.gaussmeter_obj = DummyGaussmeter(self.p.address_gaussmeter)
-                log.warning("Used dummy Gaussmeter.")
+    def create_lfgen(self):
+        self.lfgen_obj = self.hardware_manager.create_lf_generator()
+        if self.p.set_lfgen == "SR830" and isinstance(self.lockin_obj, DummyLockin):
+            self.lockin_obj = self.lfgen_obj
+            self.lfgen_obj = DummyLFGenDriver()
 
-        # Field controller object initialization
-        match self.p.set_field_cntrl:
-            case "DAQ":
-                self.field_obj = DAQ(self.p.address_daq)
-            case _:
-                self.field_obj = DummyField(self.p.address_daq)
-                log.warning("Used dummy DAQ.")
-
-        # High Frequency Generator object initialization
-        match self.p.set_generator:
-            case "Agilent":
-                self.generator_obj = FGenDriver(self.p.address_generator)
-            case "Windfreak":
-                channel = 0 if self.p.generator_channel == "A" else 1
-                self.generator_obj = Windfreak(self.p.address_generator, channel=channel)
-            case _:
-                self.generator_obj = DummyFgenDriver()
-                log.warning("Used dummy Frequency Generator.")
-
-        # Low Frequency Generator object initialization (Helmholtz coil)
-        match self.p.set_lfgen:
-            case "SR830":
-                if type(self.lockin_obj) is DummyLockin:
-                    self.lockin_obj = SR830(self.p.address_lockin)
-            case "HP33120A":
-                self.lfgen_obj = LFGenDriver(self.p.address_lfgen)
-            case _:
-                self.lfgen_obj = DummyLFGenDriver()
-                log.warning("Used dummy Modulation Generator.")
+    def initializing(self):
+        # Hardware objects initialization
+        self.create_measurement_device()
+        self.gaussmeter_obj = self.hardware_manager.create_gaussmeter()
+        self.field_obj = self.hardware_manager.create_field_cntrl()
+        self.generator_obj = self.hardware_manager.create_hf_generator()
+        self.create_lfgen()
 
         # High Frequency Generator initialization
         self.generator_obj.initialization()
 
         # Lockin initialization
-        self.lockin_obj.frequency = self.p.lockin_frequency
-        if self.p.lockin_sensitivity == "Auto Gain":
-            self.lockin_obj.auto_gain()
-        else:
-            self.lockin_obj.sensitivity = _lockin_sensitivity(self.p.lockin_sensitivity)
-        self.lockin_obj.time_constant = _lockin_timeconstant(self.p.lockin_timeconstant)
-        self.lockin_obj.filter_slope = _lockin_filter_slope(self.p.lockin_slope)
-        self.lockin_obj.harmonic = self.p.lockin_harmonic
-        self.lockin_obj.sine_voltage = self.p.lockin_sine_amplitude
-        self.lockin_obj.channel1 = self.p.lockin_channel1
-        self.lockin_obj.channel2 = self.p.lockin_channel2
-        self.lockin_obj.input_config = self.p.lockin_input_connection
-        self.lockin_obj.input_coupling = self.p.lockin_input_coupling
-        self.lockin_obj.reference_source = self.p.lockin_reference_source
-        self.lockin_obj.reserve = self.p.lockin_dynamic_reserve
+        self.hardware_manager.initialize_lockin(self.lockin_obj)
 
         # Multimeter initialization
-        if not self.p.multimeter_autorange:
-            self.multimeter_obj.resolution = self.p.multimeter_resolution
-        self.multimeter_obj.range_ = self.p.multimeter_range
-        self.multimeter_obj.autorange = self.p.multimeter_autorange
-        self.multimeter_obj.function_ = self.p.multimeter_function
-        self.multimeter_obj.trigger_delay = "MIN"
-        self.multimeter_obj.trigger_count = self.p.multimeter_average
-        self.multimeter_obj.nplc = self.p.multimeter_nplc
+        self.hardware_manager.initialize_multimeter(self.multimeter_obj)
 
         # Low Frequency Generator initalization
         if self.p.set_lfgen == "SR830":
