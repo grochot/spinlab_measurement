@@ -27,7 +27,7 @@ def sweep_field_to_value(start_field: float, end_field: float, field_step: float
     
     step_direction = field_step if end_field > start_field else -field_step
     field_values = np.arange(start_field, end_field, step_direction)
-    
+
 
     if len(field_values) == 0 or field_values[-1] != end_field:
         field_values = np.append(field_values, end_field)
