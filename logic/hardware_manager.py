@@ -70,6 +70,7 @@ class HardwareManager:
         lockin_obj.input_config = self.p.lockin_input_connection
         lockin_obj.input_coupling = self.p.lockin_input_coupling
         lockin_obj.reference_source = self.p.lockin_reference_source
+        lockin_obj.reserve = self.p.lockin_dynamic_reserve
 
     def create_multimeter(self) -> Union[Agilent34410A, DummyMultimeter]:
         match self.p.set_multimeter:
