@@ -57,10 +57,7 @@ class HardwareManager:
 
     def initialize_lockin(self, lockin_obj: Union[SR830, DummyLockin]) -> None:
         lockin_obj.frequency = self.p.lockin_frequency
-        if self.p.lockin_sensitivity == "Auto Gain":
-            lockin_obj.auto_gain()
-        else:
-            lockin_obj.sensitivity = _lockin_sensitivity(self.p.lockin_sensitivity)
+        lockin_obj.sensitivity = _lockin_sensitivity(self.p.lockin_sensitivity)
         lockin_obj.time_constant = _lockin_timeconstant(self.p.lockin_timeconstant)
         lockin_obj.filter_slope = _lockin_filter_slope(self.p.lockin_slope)
         lockin_obj.harmonic = self.p.lockin_harmonic
