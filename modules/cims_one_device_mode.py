@@ -36,12 +36,14 @@ log.addHandler(logging.NullHandler())
 class CIMSOneDeviceMode(MeasurementMode):
     def __init__(self, procedure: SpinLabMeasurement) -> None:
         self.p = procedure
+        self.is_iterable=True
 
     def generate_points(self):
         vector_string = self.p.vector
         v = Vector()
-        ranges = v.generate_ranges(vector_string)
-        return ranges
+        self.ranges = v.generate_ranges(vector_string)
+        self.n_measurement=sum(self.ranges[1])
+        return range(self.n_measurement)
 
     def initializing(self):
         # Hardware objects initialization
@@ -112,29 +114,64 @@ class CIMSOneDeviceMode(MeasurementMode):
             self.sourcemeter_obj.current_range = self.p.sourcemeter_limit
             self.sourcemeter_obj.compliance_current = self.p.sourcemeter_compliance
             self.sourcemeter_obj.source_voltage = self.p.sourcemeter_bias
-            self.sourcemeter_obj.enable_source()
-            self.sourcemeter_obj.measure_current(self.p.sourcemeter_nplc, self.p.sourcemeter_limit)
+            #self.sourcemeter_obj.enable_source()
+            #self.sourcemeter_obj.measure_current(self.p.sourcemeter_nplc, self.p.sourcemeter_limit)
         else:
             self.sourcemeter_obj.voltage_range = self.p.sourcemeter_limit
             self.sourcemeter_obj.compliance_voltage = self.p.sourcemeter_compliance
             self.sourcemeter_obj.source_current = self.p.sourcemeter_bias
-            self.sourcemeter_obj.enable_source()
-            self.sourcemeter_obj.measure_voltage(self.p.sourcemeter_nplc, self.p.sourcemeter_limit)
+            #self.sourcemeter_obj.enable_source()
+            #self.sourcemeter_obj.measure_voltage(self.p.sourcemeter_nplc, self.p.sourcemeter_limit)
 
         # Lakeshore initalization
         self.gaussmeter_obj.range(self.p.gaussmeter_range)
         self.gaussmeter_obj.resolution(self.p.gaussmeter_resolution)
 
-        # Field initialization
-        self.field_obj.field_constant = self.p.field_constant
-        if self.p.set_rotationstation:
-            sweep_field_to_value(0, self.p.constant_field_value, self.p.field_step, self.field_obj)
-            self.tmp_field = self.p.constant_field_value
-        else:
-            sweep_field_to_value(0, self.point_list[0], self.p.field_step, self.field_obj)
-            self.tmp_field = self.point_list[0]
+        # Field remagnetization
+        if self.p.remagnetization:
+            # first remanency corection for remagnetization
+            if self.p.remanency_correction:
+                sleep(self.p.remanency_correction_time)
 
-        # MotionDriver
+                self.actual_remanency = self.gaussmeter_obj.measure()
+                sweep_field_to_value(0, self.p.remagnetization_value - self.actual_remanency, self.p.field_step, self.field_obj)
+                sleep(self.p.remagnetization_time)
+                print("to zero:")
+                sweep_field_to_value(
+                    self.p.remagnetization_value - self.actual_remanency,
+                    self.p.field_bias_value,
+                    self.p.field_step,
+                    self.field_obj,
+                )
+                sleep(self.p.remanency_correction_time)
+
+                self.actual_remanency = self.gaussmeter_obj.measure()
+                sweep_field_to_value(
+                    self.p.field_bias_value,
+                    self.p.field_bias_value + (self.p.field_bias_value - self.actual_remanency),
+                    self.p.field_step,
+                    self.field_obj,
+                )
+            else:
+                self.actual_remanency = 0
+                sweep_field_to_value(0, self.p.remagnetization_value, self.p.field_step, self.field_obj)
+                sleep(self.p.remagnetization_time)
+                print("to zero:")
+                sweep_field_to_value(self.p.remagnetization_value, self.p.field_bias_value, self.p.field_step, self.field_obj)
+
+        else:
+            if self.p.remanency_correction:
+                sleep(self.p.remanency_correction_time)
+
+                self.actual_remanency = self.gaussmeter_obj.measure()
+                print("Remanency:", self.actual_remanency)
+                sweep_field_to_value(0, self.p.field_bias_value - self.actual_remanency, self.p.field_step, self.field_obj)
+
+            else:
+                self.actual_remanency = 0
+                sweep_field_to_value(0, self.p.field_bias_value, self.p.field_step, self.field_obj)
+
+        #MotionDriver
         if self.p.set_automaticstation:
             if self.p.address_automaticstation == "None":
                 self.MotionDriver = DummyMotionDriver("sth")
@@ -143,27 +180,41 @@ class CIMSOneDeviceMode(MeasurementMode):
                 self.MotionDriver.high_level_motion_driver(self.p.global_xyname, self.p.sample_in_plane, self.p.disconnect_length)
 
 
-        #Script initialization and measurement
+        #Script inside device initialization and measurement
+        self.sourcemeter_obj.enable_source()
 
+        self.current_measurement=[]
+        self.voltage_measurement=[]
+        for i in range(len(self.ranges[0])):
+            print(self.ranges[2][i])
+            self.sourcemeter_obj.prepare_ConfigPulseVMeasureISweepLin(self.p.pulsegenerator_offset, self.ranges[0][i], self.ranges[2][i],self.p.pulsegenerator_compliance, self.p.pulsegenerator_ton, self.p.pulsegenerator_toff, self.ranges[1][i], 3)
+            self.sourcemeter_obj.InitiatePulseTest(3)
+            self.current_measurement+=self.sourcemeter_obj.downolad_data_from_buffer(self.ranges[1][i],'rbs.i')
+            self.voltage_measurement+=self.sourcemeter_obj.downolad_data_from_buffer(self.ranges[1][i],'rbs.v')
+            print( self.voltage_measurement)
 
+        #self.current_measurement=np.array(self.current_measurement)
+        #self.voltage_measurement=np.array(self.voltage_measurement)
+        
         # measure field
         if self.p.set_gaussmeter == "none":
-            self.tmp_field = point
+            self.tmp_field = self.p.field_bias_value
         else:
             self.tmp_field = self.gaussmeter_obj.measure()
         sleep(self.p.delay_bias)
 
 
-    def operating(self, point):
+    def operating(self, iterator):
         #self.field_obj.set_field(point)
         #sleep(self.p.delay_field)
 
-
+        voltage=float(self.voltage_measurement[iterator])
+        current=float(self.current_measurement[iterator])
 
         data = {
-            "Voltage (V)": self.tmp_voltage,
-            "Current (A)": self.tmp_current,
-            "Resistance (ohm)": self.tmp_resistance,
+            "Voltage (V)": voltage,
+            "Current (A)": current,
+            "Resistance (ohm)": voltage/current,
             "Field (Oe)": self.tmp_field,
             "Frequency (Hz)": math.nan,
             "X (V)": math.nan,

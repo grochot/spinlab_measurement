@@ -45,31 +45,36 @@ class Vector:
             stop = float(ranges[2])
             
             start_tab.append(start)
-            no_point_tab.append(no_point_tab)
+            no_point_tab.append(no_point)
             stop_tab.append(stop_tab)
 
             #numbers = list(np.linspace(start, stop, no_point))
         w = 1
         if len(ranges) > 3:
             start = float(ranges[0])
+            start_tab.append(start)
             no_point = int(ranges[1])
+            no_point_tab.append(no_point)
             stop = float(ranges[2])
+            stop_tab.append(stop)
+
             numbers = list(np.linspace(start, stop, no_point))
             for i in range(2, len(ranges) - 2, 2):
                 start = float(ranges[i])
                 no_point = int(ranges[i + 1])
                 stop = float(ranges[i + 2])
 
+                start_tab.append(start)
+                no_point_tab.append(no_point)
+                stop_tab.append(stop)
                 if w < len(range(2, len(ranges) - 2, 2)):
                     numbers = numbers + list(np.linspace(start, stop, no_point + 1))[1:]
                 else:
                     numbers = numbers + list(np.linspace(start, stop, no_point + 1))[1:]
                 w = w + 1
 
-                start_tab.append(start)
-                no_point_tab.append(no_point_tab)
-                stop_tab.append(stop_tab)
-        return [start_tab,no_point,stop_tab]
+        print("start_tab",start_tab)
+        return [start_tab,no_point_tab,stop_tab]
 
 
 # v = Vector()

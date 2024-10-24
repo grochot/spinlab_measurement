@@ -10,6 +10,7 @@ log.addHandler(logging.NullHandler())
 class MeasurementMode(ABC):
     def __init__(self, procedure):
         self.p: SpinLabMeasurement = procedure
+        self.is_iterable=False
 
     def generate_points(self) -> list:
         if self.p.vector:

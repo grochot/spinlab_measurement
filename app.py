@@ -47,12 +47,12 @@ class SpinLabMeasurement(Procedure):
 
     return_the_rotationstation = BooleanParameter("Return the rotationstation", default = parameters_from_file["return_the_rotationstation"], vis_cond=(PARAMETERS, lambda mode, set_rotationstation: (mode == "CIMSMode" or mode == "ResistanceMode" or mode == "HarmonicMode" or mode == "FMRMode") and set_rotationstation == True))
 
-    remagnetization=BooleanParameter("Remagnetize sample", default = parameters_from_file["remagnetization"], vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode"))
-    remagnetization_value=FloatParameter("Remagnetization value", default = parameters_from_file["remagnetization_value"], units="Oe", vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode"))
-    remagnetization_time=FloatParameter("Remagnetization time", default = parameters_from_file["remagnetization_time"], units="s", vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode"))
+    remagnetization=BooleanParameter("Remagnetize sample", default = parameters_from_file["remagnetization"], vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode" or mode=="CIMSOneDeviceMode"))
+    remagnetization_value=FloatParameter("Remagnetization value", default = parameters_from_file["remagnetization_value"], units="Oe", vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode" or mode=="CIMSOneDeviceMode"))
+    remagnetization_time=FloatParameter("Remagnetization time", default = parameters_from_file["remagnetization_time"], units="s", vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode" or mode=="CIMSOneDeviceMode"))
 
-    remanency_correction = BooleanParameter("Remanency correction", default = parameters_from_file["remanency_correction"], vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode"))
-    remanency_correction_time=FloatParameter("Remanency correction time", default = parameters_from_file["remanency_correction_time"], units="s", vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode"))
+    remanency_correction = BooleanParameter("Remanency correction", default = parameters_from_file["remanency_correction"], vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode" or mode=="CIMSOneDeviceMode"))
+    remanency_correction_time=FloatParameter("Remanency correction time", default = parameters_from_file["remanency_correction_time"], units="s", vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode" or mode=="CIMSOneDeviceMode"))
 
     hold_the_field_after_measurement=BooleanParameter("Hold the field after measurement", default = parameters_from_file["hold_the_field_after_measurement"], vis_cond=(PARAMETERS, lambda mode: mode == "CIMSMode" or mode == "HarmonicMode" or mode == "FMRMode"))
 
@@ -111,6 +111,8 @@ class SpinLabMeasurement(Procedure):
     sourcemeter_average = IntegerParameter("Sourcemeter average", default = parameters_from_file["sourcemeter_average"],  vis_cond=sourcemeter_params_vis_cond)
     sourcemeter_bias = FloatParameter("Sourcemeter bias", default = parameters_from_file["sourcemeter_bias"],  vis_cond=sourcemeter_params_vis_cond)
 
+
+
     # MultimeterParameters
     multimeter_params_vis_cond = (SETTINGS, lambda mode, set_measdevice_fmr, set_multimeter, address_multimeter, mode_resistance, set_measdevice_qm: set_multimeter != "none" and address_multimeter != "None" and ((mode == "ResistanceMode" and mode_resistance == True) or (mode == "FMRMode" and set_measdevice_fmr == "Multimeter") or (mode == "QuickMeasurement" and set_measdevice_qm == "Multimeter")))
     multimeter_function = ListParameter("Multimeter function", default = parameters_from_file["multimeter_function"], choices=[ "DCV", "DCV_RATIO", "ACV", "DCI", "ACI", "R2W", "R4W", "FREQ", "PERIOD", "CONTINUITY", "DIODE"], vis_cond=multimeter_params_vis_cond)
@@ -143,7 +145,7 @@ class SpinLabMeasurement(Procedure):
     set_field_value_fmr = FloatParameter("Set Constant Field Value", default = parameters_from_file["set_field_value_fmr"], units="Oe", vis_cond =(PARAMETERS, lambda mode, mode_fmr: mode == "FMRMode" and mode_fmr == "ST-FMR"))
     field_step = FloatParameter("Field sweep step", default = parameters_from_file["field_step"], units="Oe", vis_cond=(PARAMETERS, lambda mode: mode != "CalibrationFieldMode" and mode != "QuickMeasurement"))
     constant_field_value =  FloatParameter("Set Constant Field Value", default = parameters_from_file["constant_field_value"], units="Oe", vis_cond=(SETTINGS, lambda mode, set_rotationstation: set_rotationstation == True and mode != "QuickMeasurement"))
-    field_bias_value= FloatParameter("Set Field Bias Value", default = parameters_from_file['field_bias_value'], units="Oe", vis_cond=(PARAMETERS, lambda mode: mode == "CIMSMode" or mode == "CIMSOneDeviceMode"))
+    field_bias_value= FloatParameter("Set Field Bias Value", default = parameters_from_file['field_bias_value'], units="Oe", vis_cond=(SETTINGS, lambda mode: mode == "CIMSMode" or mode == "CIMSOneDeviceMode"))
     polarity_control_enabled = BooleanParameter("Polarity control", default = parameters_from_file["polarity_control_enabled"], vis_cond=(SETTINGS, lambda mode: mode=="FMRMode"))
 
     # GeneratorParameters
@@ -172,12 +174,14 @@ class SpinLabMeasurement(Procedure):
     set_azimuthal_angle_fmr=FloatParameter("Set azimuthal angle", default = parameters_from_file["set_azimuthal_angle_fmr"], units="Deg", vis_cond=(PARAMETERS, lambda set_rotationstation, mode: set_rotationstation == True and mode == "FMRMode"))
 
     # pulsegenerator parameters
-    pulsegenerator_offset=FloatParameter("pulsegenerator offset", default = parameters_from_file["pulsegenerator_offset"], vis_cond=(SETTINGS, lambda mode, set_pulsegenerator: mode == "CIMSMode" and set_pulsegenerator != "none"))
+    pulsegenerator_offset=FloatParameter("pulsegenerator offset", default = parameters_from_file["pulsegenerator_offset"], vis_cond=(SETTINGS, lambda mode, set_pulsegenerator: mode == "CIMSMode" or mode=="CIMSOneDeviceMode" and set_pulsegenerator != "none"))
     pulsegenerator_duration=FloatParameter("pulsegenerator duration", default = parameters_from_file["pulsegenerator_duration"], vis_cond=(SETTINGS, lambda mode, set_pulsegenerator: mode == "CIMSMode" and set_pulsegenerator != "none"))
     pulsegenerator_pulsetype=ListParameter("pulsegenerator pulsetype", default = parameters_from_file["pulsegenerator_pulsetype"],choices=["VOLT", "CURR"], vis_cond=(SETTINGS, lambda mode, set_pulsegenerator: mode == "CIMSMode" and set_pulsegenerator != "none" and set_pulsegenerator != "Tektronix 10,070A"))
     pulsegenerator_channel=ListParameter("pulsegenerator channel", default = parameters_from_file["pulsegenerator_channel"],choices=["Channel A","Channel B"], vis_cond=(SETTINGS, lambda mode, set_pulsegenerator: mode == "CIMSMode" and set_pulsegenerator != "none" and set_pulsegenerator != "Tektronix 10,070A"))
-    pulsegenerator_compliance = FloatParameter("Pulsegenerator compliance", default = parameters_from_file["pulsegenerator_compliance"], vis_cond=(SETTINGS, lambda mode, set_pulsegenerator: mode == "CIMSMode" and set_pulsegenerator != "none" and set_pulsegenerator != "Tektronix 10,070A"))
+    pulsegenerator_compliance = FloatParameter("Pulsegenerator compliance", default = parameters_from_file["pulsegenerator_compliance"], vis_cond=(SETTINGS, lambda mode, set_pulsegenerator: mode == "CIMSMode" or mode=="CIMSOneDeviceMode" and set_pulsegenerator != "none" and set_pulsegenerator != "Tektronix 10,070A"))
     pulsegenerator_source_range=FloatParameter("Pulsegenerator sourcerange", default = parameters_from_file["pulsegenerator_source_range"], vis_cond=(SETTINGS, lambda mode, set_pulsegenerator: mode == "CIMSMode" and set_pulsegenerator == "Keithley 2636"))
+    pulsegenerator_ton=FloatParameter("pulsegenerator ton", default = parameters_from_file["pulsegenerator_offset"], vis_cond=(SETTINGS, lambda mode, set_pulsegenerator: mode == "CIMSMode" or mode=="CIMSOneDeviceMode" and set_pulsegenerator != "none"))
+    pulsegenerator_toff=FloatParameter("pulsegenerator toff", default = parameters_from_file["pulsegenerator_offset"], vis_cond=(SETTINGS, lambda mode, set_pulsegenerator: mode == "CIMSMode" or mode=="CIMSOneDeviceMode" and set_pulsegenerator != "none"))
 
     # kriostat parameters
     kriostat_temperature = FloatParameter("Kriostat Temperature", default = parameters_from_file["kriostat_temperature"], units="K", vis_cond=(PARAMETERS, lambda set_kriostat: set_kriostat == True))
@@ -283,14 +287,15 @@ class SpinLabMeasurement(Procedure):
     def execute(self):
         self.counter = 0
 
+        self.is_iterable=self.selected_mode.is_iterable
+
         for point in self.points:
             if self.should_stop():
                 log.warning("Caught the stop flag in the procedure")
                 break
 
             start_time = time()
-
-            self.result = self.selected_mode.operating(point)
+            self.result = self.selected_mode.operating(self.counter if self.is_iterable else point)
 
             self.emit("results", self.result)
             self.emit("progress", 100 * self.counter / len(self.points))
@@ -327,7 +332,7 @@ class MainWindow(ManagedDockWindow):
     def __init__(self):
         super().__init__(
             procedure_class= SpinLabMeasurement,
-            inputs = ['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'set_measdevice_qm', 'set_sourcemeter','set_pulsegenerator', 'set_measdevice_fmr', 'set_multimeter', 'set_gaussmeter', 'set_field_cntrl','address_daq', 'polarity_control_enabled', 'address_polarity_control', 'set_lockin', 'set_automaticstation', 'set_rotationstation','address_rotationstation','rotation_axis', 'set_polar_angle','set_azimuthal_angle','set_polar_angle_fmr','set_azimuthal_angle_fmr', 'rotation_polar_constant', 'rotation_azimuth_constant','set_switch', 'set_kriostat', "kriostat_temperature", 'set_lfgen', 'set_analyzer', 'set_generator', 'address_generator','generator_channel','address_sourcemeter', 'address_multimeter', 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_lfgen','address_pulsegenerator','address_automaticstation','sourcemeter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'constant_field_value', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_slope', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power', 'lfgen_freq', 'lfgen_amp','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias','mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','pulsegenerator_compliance','pulsegenerator_source_range','delay_measurement','field_bias_value','remanency_correction','remanency_correction_time','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','return_the_rotationstation', 'layout_type', 'point_meas_duration', 'number_of_points','global_xyname','disconnect_length','sample_in_plane','go_init_position'],
+            inputs = ['mode', 'sample_name', 'vector', 'mode_resistance', 'mode_fmr', 'set_measdevice_qm', 'set_sourcemeter','set_pulsegenerator', 'set_measdevice_fmr', 'set_multimeter', 'set_gaussmeter', 'set_field_cntrl','address_daq', 'polarity_control_enabled', 'address_polarity_control', 'set_lockin', 'set_automaticstation', 'set_rotationstation','address_rotationstation','rotation_axis', 'set_polar_angle','set_azimuthal_angle','set_polar_angle_fmr','set_azimuthal_angle_fmr', 'rotation_polar_constant', 'rotation_azimuth_constant','set_switch', 'set_kriostat', "kriostat_temperature", 'set_lfgen', 'set_analyzer', 'set_generator', 'address_generator','generator_channel','address_sourcemeter', 'address_multimeter', 'address_gaussmeter', 'address_lockin', 'address_switch', 'address_analyzer', 'address_lfgen','address_pulsegenerator','address_automaticstation','sourcemeter_source', 'sourcemeter_compliance', 'sourcemeter_channel', 'sourcemeter_limit', 'sourcemeter_nplc', 'sourcemeter_average', 'sourcemeter_bias', 'multimeter_function', 'multimeter_resolution','multimeter_nplc', 'multimeter_autorange', 'multimeter_range', 'multimeter_average', 'field_constant', 'constant_field_value', 'gaussmeter_range', 'gaussmeter_resolution', 'lockin_average', 'lockin_input_coupling', 'lockin_reference_source', 'lockin_dynamic_reserve', 'lockin_input_connection', 'lockin_sensitivity','lockin_frequency', 'lockin_harmonic','lockin_sine_amplitude',  'lockin_timeconstant', 'lockin_slope', 'lockin_channel1','lockin_channel2' ,'lockin_autophase','generator_frequency', 'generator_power', 'lfgen_freq', 'lfgen_amp','set_field_value_fmr', 'field_step', 'delay_field', 'delay_lockin', 'delay_bias','mode_cims_relays','pulsegenerator_offset','pulsegenerator_duration','pulsegenerator_pulsetype','pulsegenerator_channel','pulsegenerator_compliance','pulsegenerator_source_range','pulsegenerator_ton','pulsegenerator_toff','delay_measurement','field_bias_value','remanency_correction','remanency_correction_time','remagnetization','remagnetization_value','remagnetization_time','hold_the_field_after_measurement','return_the_rotationstation', 'layout_type', 'point_meas_duration', 'number_of_points','global_xyname','disconnect_length','sample_in_plane','go_init_position'],
             x_axis=['Field (Oe)', 'Voltage (V)'],
             y_axis=['Field (Oe)', 'Resistance (ohm)'],
             # directory_input=True,  

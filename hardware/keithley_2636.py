@@ -520,6 +520,11 @@ class Channel:
         self.write('smua.measure.nplc = 0.01')
 
 
+    def downolad_data_from_buffer(self,points,buffer_name):
+        return self.ask('printbuffer(1, {}, {})'.format(points,buffer_name))[:-1].split(",")
+
+
+
     def test(self):
         self.write('smua.reset()')
  
@@ -556,6 +561,7 @@ if __name__ == "__main__":
     ch.enable_source()
     ch.InitiatePulseTest(3)
     ch.disable_source(HIGH_Z=False)
+    print(ch.downolad_data_from_buffer(10,'rbs.v'))
     
 
 

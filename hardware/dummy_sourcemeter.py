@@ -38,7 +38,15 @@ class DummySourcemeter:
        
     def disable_source(self):
         pass
-   
+
+    def prepare_ConfigPulseVMeasureISweepLin(self,bias,start,stop,limit,ton,toff,points,tag):
+        pass
+
+    def downolad_data_from_buffer(self,points,buffer_name):
+        return list(range(points))
+
+    def InitiatePulseTest(self,tag):
+        pass
 
 
 
