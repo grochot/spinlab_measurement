@@ -82,6 +82,7 @@ class HarmonicMode(MeasurementMode):
         self.lockin_obj.input_config = self.p.lockin_input_connection
         self.lockin_obj.input_coupling = self.p.lockin_input_coupling
         self.lockin_obj.reference_source = self.p.lockin_reference_source
+        self.lockin_obj.reserve = self.p.lockin_dynamic_reserve
 
         # Lakeshore initalization
         self.gaussmeter_obj.range(self.p.gaussmeter_range)

@@ -9,7 +9,6 @@ def sweep_field_to_zero(start_field: float, field_constant: float, field_step: f
     Args:
         start_field (float): The initial magnetic field value in Oersteds (Oe).
         field_constant (float): The conversion factor between field and voltage in Volts per Oersted (V/Oe).
-                                If greater than 2, the field is directly set to zero.
         field_step (float): The step size for decreasing the field value in Oersteds (Oe).
         daq (object): The DAQ device used to set the field during the sweep.
         abort_callback (function, optional): A function that returns True if the sweep should be aborted. Defaults to None.
@@ -24,14 +23,11 @@ def sweep_field_to_zero(start_field: float, field_constant: float, field_step: f
     if abs(start_field) <= field_step:
         daq.set_field(0)
         return 0.0, wasAborted
-    
-    if field_constant > 2:  # tego if'a bym wywalil przy mergowaniu
-        daq.set_field(0)
-        return 0.0, wasAborted
 
     step_direction = field_step if start_field < 0 else -field_step
     field_values = np.arange(start_field, 0, step_direction)
-    field_values = np.append(field_values, 0)
+    if field_values[-1] != 0:
+        field_values = np.append(field_values, 0)
 
     # set print options to avoid printing large arrays to console
     np.set_printoptions(threshold=10)

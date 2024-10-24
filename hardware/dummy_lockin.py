@@ -94,6 +94,7 @@ class DummyLockin():
     input_notch_config = 0
     reference_source = 0
     reference_source_trigger = 0
+    reserve = ""
 
     aux_out_1 = 0
     # For consistency with other lock-in instrument classes
